@@ -2,26 +2,35 @@
 
 ## Estruturas de Dados 
 
+### Technician (Singly Linked List)
+
+Utilizamos uma Singly Linked List com um apontador (head) e uma variável 'count' para contagem do número atual de técnicos e uma variável 'next_id' que representa o próximo ID a ser utilizado.  
+
+
+### Username do Technician (Hashmap)
+
+Trabalho extra para valorização da nota final, implementamos 1 hashmap (username) com as colisões resolvidas por linked list. Obtendo assim uma eficiência de O(1) nas autenticação dos técnicos. 
+
+
 ### Equipment Inventory (Doubly Linked List)
 
-Utilizamos uma Doubly Linked List com dois apontadores (head e tail) e uma variável 'count' para contagem do número de equipamentos.
+Utilizamos uma Doubly Linked List com dois apontadores (head e tail) e uma variável 'count' para contagem do número atual de equipamentos e uma variável 'next_id' que representa o próximo ID a ser utilizado.  
 
 #### Funções (Algoritmos)
 
-|            Função              | Eficiência |
-| :----------------------------- | :--------: |
-| insert_tail()                  | O(1)       |
-| remove_by_id()                 | O(n)       |
-| find_by_id()                   | O(log n)   |
-| find_by_ip/mac()               | O(1)       |
-| sort_by_status/type/location() | O(n log n) |
-
-Na função `find_by_id()` utilizamos um array auxilar ordenado, de modo que seja possível utilizar o algoritmo de Binary Search, sempre que inserido/removido um novo equipamento é atualizado o array auxiliar.
+|                   Função                 | Eficiência |
+| :--------------------------------------- | :--------: |
+| equipment_list_insert()                  | O(1)       |
+| equipment_list_remove()                  | O(n)       |
+| equipment_find_by_id/ip/mac()            | O(1)       |
+| equipment_sort_by_status/type/location() | O(n log n) |
 
 
-### MAC/IP do Equipment (Hashmap)
+### ID/MAC/IP do Equipment (Hashmap)
 
-Trabalho extra para valorização da nota final, implementamos então dois hashmaps (IP e MAC) com as colisões resolvidas por linked list. Obtendo assim uma eficiência de O(1) nas funções de `find_by_ip()` e `find_by_mac()`, hash function utilizamos o algoritmo DJB2.
+Trabalho extra para valorização da nota final, implementamos então 3 hashmaps independentes (ID, IP, MAC) com as colisões resolvidas por linked list. Obtendo assim uma eficiência de O(1) nas funções de `find_by_id()`, `find_by_ip()` e `find_by_mac()`, hash function utilizamos o algoritmo DJB2.
+
+A struct `hashmap_t` retorna um apontador genérico (void *), permitindo a reutilização para o `id_index`, `mac_index`, `ip_index` e `username_index` sem duplicação do código.
 
 #### Funções (Algoritmos)
 
@@ -32,25 +41,25 @@ Trabalho extra para valorização da nota final, implementamos então dois hashm
 | hashmap_remove()               | O(1)       |
 
 
-Os hashmaps funcionam como index auxiliares para pesquisa mais eficiênte por IP e MAC, embora seja raro com o algoritmo DJB2 haver colisões pode acontecer e no pior caso a eficiência é O(n).
+Os hashmaps funcionam como index auxiliares para pesquisa mais eficiênte por ID, IP e MAC, embora seja raro com o algoritmo DJB2 haver colisões pode acontecer e no pior caso a eficiência é O(n).
 
 
 ### Incident (Queue)
 
-Utilizamos uma Queue com dois apontadores (head e tail) e uma variável 'count' para contagem do número de incidentes.
+Utilizamos uma Queue com dois apontadores (head e tail) e uma variável 'count' para contagem do número atual de incidentes e uma variável 'next_id' que representa o próximo ID a ser utilizado.  
 
 #### Funções (Algoritmos)
 
-|            Função              | Eficiência |
-| :----------------------------- | :--------: |
-| enqueue()                      | O(1)       |
-| dequeue()                      | O(1)       |
-| peek_head()                    | O(1)       |
-| find_by_equip()                | O(n)       |
-| filter_by_priority()           | O(n)       |
+|                 Função                | Eficiência |
+| :------------------------------------ | :--------: |
+| incident_queue_enqueue()              | O(1)       |
+| incident_queue_dequeue()              | O(1)       |
+| incident_queue_peek_head()            | O(1)       |
+| incident_find_by_equipment_sensor()   | O(n)       |
+| incident_filter_by_priority()         | O(n)       |
 
 
-### Configurations (Stack)
+### Config (Stack)
 
 Utilizamos uma Stack com um apontador (top) e uma variável 'count' para contagem do número de configurações.
 
@@ -58,11 +67,11 @@ Utilizamos uma Stack com um apontador (top) e uma variável 'count' para contage
 
 |            Função              | Eficiência |
 | :----------------------------- | :--------: |
-| push()                         | O(1)       |
-| pop()                          | O(1)       |
-| peek()                         | O(1)       |
-| peek_n()                       | O(n)       |
-| filter_by_equip()              | O(n)       |
+| config_stack_push()            | O(1)       |
+| config_stack_pop()             | O(1)       |
+| config_stack_peek()            | O(1)       |
+| config_stack_peek_n()          | O(n)       |
+| config_filter_by_equipment()   | O(n)       |
 
 
 ### Sensors  (Singly Linked List)
@@ -73,12 +82,12 @@ Utilizamos uma Singly Linked List com um apontador (head) e uma variável 'count
 
 |            Função              | Eficiência |
 | :----------------------------- | :--------: |
-| insert_head()                  | O(1)       |
-| find_by_code()                 | O(n)       |
-| filter_anomalous()             | O(n)       |
+| sensor_insert_head()           | O(1)       |
+| sensor_find_by_code()          | O(n)       |
+| sensor_filter_anomalous()      | O(n)       |
 
 
-## Algoritimos (Sorting, Binary e Linear Search)
+## Algoritmos (Sorting, Binary e Linear Search)
 
 ### Sorting
 
@@ -86,31 +95,22 @@ Utilizamos o Merge Sort, mostrando maior eficiência em relação aos outros alg
 
 |            Função              | Eficiência |
 | :----------------------------- | :--------: |
-| sort_by_status()               | O(n log n) |
-| sort_by_type()                 | O(n log n) |
-| sort_by_location()             | O(n log n) |
-
-
-### Binary Search
-
-Utilizamos Binary Search para encontrar o equipamento por id 'find_by_id()', utilizamos um array auxiliar e ordenado.
-
-|            Função              | Eficiência |
-| :----------------------------- | :--------: |
-| find_by_id()                   | O(log n)   |
+| equipment_sort_by_status()     | O(n log n) |
+| equipment_sort_by_type()       | O(n log n) |
+| equipment_sort_by_location()   | O(n log n) |
 
 
 ### Linear Search
 
 Utilizamos Linear Search para o resto das operações de pesquisa, evitando assim excesso uso de memória.
 
-|            Função              | Eficiência |
-| :----------------------------- | :--------: |
-| find_by_equip()                | O(n)       |
-| filter_by_priority()           | O(n)       |
-| filter_by_equip()              | O(n)       |
-| find_by_code()                 | O(n)       |
-| filter_anomalous()             | O(n)       |
+|                 Função                | Eficiência |
+| :------------------------------------ | :--------: |
+| incident_find_by_equipment_sensor()   | O(n)       |
+| incident_filter_by_priority()         | O(n)       |
+| config_filter_by_equipment()          | O(n)       |
+| sensor_find_by_code()                 | O(n)       |
+| sensor_filter_anomalous()             | O(n)       |
 
 
 ## Layout
@@ -119,12 +119,13 @@ Utilizamos Linear Search para o resto das operações de pesquisa, evitando assi
 | :----------------- | :------------------------------------------------------------ |
 | src/               | ficheiros .c, implementação da função.                        |
 | inc/               | ficheiros .h, implementação do prototipo da função e structs. |
-| ui/                | ficheiros .c e .h relacionados com ambiente gráfico.          |
+| ui/                | ficheiros .c e .h relacionados com a interface gráfica.       |
 | data/              | ficheiros .txt .dat, relacionados com os dados.               |
-| assets/            | imagens para ambiente gráfico da aplicação                    |
-| structs.h          | todos os tipos (struct e enum)                                |
+| assets/            | imagens para interface gráfica da aplicação                   |
+| application.h      | encapsulamento de todos dados                                 |
+| technician.c       | singly linked list
 | equipment.c        | doubly linked list + merge sort                               |
-| hashmap.c          | MAC e IP                                                      |
+| hashmap.c          | username, ID, IP e MAC                                        |
 | incident.c         | queue                                                         |  
 | config.c           | stack                                                         |
 | sensor.c           | singly linked list                                            |
@@ -143,11 +144,11 @@ Utilizamos o sufixo `_t` e snake_case, como no exemplo:
 
 ```c 
 
-typedef struct node_equip_t {
+typedef struct equipment_node_t {
     equipment_t data;
-    struct node_equip_t *next;
-    struct node_equip_t *previous;
-} node_equip_t;
+    struct equipment_node_t *next;
+    struct equipment_node_t *previous;
+} equipment_node_t;
 
 ```
 
@@ -162,7 +163,7 @@ typedef enum {
     STATUS_FAILED,
     STATUS_MAINTENANCE,
     STATUS_DISABLED
-} equip_status_t;
+} equipment_status_t;
 
 ```
 
@@ -172,9 +173,9 @@ Utilizamos o prefixo do módulo + estrutura de dados + operação e em snake_cas
 
 ```c 
 
-equip_list_insert()
-equip_list_remove()
-equip_list_find_by_ip()
+equipment_list_insert()
+equipment_list_remove()
+equipment_list_find_by_ip()
 
 incident_queue_enqueue()
 incident_queue_dequeue()
@@ -208,7 +209,7 @@ Utilizamos SCREAMING_SNAKE_CASE, como no exemplo:
 
 ## Interface Gráfica
 
-A implementação da interface gráfica (GUI) é feita com recurso ao GTK4 com personalização realizada em CSS (style.css), a interface foi inspirada em aplicações com o mesmo foco como o OpManager da ManageEngine e o N-central da TechRadar.
+A implementação da interface gráfica (GUI) é feita com recurso ao GTK4 com personalização realizada em CSS (style.css), a interface foi inspirada em aplicações com o mesmo foco como o OpManager da ManageEngine e o N-central da N-able.
 
 ![example](example.png)
 
@@ -231,3 +232,8 @@ Cores utilizadas no design da aplicação:
 * #ff4d4f (Vermelho, utilizado como estado 'Critical')
 * #faad14 (Amarelo, utilizado como estado 'Warning')
 * #52c41a (Verde, utilizado como estado 'Operational')
+
+
+## Referências
+
+https://docs.gtk.org/gtk4/
