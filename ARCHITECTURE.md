@@ -12,7 +12,7 @@ Utilizamos uma Singly Linked List com um apontador (head) e uma variável 'count
 Trabalho extra para valorização da nota final, implementamos 1 hashmap (username) com as colisões resolvidas por linked list. Obtendo assim uma eficiência de O(1) nas autenticação dos técnicos. 
 
 
-### Equipment Inventory (Doubly Linked List)
+### Equipment (Doubly Linked List)
 
 Utilizamos uma Doubly Linked List com dois apontadores (head e tail) e uma variável 'count' para contagem do número atual de equipamentos e uma variável 'next_id' que representa o próximo ID a ser utilizado.  
 
@@ -74,7 +74,7 @@ Utilizamos uma Stack com um apontador (top) e uma variável 'count' para contage
 | config_filter_by_equipment()   | O(n)       |
 
 
-### Sensors  (Singly Linked List)
+### Sensor  (Singly Linked List)
 
 Utilizamos uma Singly Linked List com um apontador (head) e uma variável 'count' para contagem do número de leituras dos sensores. 
 
