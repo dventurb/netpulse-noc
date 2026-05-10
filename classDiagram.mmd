@@ -1,0 +1,240 @@
+classDiagram
+
+class application_t {
+  +equipment_list_t       equipments
+  +hashmap_t              id_index
+  +hashmap_t              ip_index
+  +hashmap_t              mac_index
+  +incident_queue_t       incidents
+  +config_stack_t         configs
+  +sensor_list_t          sensors
+  +technician_list_t      technicians
+  +hashmap_t              username_index
+  +technician_t           *current_user
+}
+
+
+class equipment_t {
+  +int                     id  
+  +char                    name[100]
+  +char                    type[100]
+  +char                    vendor[100]
+  +char                    model[100]
+  +char                    ip_address[16]
+  +char                    mac_address[18]
+  +char                    location[100]
+  +equipment_status_t      status
+  +time_t                  last_check
+}
+
+class equipment_node_t {
+  +equipment_t           data
+  +equipment_node_t      *next
+  +equipment_node_t      *previous
+}
+
+class equipment_list_t {
+  +equipment_node_t      *head 
+  +equipment_node_t      *tail 
+  +int                   count 
+  +int                   next_id
+}
+
+
+
+class incident_t {
+  +int                      number
+  +char                     equipment_or_sensor[100]
+  +char                     type[100]
+  +char                     description[200]
+  +incident_priority_t      priority 
+  +incident_status_t        status
+  +time_t                   created_at 
+  +time_t                   concluded_at
+  +char                     technician_name[100]
+}
+
+class incident_node_t {
+  +incident_t           data
+  +incident_node_t      *next
+}
+
+class incident_queue_t {
+  +incident_node_t      *head 
+  +incident_node_t      *tail 
+  +int                  count 
+  +int                  next_number
+}
+
+
+
+class config_t {
+  +int         equipment_or_sensor_id
+  +char        config_type[100]
+  +char        previous_values[100]
+  +char        new_values[100]
+  +char        technician_name[100]
+  +time_t      operated_at
+}
+
+class config_node_t {
+  +config_t           data 
+  +config_node_t      *next
+}
+
+class config_stack_t {
+  +config_node_t      *top 
+  +int                count
+}
+
+
+
+class sensor_t {
+  +int                  id 
+  +char                 type[100]
+  +float                value
+  +char                 unit[10]
+  +sensor_status_t      status
+  +time_t               read_at
+}
+
+class sensor_node_t {
+  +sensor_t           data 
+  +sensor_node_t      *next
+}
+
+class sensor_list_t {
+  +sensor_node_t      *head
+  +int                count
+}
+
+
+
+class technician_t {
+  +int                    id
+  +char                   username[100]
+  +char                   salt[16]
+  +char                   password_hash[65]
+  +char                   path[100]
+  +technician_role_t      role
+  +bool                   is_active
+}
+
+class technician_node_t {
+  +technician_t           data
+  +technician_node_t      *next
+}
+
+class technician_list_t {
+  +technician_node_t      *head 
+  +int                    count 
+  +int                    next_id 
+}
+
+
+
+class hashmap_t {
+  +hash_bucket_t      *buckets[64]
+  +int                size
+  +int                count
+}
+
+class hash_bucket_t {
+  +char               key[100]
+  +void               *reference
+  +hash_bucket_t      *next
+}
+
+
+
+class equipment_status_t {
+  <<enumeration>>
+  STATUS_OPERATIONAL 
+  STATUS_FAILED 
+  STATUS_MAINTENANCE 
+  STATUS_DISABLED
+}
+
+class incident_priority_t {
+  <<enumeration>> 
+  PRIORITY_LOW 
+  PRIORITY_MEDIUM
+  PRIORITY_HIGH
+  PRIORITY_CRITICAL
+}
+
+class incident_status_t {
+  <<enumeration>>
+  INCIDENT_PENDING
+  INCIDENT_IN_PROGRESS 
+  INCIDENT_CONCLUDED
+}
+
+class sensor_status_t {
+  <<enumeration>>
+  SENSOR_OK
+  SENSOR_WARNING
+  SENSOR_CRITICAL
+  SENSOR_NET_FAILURE
+}
+
+class technician_role_t {
+  <<enumeration>>
+  ROLE_ADMIN
+  ROLE_TECHNICIAN
+}
+
+
+
+application_t *-- equipment_list_t      : equipments 
+application_t *-- hashmap_t             : id_index
+application_t *-- hashmap_t             : ip_index
+application_t *-- hashmap_t             : mac_index
+application_t *-- incident_queue_t      : incidents
+application_t *-- config_stack_t        : configs 
+application_t *-- sensor_list_t         : sensors 
+application_t *-- technician_list_t     : technicians 
+application_t *-- hashmap_t             : username_index
+application_t --> technician_t          : *current_user
+
+
+
+equipment_t --> equipment_status_t         : status 
+equipment_node_t *-- equipment_t           : data
+equipment_node_t --> equipment_node_t      : next / previous
+equipment_list_t *-- equipment_node_t      : head / tail
+
+
+
+incident_t --> incident_priority_t       : priority
+incident_t --> incident_status_t         : status 
+incident_node_t *-- incident_t           : data 
+incident_node_t --> incident_node_t      : next 
+incident_queue_t *-- incident_node_t     : head / tail 
+
+
+
+config_node_t *-- config_t           : data  
+config_node_t --> config_node_t      : next
+config_stack_t *-- config_node_t     : top 
+
+
+
+sensor_t --> sensor_status_t         : status 
+sensor_node_t *-- sensor_t           : data 
+sensor_node_t --> sensor_node_t      : next
+sensor_list_t *-- sensor_node_t      : head
+
+
+
+technician_t --> technician_role_t           : role 
+technician_node_t *-- technician_t           : data 
+technician_node_t --> technician_node_t      : next
+technician_list_t *-- technician_node_t      : head 
+
+
+
+hashmap_t *-- hash_bucket_t             : *buckets[64]
+hash_bucket_t --> hash_bucket_t         : next 
+hash_bucket_t --> equipment_node_t      : reference (id/ip/mac)
+hash_bucket_t --> technician_node_t     : reference (username)
