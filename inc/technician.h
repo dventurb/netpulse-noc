@@ -1,0 +1,34 @@
+#ifndef TECHNICIAN_H
+#define TECHNICIAN_H
+
+#include "macros.h"
+#include <stdbool.h>
+
+typedef enum {
+  ROLE_ADMIN,
+  ROLE_TECHNICIAN
+} technician_role_t;
+
+typedef struct {
+  int id; // TODO: Maybe change the id to a char (ex.: TE-xxx)
+  char name[STRING_MAX];
+  char username[USERNAME_MAX];
+  char salt[SALT_MAX];
+  char password_hash[HASH_MAX];
+  char avatar_path[STRING_MAX];
+  technician_role_t role;
+  bool is_active;
+} technician_t;
+
+typedef struct technician_node_t {
+  technician_t data;
+  struct technician_node_t *next;
+} technician_node_t;
+
+typedef struct {
+  technician_node_t *head;
+  int count;
+  int next_id; // TODO: Maybe change the id to a char (ex.: TE-xxx)
+} technician_list_t;
+
+#endif
