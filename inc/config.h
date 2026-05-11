@@ -4,7 +4,7 @@
 #include "macros.h"
 
 typedef struct {
-  int equipment_or_sensor_id;
+  int equipment_id; // TODO: Maybe change the equipment_id to a char (ex.: EQ-xxx)
   char config_type[STRING_MAX];
   char previous_values[STRING_MAX];
   char new_values[STRING_MAX];

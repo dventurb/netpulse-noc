@@ -16,9 +16,15 @@ typedef enum {
   INCIDENT_CONCLUDED
 } incident_status_t;
 
+typedef enum {
+  SOURCE_EQUIPMENT,
+  SOURCE_SENSOR
+} incident_source_t;
+
 typedef struct {
   int number; // TODO: Maybe change the number to a char (ex.: INC-xxx)
-  char equipment_or_sensor[STRING_MAX];
+  char source_id[STRING_MAX];
+  incident_source_t source_type;
   char type[STRING_MAX];
   char description[DESCRIPTION_MAX];
   incident_priority_t priority;
