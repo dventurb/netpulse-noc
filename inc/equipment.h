@@ -19,21 +19,21 @@ typedef struct {
   char ip_address[IP_MAX];
   char mac_address[MAC_MAX];
   char location[STRING_MAX];
-  equipment_status_t status
+  equipment_status_t status;
   // TODO: Struct time -> last_check
 } equipment_t;
 
 typedef struct equipment_node_t {
   equipment_t data;
   struct equipment_node_t *next;
-  struct equipment_node_t *previous
+  struct equipment_node_t *previous;
 } equipment_node_t;
 
 typedef struct {
   equipment_node_t *head;
   equipment_node_t *tail;
   int count;
-  int next_id // TODO: Maybe change the id to a char (ex.: EQ-xxx)
+  int next_id; // TODO: Maybe change the id to a char (ex.: EQ-xxx)
 } equipment_list_t;
 
 #endif
