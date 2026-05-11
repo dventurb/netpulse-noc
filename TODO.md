@@ -9,23 +9,24 @@
 
 
 ## Structs + Headers (.h)
-- [ ] Definir todos os .h em conjunto. (.h antes dos .c)
+- [X] Definir todos os .h em conjunto. (.h antes dos .c)
+
 
 ## Módulos (Structures)
 
 ### Hashmap - Responsável:
-- [ ] Criar struct hashmap_t
+- [X] Criar struct hashmap_t
 - [ ] Implementar DJB2 hash function 
 
 ### Technician - Responsável:
-- [ ] Criar structs (technician_t, technician_node_t, technician_list_t)
+- [X] Criar structs (technician_t, technician_node_t, technician_list_t)
 - [ ] technician_list_insert()
 - [ ] technician_list_remove()
 - [ ] technician_list_find_by_id()
 - [ ] Integrar username_index (hashmap)
 
 ### Equipment - Responsável:
-- [ ] Criar structs (equipment_t, equipment_node_t, equipment_list_t)
+- [X] Criar structs (equipment_t, equipment_node_t, equipment_list_t)
 - [ ] equipment_list_insert()
 - [ ] equipment_list_remove()
 - [ ] equipment_find_by_id/ip/mac()
@@ -33,7 +34,7 @@
 - [ ] Integrar id_index, ip_index, mac_index (hashmap)
 
 ### Incident - Responsável:
-- [ ] Criar structs (incident_t, incident_node_t, incident_queue_t)
+- [X] Criar structs (incident_t, incident_node_t, incident_queue_t)
 - [ ] incident_queue_enqueue()
 - [ ] incident_queue_dequeue()
 - [ ] incident_queue_peek_head()
@@ -41,7 +42,7 @@
 - [ ] incident_filter_by_priority()
 
 ### Config - Responsável:
-- [ ] Criar structs  (config_t, config_node_t, config_stack_t)
+- [X] Criar structs  (config_t, config_node_t, config_stack_t)
 - [ ] config_stack_push()
 - [ ] config_stack_pop()
 - [ ] config_stack_peek()
@@ -49,7 +50,7 @@
 - [ ] config_filter_by_equipment()
 
 ### Sensor - Responsável:
-- [ ] Criar structs (sensor_t, sensor_node_t, sensor_list_t)
+- [X] Criar structs (sensor_t, sensor_node_t, sensor_list_t)
 - [ ] sensor_insert_head()
 - [ ] sensor_find_by_code()
 - [ ] sensor_filter_anomalous()
@@ -66,6 +67,7 @@
 
 ### Connectivity - Responsável:
 - [ ] Implementar ping()
+- [ ] Implementar traceroute()
 - [ ] Implementar parse do ping()
 
 
@@ -77,6 +79,7 @@
 - [ ] Módulo Incident
 - [ ] Módulo Config
 - [ ] Módulo Sensor
+- [ ] Módulo Connectivity
 - [ ] Importar/Exportar relatórios
 
 
@@ -91,4 +94,3 @@
 - [ ] Documentar data structures e algoritmos utilizados - Responsável:
 - [ ] Documentar decisões de arquitetura - Responsável:
 - [ ] Conclusão - Responsável:
-
