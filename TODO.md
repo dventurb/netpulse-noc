@@ -2,7 +2,7 @@
 
 ## Arquitetura + Design
 - [X] Definir quais data structures utilizar
-- [X] Definir arquitetura do sistema (ARCHITECTURE.md)
+- [X] Detalhar a arquitetura do sistema (ARCHITECTURE.md)
 - [X] Criar classDiagram com a relação entre entidades (Mermaid)
 - [X] Criar mockups da interface gráfica (Figma)
 - [ ] Criar sequence diagram (opcional)

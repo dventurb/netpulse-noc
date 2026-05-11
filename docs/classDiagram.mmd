@@ -60,8 +60,8 @@ class incident_node_t {
 }
 
 class incident_queue_t {
-  +incident_node_t      *head 
-  +incident_node_t      *tail 
+  +incident_node_t      *front
+  +incident_node_t      *rear
   +int                  count 
   +int                  next_number
 }
@@ -90,7 +90,7 @@ class config_stack_t {
 
 
 class sensor_t {
-  +int                  id 
+  +char                 code[30]
   +char                 type[100]
   +float                value
   +char                 unit[10]
@@ -112,10 +112,10 @@ class sensor_list_t {
 
 class technician_t {
   +int                    id
-  +char                   username[100]
+  +char                   username[30]
   +char                   salt[16]
   +char                   password_hash[65]
-  +char                   path[100]
+  +char                   avatar_path[100]
   +technician_role_t      role
   +bool                   is_active
 }
