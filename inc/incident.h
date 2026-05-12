@@ -2,6 +2,7 @@
 #define INCIDENT_H
 
 #include "macros.h"
+#include <time.h>
 
 typedef enum {
   PRIORITY_LOW,
@@ -30,8 +31,8 @@ typedef struct {
   incident_priority_t priority;
   incident_status_t status;
   char technician_name[STRING_MAX];
-  // TODO: Struct time -> created_at
-  // TODO: Struct time -> concluded_at
+  time_t created_at;
+  time_t concluded_at;
 } incident_t;
 
 typedef struct incident_node_t {

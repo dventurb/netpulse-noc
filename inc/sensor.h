@@ -2,6 +2,7 @@
 #define SENSOR_H
 
 #include "macros.h"
+#include <time.h>
 
 typedef enum {
   SENSOR_OK,
@@ -16,7 +17,7 @@ typedef struct {
   float value;
   char unit[UNIT_MAX];
   sensor_status_t status;
-  // TODO: Struct time -> read_at
+  time_t read_at;
 } sensor_t;
 
 typedef struct sensor_node_t {

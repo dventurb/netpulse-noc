@@ -7,7 +7,7 @@ typedef struct hash_bucket_t {
   char key[KEY_MAX];
   void *reference; // EQUIPMENT or TECHNICIAN
   struct hash_bucket_t *next; // Chaining (collision resolution)
-}
+} hash_bucket_t;
 
 typedef struct {
   hash_bucket_t *buckets[HASHMAP_SIZE];
