@@ -38,7 +38,9 @@ typedef struct {
 } equipment_list_t;
 
 
+void equipment_list_init(equipment_list_t *list);
+void equipment_list_destroy(equipment_list_t *list);
 void equipment_list_insert(equipment_list_t *list, equipment_t data);
-void equipment_list_remove(equipment_list_t *list, equipment_node_t *node); // Flow: hashmap_get() -> return void * -> casting to equipment_node_t -> equipment_list_remove()
+void equipment_list_remove(equipment_list_t *list, equipment_node_t *node); // Flow: hashmap_get() -> return void * -> casting to equipment_node_t -> equipment_list_remove() 
 
 #endif

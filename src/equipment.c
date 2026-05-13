@@ -2,6 +2,31 @@
 
 #include <stdlib.h>
 
+void equipment_list_init(equipment_list_t *list)
+{
+  list->head = NULL;
+  list->tail = NULL;
+  list->count = 0;
+  list->next_id = 1;
+}
+
+void equipment_list_destroy(equipment_list_t *list)
+{
+  equipment_node_t *node = list->head;
+  
+  while (node != NULL)
+  {
+    equipment_node_t *next = node->next;
+    free(node);
+    node = next;
+  }
+
+  list->head = NULL;
+  list->tail = NULL;
+  list->count = 0;
+  list->next_id = 0;
+}
+
 void equipment_list_insert(equipment_list_t *list, equipment_t data)
 {
   equipment_node_t *new = malloc(sizeof(equipment_node_t));
@@ -16,14 +41,13 @@ void equipment_list_insert(equipment_list_t *list, equipment_t data)
 
   if (list->head == NULL)
   {
-    list->count = 1;
-    list->next_id = 1;
-
     new->data.id = list->next_id++;
     new->previous = NULL;
 
     list->head = new;
     list->tail = new;
+
+    list->count++;
 
     return;
   }

@@ -2,6 +2,28 @@
 
 #include <stdlib.h>
 
+void technician_list_init(technician_list_t *list)
+{
+  list->head = NULL;
+  list->count = 0;
+  list->next_id = 1;
+}
+
+void technician_list_destroy(technician_list_t *list)
+{
+  technician_node_t *node = list->head;
+
+  while (node != NULL)
+  {
+    technician_node_t *next = node->next;
+    free(node);
+    node = next;
+  }
+
+  list->head = NULL;
+  list->count = 0;
+  list->next_id = 0;
+}
 
 void technician_list_insert(technician_list_t *list, technician_t data)
 {
@@ -17,13 +39,12 @@ void technician_list_insert(technician_list_t *list, technician_t data)
 
   if (list->head == NULL)
   {
-    list->count = 1;
-    list->next_id = 1;
-
     new->data.id = list->next_id++;
     new->next = NULL;
 
     list->head = new;
+
+    list->count++;
 
     return;
   }

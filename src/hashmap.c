@@ -3,6 +3,38 @@
 #include <ctype.h>
 #include <string.h>
 
+void hashmap_init(hashmap_t *hashmap)
+{
+  for (int i = 0; i < HASHMAP_SIZE; i++)
+  {
+    hashmap->buckets[i] = NULL;
+  }
+
+  hashmap->count = 0;
+}
+
+void hashmap_destroy(hashmap_t *hashmap_t)
+{
+  for (int i = 0; i < HASHMAP_SIZE; i++) 
+  {
+    hashmap_bucket_t *bucket = hashmap->buckets[i];
+
+    while (bucket != NULL)
+    {
+      hashmap_bucket_t *next = bucket->next;
+
+      free(bucket->key);
+      free(bucket);
+
+      bucket = next;
+    }
+
+    hashmap->bucket[i] = NULL;
+  }
+
+  hashmap->count = 0;
+}
+
 // djb2 hash function from: http://www.cse.yorku.ca/~oz/hash.html
 unsigned long hash(const char *key)
 {

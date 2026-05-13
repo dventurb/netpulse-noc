@@ -52,7 +52,10 @@ typedef struct {
   int count;
 } incident_list_t;
 
-
+void incident_queue_init(incident_queue_t *queue);
+void incident_queue_destroy(incident_queue_t *queue);
+void incident_list_init(incident_list_t *list);
+void incident_list_destroy(incident_list_t *list);
 void incident_queue_enqueue(incident_queue_t *queue, incident_t data);
 incident_node_t *incident_queue_dequeue(incident_queue_t *queue); // Flow: dequeue() -> return incident_node_t * -> node->data.status = INCIDENT_IN_PROGRESS -> incident_list_insert()
 void incident_list_insert(incident_list_t *list, incident_node_t *node);

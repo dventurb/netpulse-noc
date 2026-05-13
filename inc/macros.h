@@ -13,6 +13,6 @@
 #define SALT_MAX 16
 #define KEY_MAX 30
 
-#define HASHMAP_SIZE 64
+#define HASHMAP_SIZE 61 // prime number
 
 #endif

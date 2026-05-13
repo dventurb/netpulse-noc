@@ -14,7 +14,8 @@ typedef struct {
   int count;
 } hashmap_t;
 
-
+void hashmap_init(hashmap_t *hashmap);
+void hashmap_destroy(hashmap_t *hashmap_t);
 void hashmap_insert(hashmap_t *hashmap, const char *key, void *reference);
 void hashmap_remove(hashmap_t *hashmap, const char *key);
 void hashmap_get(hashmap_t *hashmap, const char *key);

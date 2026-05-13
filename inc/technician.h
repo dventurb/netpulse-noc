@@ -33,6 +33,8 @@ typedef struct {
 } technician_list_t;
 
 
+void technician_list_init(technician_list_t *list);
+void technician_list_destroy(technician_list_t *list);
 void technician_list_insert(technician_list_t *list, technician_t data);
 void technician_list_remove(technician_list_t *list, technician_node_t *node);
 

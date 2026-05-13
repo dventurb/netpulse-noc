@@ -31,6 +31,8 @@ typedef struct {
 } sensor_list_t;
 
 
+void sensor_list_init(sensor_list_t *list);
+void sensor_list_destroy(sensor_list_t *list);
 void sensor_list_insert(sensor_list_t *list, sensor_t data);
 
 #endif

@@ -16,14 +16,14 @@
 
 ### Application - Responsável: 
 - [X] Criar struct application_t 
-- [ ] application_create() / application_free()
+- [X] application_init() / application_destroy()
 
 ### Hashmap - Responsável:
 - [X] Criar struct hashmap_t
 - [X] Implementar DJB2 hash function 
 - [X] hashmap_insert() / hashmap_remove()
 - [X] hashmap_get()
-- [ ] hashmap_create() / hashmap_free()
+- [X] hashmap_init() / hashmap_destroy()
 
 ### Technician - Responsável:
 - [X] Criar structs (technician_t, technician_node_t, technician_list_t)
@@ -31,7 +31,7 @@
 - [X] technician_list_remove()
 - [ ] technician_list_find_by_id()
 - [ ] Integrar username_index (hashmap)
-- [ ] technician_list_create() / technician_list_free()
+- [X] technician_list_init() / technician_list_destroy()
 
 ### Equipment - Responsável:
 - [X] Criar structs (equipment_t, equipment_node_t, equipment_list_t)
@@ -40,7 +40,7 @@
 - [ ] equipment_find_by_id/ip/mac()
 - [ ] equipment_sort_by_status/type/location() (Merge Sort)
 - [ ] Integrar id_index, ip_index, mac_index (hashmap)
-- [ ] equipment_list_create() / equipment_list_free()
+- [X] equipment_list_init() / equipment_list_destroy()
 
 ### Incident - Responsável:
 - [X] Criar structs (incident_t, incident_node_t, incident_queue_t, incident_list_t)
@@ -51,7 +51,7 @@
 - [ ] incident_find_by_equipment_sensor()
 - [ ] incident_filter_by_priority()
 - [ ] incident_queue_create() / incident_queue_free()
-- [ ] incident_list_create() / incident_list_free()
+- [X] incident_list_init() / incident_list_destroy()
 
 ### Config - Responsável:
 - [X] Criar structs  (config_t, config_node_t, config_stack_t)
@@ -60,14 +60,14 @@
 - [X] config_stack_peek()
 - [ ] config_stack_peek_n()
 - [ ] config_filter_by_equipment()
-- [ ] config_stack_create() / config_stack_free()
+- [X] config_stack_init() / config_stack_destroy()
 
 ### Sensor - Responsável:
 - [X] Criar structs (sensor_t, sensor_node_t, sensor_list_t)
 - [X] sensor_list_insert()
 - [ ] sensor_find_by_code()
 - [ ] sensor_filter_anomalous()
-- [ ] sensor_list_create() / sensor_list_free()
+- [X] sensor_list_init() / sensor_list_destroy()
 
 
 ## Persistence + Connectivity

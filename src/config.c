@@ -2,6 +2,27 @@
 
 #include <stdlib.h>
 
+void config_stack_init(config_stack_t *stack)
+{
+  stack->top = NULL;
+  stack->count = 0;
+}
+
+void config_stack_destroy(config_stack_t *stack)
+{
+  config_node_t *node = stack->top;
+
+  while (node != NULL)
+  {
+    config_node_t *next = node->next;
+    free(node);
+    node = next;
+  }
+
+  stack->top = NULL;
+  stack->count = 0;
+}
+
 void config_stack_push(config_stack_t *stack, config_t data)
 {
   config_node_t *new = malloc(sizeof(config_node_t));
@@ -12,8 +33,6 @@ void config_stack_push(config_stack_t *stack, config_t data)
   }
 
   new->data = data;
-
-  if (stack->top == NULL) stack->count = 0;
 
   new->next = stack->top;
   stack->top = new;

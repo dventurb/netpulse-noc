@@ -35,6 +35,8 @@ typedef struct {
 } config_stack_t;
 
 
+void config_stack_init(config_stack_t *stack);
+void config_stack_destroy(config_stack_t *stack);
 void config_stack_push(config_stack_t *stack, config_t data);
 config_node_t *config_stack_pop(config_stack_t *stack);
 config_node_t *config_stack_peek(config_stack_t *stack);
