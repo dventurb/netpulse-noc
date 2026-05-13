@@ -49,6 +49,10 @@ incident_node_t *incident_queue_dequeue(incident_queue_t *queue)
 
 void incident_list_insert(incident_list_t *list, incident_node_t *node)
 {
+  if (list->head == NULL) list->count = 0;
+
   node->next = list->head;
   list->head = node->next;
+
+  list->count++;
 }

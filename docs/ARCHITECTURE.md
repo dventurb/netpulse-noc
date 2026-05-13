@@ -44,9 +44,9 @@ A struct `hashmap_t` retorna um apontador genérico (void *), permitindo a reuti
 Os hashmaps funcionam como index auxiliares para pesquisa mais eficiênte por ID, IP e MAC, embora seja raro com o algoritmo DJB2 haver colisões pode acontecer e no pior caso a eficiência é O(n).
 
 
-### Incident (Queue)
+### Incident (Queue && Singly Linked List)
 
-Utilizamos uma Queue com dois apontadores (head e tail) e uma variável 'count' para contagem do número atual de incidentes e uma variável 'next_id' que representa o próximo ID a ser utilizado.  
+Utilizamos uma Queue para representar os 'Incidents' em estado PENDING, com dois apontadores (head e tail) e uma variável 'count' para contagem do número atual de incidentes e uma variável 'next_id' que representa o próximo ID a ser utilizado. Os 'Incidents' com estado IN_PROGRESS e CONCLUDE são adicionados na linked list. 
 
 #### Funções (Algoritmos)
 
@@ -54,6 +54,7 @@ Utilizamos uma Queue com dois apontadores (head e tail) e uma variável 'count' 
 | :------------------------------------ | :--------: |
 | incident_queue_enqueue()              | O(1)       |
 | incident_queue_dequeue()              | O(1)       |
+| incident_list_insert()                | O(1)       |
 | incident_queue_peek_head()            | O(1)       |
 | incident_find_by_equipment_sensor()   | O(n)       |
 | incident_filter_by_priority()         | O(n)       |
@@ -82,7 +83,7 @@ Utilizamos uma Singly Linked List com um apontador (head) e uma variável 'count
 
 |            Função              | Eficiência |
 | :----------------------------- | :--------: |
-| sensor_insert_head()           | O(1)       |
+| sensor_list_insert()           | O(1)       |
 | sensor_find_by_code()          | O(n)       |
 | sensor_filter_anomalous()      | O(n)       |
 

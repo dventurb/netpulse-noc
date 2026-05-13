@@ -5,7 +5,8 @@ class application_t {
   +hashmap_t              id_index
   +hashmap_t              ip_index
   +hashmap_t              mac_index
-  +incident_queue_t       incidents
+  +incident_queue_t       incidents_pending;
+  +incident_list_t        incidents_history;
   +config_stack_t         configs
   +sensor_list_t          sensors
   +technician_list_t      technicians
@@ -44,7 +45,8 @@ class equipment_list_t {
 
 class incident_t {
   +int                      number
-  +char                     equipment_or_sensor[100]
+  +char                     source_id[100]
+  incident_source_t         source_type;
   +char                     type[100]
   +char                     description[200]
   +incident_priority_t      priority 
@@ -66,10 +68,15 @@ class incident_queue_t {
   +int                  next_number
 }
 
+class incident_list_t {
+  +incident_node_t      *head 
+  int                   count;
+}
+
 
 
 class config_t {
-  +int         equipment_or_sensor_id
+  +int         equipment__id
   +char        config_type[100]
   +char        previous_values[100]
   +char        new_values[100]
@@ -170,6 +177,12 @@ class incident_status_t {
   INCIDENT_CONCLUDED
 }
 
+class incident_source_t {
+  <<enumeration>>
+  SOURCE_EQUIPMENT
+  SOURCE_SENSOR
+}
+
 class sensor_status_t {
   <<enumeration>>
   SENSOR_OK
@@ -190,7 +203,8 @@ application_t *-- equipment_list_t      : equipments
 application_t *-- hashmap_t             : id_index
 application_t *-- hashmap_t             : ip_index
 application_t *-- hashmap_t             : mac_index
-application_t *-- incident_queue_t      : incidents
+application_t *-- incident_queue_t      : incidents_pending
+application_t *-- incident_list_t       : incidents_history
 application_t *-- config_stack_t        : configs 
 application_t *-- sensor_list_t         : sensors 
 application_t *-- technician_list_t     : technicians 
@@ -208,9 +222,11 @@ equipment_list_t *-- equipment_node_t      : head / tail
 
 incident_t --> incident_priority_t       : priority
 incident_t --> incident_status_t         : status 
+incident_t --> incident_source_t         : source_type
 incident_node_t *-- incident_t           : data 
 incident_node_t --> incident_node_t      : next 
-incident_queue_t *-- incident_node_t     : head / tail 
+incident_queue_t *-- incident_node_t     : front / rear
+incident_list_t *-- incident_node_t      : head
 
 
 
