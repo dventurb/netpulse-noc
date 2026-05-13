@@ -2,9 +2,9 @@
 
 ## Estruturas de Dados 
 
-### Technician (Singly Linked List)
+### Technician (Doubly Linked List)
 
-Utilizamos uma Singly Linked List com um apontador (head) e uma variável 'count' para contagem do número atual de técnicos e uma variável 'next_id' que representa o próximo ID a ser utilizado.  
+Utilizamos uma Doubly Linked List com um apontador (head) e uma variável 'count' para contagem do número atual de técnicos e uma variável 'next_id' que representa o próximo ID a ser utilizado.  
 
 
 ### Username do Technician (Hashmap)

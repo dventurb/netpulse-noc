@@ -5,7 +5,8 @@
 void config_stack_push(config_stack_t *stack, config_t data)
 {
   config_node_t *new = malloc(sizeof(config_node_t));
-  if (new == NULL) {
+  if (new == NULL) 
+  {
     // TODO: Implement a log system (ex.: (datatime) [ERROR] config_stack_push : malloc failed)
     return;
   }

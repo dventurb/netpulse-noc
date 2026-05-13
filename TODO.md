@@ -20,8 +20,8 @@
 
 ### Technician - Responsável:
 - [X] Criar structs (technician_t, technician_node_t, technician_list_t)
-- [ ] technician_list_insert()
-- [ ] technician_list_remove()
+- [X] technician_list_insert()
+- [X] technician_list_remove()
 - [ ] technician_list_find_by_id()
 - [ ] Integrar username_index (hashmap)
 
@@ -44,15 +44,15 @@
 
 ### Config - Responsável:
 - [X] Criar structs  (config_t, config_node_t, config_stack_t)
-- [ ] config_stack_push()
-- [ ] config_stack_pop()
-- [ ] config_stack_peek()
+- [X] config_stack_push()
+- [X] config_stack_pop()
+- [X] config_stack_peek()
 - [ ] config_stack_peek_n()
 - [ ] config_filter_by_equipment()
 
 ### Sensor - Responsável:
 - [X] Criar structs (sensor_t, sensor_node_t, sensor_list_t)
-- [ ] sensor_list_insert()
+- [X] sensor_list_insert()
 - [ ] sensor_find_by_code()
 - [ ] sensor_filter_anomalous()
 

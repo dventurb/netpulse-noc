@@ -130,6 +130,7 @@ class technician_t {
 class technician_node_t {
   +technician_t           data
   +technician_node_t      *next
+  +technician_node_t      *previous
 }
 
 class technician_list_t {
@@ -258,6 +259,7 @@ sensor_list_t *-- sensor_node_t      : head
 technician_t --> technician_role_t           : role 
 technician_node_t *-- technician_t           : data 
 technician_node_t --> technician_node_t      : next
+technician_node_t --> technician_node_t      : previous
 technician_list_t *-- technician_node_t      : head 
 
 

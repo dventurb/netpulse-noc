@@ -23,6 +23,7 @@ typedef struct {
 typedef struct technician_node_t {
   technician_t data;
   struct technician_node_t *next;
+  struct technician_node_t *previous;
 } technician_node_t;
 
 typedef struct {
@@ -30,5 +31,9 @@ typedef struct {
   int count;
   int next_id; // TODO: Maybe change the id to a char (ex.: TE-xxx)
 } technician_list_t;
+
+
+void technician_list_insert(technician_list_t *list, technician_t data);
+void technician_list_remove(technician_list_t *list, technician_node_t *node);
 
 #endif
