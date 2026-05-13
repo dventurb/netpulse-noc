@@ -1,6 +1,7 @@
 #include "hashmap.h"
 
 #include <ctype.h>
+#include <string.h>
 
 // djb2 hash function from: http://www.cse.yorku.ca/~oz/hash.html
 unsigned long hash(const char *key)
