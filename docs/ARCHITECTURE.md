@@ -37,7 +37,7 @@ A struct `hashmap_t` retorna um apontador genérico (void *), permitindo a reuti
 |            Função              | Eficiência |
 | :----------------------------- | :--------: |
 | hashmap_insert()               | O(1)       |
-| hashmap_lookup()               | O(1)       |
+| hashmap_get()                  | O(1)       |
 | hashmap_remove()               | O(1)       |
 
 

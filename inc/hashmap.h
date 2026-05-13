@@ -11,8 +11,12 @@ typedef struct hash_bucket_t {
 
 typedef struct {
   hash_bucket_t *buckets[HASHMAP_SIZE];
-  int size;
   int count;
 } hashmap_t;
+
+
+void hashmap_insert(hashmap_t *hashmap, const char *key, void *reference);
+void hashmap_remove(hashmap_t *hashmap, const char *key);
+void hashmap_get(hashmap_t *hashmap, const char *key);
 
 #endif

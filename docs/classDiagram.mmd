@@ -143,12 +143,11 @@ class technician_list_t {
 
 class hashmap_t {
   +hash_bucket_t      *buckets[64]
-  +int                size
   +int                count
 }
 
 class hash_bucket_t {
-  +char               key[100]
+  +char               key[30]
   +void               *reference
   +hash_bucket_t      *next
 }
