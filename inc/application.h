@@ -13,7 +13,8 @@ typedef struct {
   hashmap_t id_index;
   hashmap_t ip_index;
   hashmap_t mac_index;
-  incident_queue_t incidents;
+  incident_queue_t incidents_pending; // PENDING
+  incident_list_t incidents_history; // IN_PROGRESS + CONCLUDED
   config_stack_t configs;
   sensor_list_t sensors;
   technician_list_t technicians;

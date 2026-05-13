@@ -1,11 +1,13 @@
 #include "equipment.h"
 
+#include <stdlib.h>
+
 void equipment_list_insert(equipment_list_t *list, equipment_t data)
 {
   equipment_node_t *new = malloc(sizeof(equipment_node_t));
   if (new == NULL)
   {
-    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_list_insert : malloc failed
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_list_insert : malloc failed)
     return;
   }
 

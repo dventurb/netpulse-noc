@@ -40,11 +40,21 @@ typedef struct incident_node_t {
   struct incident_node_t *next;
 } incident_node_t;
 
-typedef incident_queue_t {
+typedef struct {
   incident_node_t *front;
   incident_node_t *rear;
   int count;
   int next_number; // TODO: Maybe change the number to a char (ex.: INC-xxx)
-}
+} incident_queue_t;
+
+typedef struct {
+  incident_node_t *head;
+  int count;
+} incident_list_t;
+
+
+void incident_queue_enqueue(incident_queue_t *queue, incident_t data);
+incident_node_t *incident_queue_dequeue(incident_queue_t *queue); // Flow: dequeue() -> return incident_node_t * -> node->data.status = INCIDENT_IN_PROGRESS -> incident_list_insert()
+void incident_list_insert(incident_list_t *list, incident_node_t *node);
 
 #endif
