@@ -27,16 +27,17 @@
 
 ### Equipment - Responsável:
 - [X] Criar structs (equipment_t, equipment_node_t, equipment_list_t)
-- [ ] equipment_list_insert()
-- [ ] equipment_list_remove()
+- [X] equipment_list_insert()
+- [X] equipment_list_remove()
 - [ ] equipment_find_by_id/ip/mac()
 - [ ] equipment_sort_by_status/type/location() (Merge Sort)
 - [ ] Integrar id_index, ip_index, mac_index (hashmap)
 
 ### Incident - Responsável:
-- [X] Criar structs (incident_t, incident_node_t, incident_queue_t)
-- [ ] incident_queue_enqueue()
-- [ ] incident_queue_dequeue()
+- [X] Criar structs (incident_t, incident_node_t, incident_queue_t, incident_list_t)
+- [X] incident_queue_enqueue()
+- [X] incident_queue_dequeue()
+- [X] incident_list_insert()
 - [ ] incident_queue_peek_head()
 - [ ] incident_find_by_equipment_sensor()
 - [ ] incident_filter_by_priority()
@@ -51,7 +52,7 @@
 
 ### Sensor - Responsável:
 - [X] Criar structs (sensor_t, sensor_node_t, sensor_list_t)
-- [ ] sensor_insert_head()
+- [ ] sensor_list_insert()
 - [ ] sensor_find_by_code()
 - [ ] sensor_filter_anomalous()
 

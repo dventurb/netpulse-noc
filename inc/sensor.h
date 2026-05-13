@@ -30,4 +30,7 @@ typedef struct {
   int count;
 } sensor_list_t;
 
+
+void sensor_list_insert(sensor_list_t *list, sensor_t data);
+
 #endif

@@ -76,12 +76,12 @@ class incident_list_t {
 
 
 class config_t {
-  +int         equipment__id
-  +char        config_type[100]
-  +char        previous_values[100]
-  +char        new_values[100]
-  +char        technician_name[100]
-  +time_t      operated_at
+  +int                equipment__id
+  +config_type_t      config_type
+  +char               previous_values[100]
+  +char               new_values[100]
+  +char               technician_name[100]
+  +time_t             operated_at
 }
 
 class config_node_t {
@@ -183,6 +183,18 @@ class incident_source_t {
   SOURCE_SENSOR
 }
 
+class config_type_t {
+  <<enumeration>>
+  CONFIG_IP_ADDRESS
+  CONFIG_MAC_ADDRESS
+  CONFIG_NAME
+  CONFIG_LOCATION
+  CONFIG_STATUS
+  CONFIG_VENDOR
+  CONFIG_MODEL
+  CONFIG_TYPE 
+}
+
 class sensor_status_t {
   <<enumeration>>
   SENSOR_OK
@@ -229,7 +241,7 @@ incident_queue_t *-- incident_node_t     : front / rear
 incident_list_t *-- incident_node_t      : head
 
 
-
+config_t --> config_type_t           : config_type
 config_node_t *-- config_t           : data  
 config_node_t --> config_node_t      : next
 config_stack_t *-- config_node_t     : top 

@@ -39,10 +39,12 @@ incident_node_t *incident_queue_dequeue(incident_queue_t *queue)
 {
   if (queue->front == NULL) return;
 
-  node *node = queue->front;
+  incident_node_t *node = queue->front;
   
   queue->front = queue->front->next;
   if (queue->front == NULL) queue->rear = NULL;
+
+  queue->count--;
 
   return node;
 }
