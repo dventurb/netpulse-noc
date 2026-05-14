@@ -1,7 +1,7 @@
 #include "hashmap.h"
 
 #include <ctype.h>
-#include <string.h>
+#include <stdio.h>
 
 void hashmap_init(hashmap_t *hashmap)
 {
@@ -23,7 +23,6 @@ void hashmap_destroy(hashmap_t *hashmap_t)
     {
       hashmap_bucket_t *next = bucket->next;
 
-      free(bucket->key);
       free(bucket);
 
       bucket = next;
@@ -57,7 +56,7 @@ void hashmap_insert(hashmap_t *hashmap, const char *key, void *reference)
     return;
   }
 
-  new->key = strdup(key);
+  snprintf(new->key, KEY_MAX, "%s", key);
   new->reference = reference;
   new->next = NULL;
 
@@ -86,7 +85,6 @@ void hashmap_remove(hashmap_t *hashmap, const char *key)
 
       else hashmap->buckets[h] = bucket_current->next;
 
-      free(bucket_current.key);
       free(bucket_current);
 
       hashmap->count--;

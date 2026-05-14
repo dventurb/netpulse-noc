@@ -29,17 +29,18 @@
 - [X] Criar structs (technician_t, technician_node_t, technician_list_t)
 - [X] technician_list_insert()
 - [X] technician_list_remove()
-- [ ] technician_list_find_by_id()
-- [ ] Integrar username_index (hashmap)
+- [ ] technician_list_find_by_username()
+- [X] Integrar username_index (hashmap)
 - [X] technician_list_init() / technician_list_destroy()
 
 ### Equipment - Responsável:
 - [X] Criar structs (equipment_t, equipment_node_t, equipment_list_t)
 - [X] equipment_list_insert()
 - [X] equipment_list_remove()
+- [X] equipment_list_update_name/vendor/type/ip_address()...
 - [ ] equipment_find_by_id/ip/mac()
-- [ ] equipment_sort_by_status/type/location() (Merge Sort)
-- [ ] Integrar id_index, ip_index, mac_index (hashmap)
+- [ ] equipment_sort_by_status/type/location() - (Merge Sort)
+- [X] Integrar id_index, ip_index, mac_index (hashmap)
 - [X] equipment_list_init() / equipment_list_destroy()
 
 ### Incident - Responsável:
@@ -47,10 +48,12 @@
 - [X] incident_queue_enqueue()
 - [X] incident_queue_dequeue()
 - [X] incident_list_insert()
-- [ ] incident_queue_peek_head()
-- [ ] incident_find_by_equipment_sensor()
+- [ ] incident_queue_peek_front()
+- [ ] incident_list_conclude()
+- [ ] incident_filter_by_source()
 - [ ] incident_filter_by_priority()
-- [ ] incident_queue_create() / incident_queue_free()
+- [ ] incident_filter_by_status()
+- [X] incident_queue_init() / incident_queue_destroy()
 - [X] incident_list_init() / incident_list_destroy()
 
 ### Config - Responsável:
@@ -58,7 +61,6 @@
 - [X] config_stack_push()
 - [X] config_stack_pop()
 - [X] config_stack_peek()
-- [ ] config_stack_peek_n()
 - [ ] config_filter_by_equipment()
 - [X] config_stack_init() / config_stack_destroy()
 
@@ -69,8 +71,12 @@
 - [ ] sensor_filter_anomalous()
 - [X] sensor_list_init() / sensor_list_destroy()
 
+### Reports - Responsável
+- [ ] Relatório de estado da rede
+- [ ] Relatório mensal de incidentes 
 
-## Persistence + Connectivity
+
+## Persistence + Connectivity + Logger
 
 ### Persistence - Responsável:
 - [ ] Implementar save/load_technician()
@@ -83,6 +89,9 @@
 - [ ] Implementar ping()
 - [ ] Implementar traceroute()
 - [ ] Implementar parse do ping()
+
+### Logger - Responsável:
+- [ ] Implementar log system (audit.log e system.log)
 
 
 ## Interface Gráfica (GTK4)
