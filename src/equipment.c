@@ -176,3 +176,54 @@ void equipment_update_last_check(equipment_t *equipment)
 
   // TODO: Implement a get_datetime()
 }
+
+
+int equipment_filter_by_status(const equipment_list_t *list, equipment_status_t status, equipment_t *equipments)
+{
+  if (list == NULL || equipments == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_filter_by_status: NULL arguments)
+    return 0;
+  }
+
+  equipment_node_t *node = list->head;
+  int i = 0;
+
+  while (node != NULL && i < list->count)
+  {
+    if (node->data.status == status)
+    {
+      equipments[i] = node->data;
+      i++;
+    }
+
+    node = node->next;
+  }
+
+  return i;
+}
+
+int equipment_filter_by_type(const equipment_list_t *list, const char *type, equipment_t *equipments)
+{
+  if (list == NULL || equipments == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_filter_by_type: NULL arguments)
+    return 0;
+  }
+
+  equipment_node_t *node = list->head;
+  int i = 0;
+
+  while (node != NULL && i < list->count)
+  {
+    if (strcmp(node->data.type, type) == 0)
+    {
+      equipments[i] = node->data;
+      i++;
+    }
+    
+    node = node->next;
+  }
+
+  return i;
+}

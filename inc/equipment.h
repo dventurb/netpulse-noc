@@ -53,4 +53,7 @@ void equipment_update_location(equipment_t *equipment, const char *location);
 void equipment_update_status(equipment_t *equipment, equipment_status_t status);
 void equipment_update_last_check(equipment_t *equipment);
 
+int equipment_filter_by_status(const equipment_list_t *list, equipment_status_t status, equipment_t *equipments);
+int equipment_filter_by_type(const equipment_list_t *list, const char *type, equipment_t *equipments);
+
 #endif

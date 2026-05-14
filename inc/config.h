@@ -41,4 +41,6 @@ void config_stack_push(config_stack_t *stack, config_t data);
 config_node_t *config_stack_pop(config_stack_t *stack);
 config_node_t *config_stack_peek(config_stack_t *stack);
 
+int config_filter_by_equipment(const config_stack_t *stack, int equipment_id, config_t *configs);
+
 #endif

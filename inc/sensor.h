@@ -35,4 +35,6 @@ void sensor_list_init(sensor_list_t *list);
 void sensor_list_destroy(sensor_list_t *list);
 void sensor_list_insert(sensor_list_t *list, sensor_t data);
 
+int sensor_filter_anomalous(const sensor_list_t *list, sensor_status_t status, sensor_t *sensors);
+
 #endif
