@@ -82,7 +82,11 @@ void incident_queue_enqueue(incident_queue_t *queue, incident_t data)
 
 incident_node_t *incident_queue_dequeue(incident_queue_t *queue)
 {
-  if (queue->front == NULL) return;
+  if (queue == NULL || queue->front == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_dequeue : NULL arguments)
+    return NULL;
+  }
 
   incident_node_t *node = queue->front;
   
@@ -100,6 +104,17 @@ void incident_list_insert(incident_list_t *list, incident_node_t *node)
   list->head = node;
 
   list->count++;
+}
+
+incident_node_t *incident_queue_peek(incident_queue_t *queue)
+{
+  if (queue == NULL || queue->front == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_peek : NULL arguments)
+    return NULL;
+  }
+
+  return queue->front;
 }
 
 int incident_queue_filter_by_priority(const incident_queue_t *queue, incident_priority_t priority, incident_t *incidents)

@@ -63,7 +63,11 @@ void equipment_list_insert(equipment_list_t *list, equipment_t data)
 
 void equipment_list_remove(equipment_list_t *list, equipment_node_t *node) 
 {
-  if (list->head == NULL || node == NULL) return;
+  if (list->head == NULL || node == NULL) 
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_list_remove : NULL arguments)
+    return;
+  }
   
   if (node != list->head) node->previous->next = node->next;
 

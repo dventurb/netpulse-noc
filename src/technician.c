@@ -60,7 +60,12 @@ void technician_list_insert(technician_list_t *list, technician_t data)
 
 void technician_list_remove(technician_list_t *list, technician_node_t *node)
 {
-  if (list->head == NULL || node == NULL) return;
+  if (list->head == NULL || node == NULL) 
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] technician_list_remove : NULL arguments)
+  
+    return;
+  }
 
   if (node != list->head) node->previous->next = node->next;
 
@@ -78,7 +83,6 @@ int technician_filter_by_role(technician_list_t *list, technician_role_t role, t
   if (list == NULL || technicians == NULL)
   {
     // TODO: Implement a log system (ex.: (datatime) [ERROR] technician_filter_by_role : NULL arguments)
-
     return 0;
   }
 

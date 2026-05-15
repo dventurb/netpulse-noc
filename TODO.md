@@ -50,7 +50,7 @@
 - [X] incident_queue_enqueue()
 - [X] incident_queue_dequeue()
 - [X] incident_list_insert()
-- [ ] incident_queue_peek_front()
+- [X] incident_queue_peek()
 - [ ] incident_list_conclude()
 - [X] incident_filter_by_priority/status()
 - [X] incident_queue_init() / incident_queue_destroy()

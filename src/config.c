@@ -42,7 +42,11 @@ void config_stack_push(config_stack_t *stack, config_t data)
 
 config_node_t *config_stack_pop(config_stack_t *stack)
 {
-  if (stack->top == NULL) return;
+  if (stack == NULL || stack->top == NULL) 
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] config_stack_pop : NULL arguments)
+    return NULL;
+  }
 
   config_node_t *node = stack->top;
   stack->top = stack->top->next;
@@ -54,7 +58,11 @@ config_node_t *config_stack_pop(config_stack_t *stack)
 
 config_node_t *config_stack_peek(config_stack_t *stack)
 {
-  if (stack->top == NULL) return;
+  if (stack == NULL || stack->top == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] config_stack_peek : NULL arguments)
+    return NULL;
+  }
 
   return stack->top;
 }
