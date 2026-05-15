@@ -72,3 +72,29 @@ void technician_list_remove(technician_list_t *list, technician_node_t *node)
 
   list->count--;
 }
+
+int technician_filter_by_role(technician_list_t *list, technician_role_t role, technician_t *technicians)
+{
+  if (list == NULL || technicians == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] technician_filter_by_role : NULL arguments)
+
+    return 0;
+  }
+
+  technician_node_t *node = list->head;
+  int i = 0;
+
+  while (node != NULL && i < list->count)
+  {
+    if (node->data.role == role)
+    {
+      technicians[i] = node->data;
+      i++;
+    }
+
+    node = node->next;
+  }
+
+  return i;
+}

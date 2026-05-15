@@ -38,4 +38,6 @@ void technician_list_destroy(technician_list_t *list);
 void technician_list_insert(technician_list_t *list, technician_t data);
 void technician_list_remove(technician_list_t *list, technician_node_t *node);
 
+int technician_filter_by_role(technician_list_t *list, technician_role_t role, technician_t *technicians);
+
 #endif

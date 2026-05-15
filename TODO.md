@@ -30,6 +30,7 @@
 - [X] technician_list_insert()
 - [X] technician_list_remove()
 - [ ] technician_list_find_by_username()
+- [X] technician_filter_by_role()
 - [X] Integrar username_index (hashmap)
 - [X] technician_list_init() / technician_list_destroy()
 
