@@ -101,3 +101,103 @@ void incident_list_insert(incident_list_t *list, incident_node_t *node)
 
   list->count++;
 }
+
+int incident_queue_filter_by_priority(const incident_queue_t *queue, incident_priority_t priority, incident_t *incidents)
+{
+  if (queue == NULL || incidents == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_filter_by_priority : NULL arguments)
+    return 0;
+  }
+
+  incident_node_t *node = queue->head;
+  int i = 0;
+
+  while (node != NULL && i < queue->count)
+  {
+    if (node->data.priority == priority)
+    {
+      incidents[i] = node->data;
+      i++;
+    }
+
+    node = node->next;
+  }
+
+  return i;
+}
+
+int incident_queue_filter_by_status(const incident_queue_t *queue, incident_status_t status, incident_t *incidents)
+{
+  if (queue == NULL || incidents == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_filter_by_status : NULL arguments)
+    return 0;
+  }
+
+  incident_node_t *node = queue->head;
+  int i = 0;
+
+  while (node != NULL && i < queue->count)
+  {
+    if (node->data.status == status)
+    {
+      incidents[i] = node->data;
+      i++;
+    }
+
+    node = node->next;
+  }
+
+  return i;
+}
+
+int incident_list_filter_by_priority(const incident_list_t *list, incident_priority_t priority, incident_t *incidents)
+{
+  if (list == NULL || incidents == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_list_filter_by_priority : NULL arguments)
+    return 0;
+  }
+
+  incident_node_t *node = list->head;
+  int i = 0;
+
+  while (node != NULL)
+  {
+    if (node->data.priority == priority)
+    {
+      incidents[i] = node->data;
+      i++;
+    }
+
+    node = node->next;
+  }
+
+  return 1;
+}
+
+int incident_list_filter_by_status(const incident_list_t *list, incident_status_t status, incident_t *incidents)
+{
+  if (list == NULL || incidets == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_list_filter_by_status : NULL arguments)
+    return 0;
+  }
+
+  incident_node_t *node = list->head;
+  int i = 0;
+
+  while (node != NULL)
+  {
+    if (node->data.status == status)
+    {
+      incidents[i] = node->data;
+      i++;
+    }
+
+    node = node->next;
+  }
+
+  return i;
+}
