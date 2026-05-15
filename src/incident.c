@@ -110,7 +110,7 @@ int incident_queue_filter_by_priority(const incident_queue_t *queue, incident_pr
     return 0;
   }
 
-  incident_node_t *node = queue->head;
+  incident_node_t *node = queue->front;
   int i = 0;
 
   while (node != NULL && i < queue->count)
@@ -135,7 +135,7 @@ int incident_queue_filter_by_status(const incident_queue_t *queue, incident_stat
     return 0;
   }
 
-  incident_node_t *node = queue->head;
+  incident_node_t *node = queue->front;
   int i = 0;
 
   while (node != NULL && i < queue->count)
