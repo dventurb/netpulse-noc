@@ -15,4 +15,6 @@
 
 #define HASHMAP_SIZE 61 // prime number
 
+#define DATETIME_MAX 17 // "2026-05-16 00:25" + '\0'
+
 #endif

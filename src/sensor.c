@@ -64,3 +64,28 @@ int sensor_filter_status(const sensor_list_t *list, sensor_status_t status, sens
 
   return i;
 }
+
+
+int sensor_filter_by_code(const sensor_list_t *list, const char *code, sensor_t *sensors){
+  if (list == NULL || code == NULL || sensors == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] sensor_filter_by_code : NULL arguments)
+    return 0;
+  }
+
+  sensor_node_t *node = list->head;
+  int i = 0;
+
+  while (node != NULL && i < list->count)
+  {
+    if (strcmp(node->data.code, code) == 0)
+    {
+      sensors[i] = node->data;
+      i++;
+    }
+
+    node = node->next;
+  }
+
+  return i;
+}

@@ -82,6 +82,14 @@ void equipment_list_remove(equipment_list_t *list, equipment_node_t *node)
   list->count--;
 }
 
+void equipment_list_sort_by_status(equipment_list_t *list)
+{
+  equipment_node_t *fast = list->head;
+  equipment_node_t *slow = list->head;
+
+  while ()
+}
+
 void equipment_update_name(equipment_t equipment, const char *name)
 {
   if (equipment == NULL || name == NULL) 
@@ -178,7 +186,7 @@ void equipment_update_last_check(equipment_t *equipment)
     return;
   }
 
-  // TODO: Implement a get_datetime()
+  equipment->last_check = time(NULL);
 }
 
 

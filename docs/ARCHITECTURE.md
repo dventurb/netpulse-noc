@@ -71,7 +71,6 @@ Utilizamos uma Stack com um apontador (top) e uma variável 'count' para contage
 | config_stack_push()            | O(1)       |
 | config_stack_pop()             | O(1)       |
 | config_stack_peek()            | O(1)       |
-| config_stack_peek_n()          | O(n)       |
 | config_filter_by_equipment()   | O(n)       |
 
 
@@ -84,7 +83,7 @@ Utilizamos uma Singly Linked List com um apontador (head) e uma variável 'count
 |            Função              | Eficiência |
 | :----------------------------- | :--------: |
 | sensor_list_insert()           | O(1)       |
-| sensor_find_by_code()          | O(n)       |
+| sensor_filter_by_code()          | O(n)       |
 | sensor_filter_anomalous()      | O(n)       |
 
 
@@ -107,11 +106,11 @@ Utilizamos Linear Search para o resto das operações de pesquisa, evitando assi
 
 |                 Função                | Eficiência |
 | :------------------------------------ | :--------: |
-| incident_find_by_equipment_sensor()   | O(n)       |
+| incident_filter_by_source_id()        | O(n)       |
 | incident_filter_by_priority()         | O(n)       |
 | config_filter_by_equipment()          | O(n)       |
-| sensor_find_by_code()                 | O(n)       |
-| sensor_filter_anomalous()             | O(n)       |
+| sensor_filter_by_code()               | O(n)       |
+| sensor_filter_by_status()             | O(n)       |
 
 
 ## Layout
@@ -238,3 +237,7 @@ Cores utilizadas no design da aplicação:
 ## Referências
 
 https://docs.gtk.org/gtk4/
+https://theartincode.stanis.me/008-djb2/
+https://man7.org/linux/man-pages/man2/time.2.html
+https://man7.org/linux/man-pages/man3/localtime.3p.html
+https://man7.org/linux/man-pages/man3/strftime.3.html

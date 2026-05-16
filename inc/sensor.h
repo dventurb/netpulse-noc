@@ -36,5 +36,6 @@ void sensor_list_destroy(sensor_list_t *list);
 void sensor_list_insert(sensor_list_t *list, sensor_t data);
 
 int sensor_filter_status(const sensor_list_t *list, sensor_status_t status, sensor_t *sensors);
+int sensor_filter_by_code(const sensor_list_t *list, const char *code, sensor_t *sensors);
 
 #endif
