@@ -242,6 +242,6 @@ https://man7.org/linux/man-pages/man2/time.2.html
 https://man7.org/linux/man-pages/man3/localtime.3p.html
 https://man7.org/linux/man-pages/man3/strftime.3.html
 https://medium.com/@arifimran5/fast-and-slow-pointer-pattern-in-linked-list-43647869ac99
-https://www.baeldung.com/cs/merge-sort-linked-listhttps://www.baeldung.com/cs/merge-sort-linked-list
+https://www.baeldung.com/cs/merge-sort-linked-list
 https://stackoverflow.com/questions/840501/how-do-function-pointers-in-c-work
 https://www.cs.cmu.edu/~ab/15-123N09/lectures/Lecture%2008%20-%20Function%20Pointers.pdf

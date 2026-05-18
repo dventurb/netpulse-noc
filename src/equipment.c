@@ -4,8 +4,14 @@
 
 // Private function
 static equipment_node_t *get_middle(equipment_node_t *node);
-static equipment_node_t *merge_sort(equipment_node_t *node);
-static equipment_node_t *merge(equipment_node_t *left, equipment_node_t *right);
+static equipment_node_t *merge_sort(equipment_node_t *node, callback_fn compare);
+static equipment_node_t *merge(equipment_node_t *left, equipment_node_t *right, callback_fn compare);
+static equipment_node_t *get_tail(equipment_list_t *list);
+static int compare_by_status(const equipment_node_t *left, const equipment_node_t *right);
+static int compare_by_location(const equipment_node_t *left, const equipment_node_t *right);
+
+static int compare_by_type(const equipment_node_t *left, const equipment_node_t *right);
+
 
 void equipment_list_init(equipment_list_t *list)
 {
