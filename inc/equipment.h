@@ -6,8 +6,8 @@
 
 typedef enum {
   STATUS_OPERATIONAL,
-  STATUS_FAILED,
   STATUS_MAINTENANCE,
+  STATUS_FAILED,
   STATUS_DISABLED
 } equipment_status_t;
 
@@ -38,12 +38,16 @@ typedef struct {
 } equipment_list_t;
 
 
+typedef int (*callback_fn)(const equipment_node_t *, const equipment_node_t *); // Function Pointer
+
 void equipment_list_init(equipment_list_t *list);
 void equipment_list_destroy(equipment_list_t *list);
 void equipment_list_insert(equipment_list_t *list, equipment_t data);
 void equipment_list_remove(equipment_list_t *list, equipment_node_t *node); // Flow: hashmap_get() -> return void * -> casting to equipment_node_t -> equipment_list_remove() 
 
 void equipment_list_sort_by_status(equipment_list_t *list);
+void equipment_list_sort_by_location(equipment_list_t *list);
+void equipment_list_sort_by_type(equipment_list_t *list);
 
 void equipment_update_name(equipment_t *equipment, const char *name);
 void equipment_update_type(equipment_t *equipment, const char *type);

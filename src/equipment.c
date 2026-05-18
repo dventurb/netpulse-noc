@@ -2,6 +2,11 @@
 
 #include <stdlib.h>
 
+// Private function
+static equipment_node_t *get_middle(equipment_node_t *node);
+static equipment_node_t *merge_sort(equipment_node_t *node);
+static equipment_node_t *merge(equipment_node_t *left, equipment_node_t *right);
+
 void equipment_list_init(equipment_list_t *list)
 {
   list->head = NULL;
@@ -238,4 +243,135 @@ int equipment_filter_by_type(const equipment_list_t *list, const char *type, equ
   }
 
   return i;
+}
+
+void equipment_list_sort_by_status(equipment_list_t *list)
+{
+  if (list == NULL || list->head == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_list_sort_by_status : NULL argument)
+    return;
+  }
+
+  list->head = merge_sort(list->head, compare_by_status);
+  list->tail = get_tail(list);
+}
+
+void equipment_list_sort_by_location(equipment_list_t *list)
+{
+  if (list == NULL || list->head == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_list_sort_by_location : NULL argument)
+    return;
+  }
+
+  list->head = merge_sort(list->head, compare_by_location);
+  list->tail = get_tail(list);
+}
+
+void equipment_list_sort_by_type(equipment_list_t *list)
+{
+  if (list == NULL || list->head == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_list_sort_by_type : NULL argument)
+    return;
+  }
+
+  list->head = merge_sort(list->head, compare_by_type);
+  list->tail = get_tail(list);
+}
+
+// Fast and Slow Pointer
+static equipment_node_t *get_middle(equipment_node_t *node)
+{
+  equipment_node_t *slow = node;
+  equipment_node_t *fast = node;
+
+  while (fast != NULL && fast->next != NULL)
+  {
+    slow = slow->next;
+    fast = fast->next->next;
+  }
+
+  return slow; // First element from the right side (left: head to slow->previous; right: slow to tail)
+}
+
+static equipment_node_t *merge_sort(equipment_node_t *node, callback_fn compare)
+{
+  // Base case: list empty or already sorted
+  if (node == NULL || node->next == NULL)
+  {
+    return node;
+  }
+
+  equipment_node_t *left = node;
+  equipment_node_t *right = get_middle(node);
+
+  right->previous->next = NULL;
+  right->previous = NULL;
+
+  left = merge_sort(left, compare);
+  right = merge_sort(right, compare);
+
+  return merge(left, right, compare);
+}
+
+static equipment_node_t *merge(equipment_node_t *left, equipment_node_t *right, callback_fn compare)
+{
+  if (left == NULL) return right;
+  if (right == NULL) return left;
+
+  equipment_node_t *node;
+
+  if (compare(left, right) >= 0)
+  {
+    node = left;
+    node->next = merge(node->next, right, compare);
+  }
+
+  else 
+  {
+    node = right;
+    node->next = merge(left, node->next, compare);
+  }
+
+  if (node->next != NULL)
+  {
+    node->next->previous = node;
+  }
+
+  return node;
+}
+
+static equipment_node_t *get_tail(equipment_list_t *list)
+{
+  if (list == NULL || list->head == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] get_tail : NULL argument)
+    return;
+  }
+
+  equipment_node_t *node = list->head;
+  
+  while (node->next != NULL)
+  {
+    node = node->next;
+  }
+
+  return node;
+}
+
+static int compare_by_status(const equipment_node_t *left, const equipment_node_t *right)
+{
+  return left->data.status - right->data.status;
+}
+
+static int compare_by_location(const equipment_node_t *left, const equipment_node_t *right)
+{
+  return strcmp(left->data.location, right->data.location);
+}
+
+static int compare_by_type(const equipment_node_t *left, const equipment_node_t *right)
+{
+  return strcmp(left->data.type, right->data.type);
 }
