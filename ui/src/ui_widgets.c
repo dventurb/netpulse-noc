@@ -2,7 +2,7 @@
 
 GtkWidget *widget_create_primary_button(const char *text, const char *css)
 {
-  GtkWidget *button = gtk_button_new_with_label(text != NULL ? text : "");
+  GtkWidget *button = gtk_toggle_button_new_with_label(text != NULL ? text : "");
 
   if (css != NULL)
   {

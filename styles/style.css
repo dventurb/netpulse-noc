@@ -24,6 +24,7 @@
   opacity: 1.0;
 }
 
+.menu-button:checked,
 .menu-button:active {
   background-color: #19c37d;
   opacity: 1.0;
