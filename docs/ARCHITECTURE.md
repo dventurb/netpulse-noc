@@ -245,3 +245,5 @@ https://medium.com/@arifimran5/fast-and-slow-pointer-pattern-in-linked-list-4364
 https://www.baeldung.com/cs/merge-sort-linked-list
 https://stackoverflow.com/questions/840501/how-do-function-pointers-in-c-work
 https://www.cs.cmu.edu/~ab/15-123N09/lectures/Lecture%2008%20-%20Function%20Pointers.pdf
+https://stackoverflow.com/questions/714100/os-detecting-makefile
+https://linuxvox.com/blog/makefile-that-distinguishes-between-windows-and-unix-like-systems/

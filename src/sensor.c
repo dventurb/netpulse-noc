@@ -1,6 +1,7 @@
 #include "sensor.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 void sensor_list_init(sensor_list_t *list)
 {
@@ -10,11 +11,11 @@ void sensor_list_init(sensor_list_t *list)
 
 void sensor_list_destroy(sensor_list_t *list)
 {
-  sensor_list_t *node = list->head;
+  sensor_node_t *node = list->head;
 
   while (node != NULL)
   {
-    sensor_list_t *next = node->next;
+    sensor_node_t *next = node->next;
     free(node);
     node = next;
   }

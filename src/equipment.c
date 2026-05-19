@@ -1,6 +1,8 @@
 #include "equipment.h"
 
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 // Private function
 static equipment_node_t *get_middle(equipment_node_t *node);
@@ -93,15 +95,7 @@ void equipment_list_remove(equipment_list_t *list, equipment_node_t *node)
   list->count--;
 }
 
-void equipment_list_sort_by_status(equipment_list_t *list)
-{
-  equipment_node_t *fast = list->head;
-  equipment_node_t *slow = list->head;
-
-  while ()
-}
-
-void equipment_update_name(equipment_t equipment, const char *name)
+void equipment_update_name(equipment_t *equipment, const char *name)
 {
   if (equipment == NULL || name == NULL) 
   {
@@ -134,7 +128,7 @@ void equipment_update_vendor(equipment_t *equipment, const char *vendor)
   snprintf(equipment->vendor, STRING_MAX, "%s", vendor);
 }
 
-void equipment_update_model(equipment *equipment, const char *model)
+void equipment_update_model(equipment_t *equipment, const char *model)
 {
   if (equipment == NULL || model == NULL) 
   {
@@ -354,7 +348,7 @@ static equipment_node_t *get_tail(equipment_list_t *list)
   if (list == NULL || list->head == NULL)
   {
     // TODO: Implement a log system (ex.: (datetime) [ERROR] get_tail : NULL argument)
-    return;
+    return NULL;
   }
 
   equipment_node_t *node = list->head;

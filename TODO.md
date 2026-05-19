@@ -41,7 +41,7 @@
 - [X] equipment_list_update_name/vendor/type/ip_address()...
 - [ ] equipment_find_by_id/ip/mac()
 - [X] equipment_filter_by_status/type()
-- [ ] equipment_sort_by_status/type/location() - (Merge Sort)
+- [X] equipment_sort_by_status/type/location() - (Merge Sort)
 - [X] Integrar id_index, ip_index, mac_index (hashmap)
 - [X] equipment_list_init() / equipment_list_destroy()
 

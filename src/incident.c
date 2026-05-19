@@ -30,8 +30,8 @@ void incident_queue_destroy(incident_queue_t *queue)
 
 void incident_list_init(incident_list_t *list)
 {
-  queue->head = NULL;
-  queue->count = 0;
+  list->head = NULL;
+  list->count = 0;
 }
 
 void incident_list_destroy(incident_list_t *list)
@@ -68,7 +68,7 @@ void incident_queue_enqueue(incident_queue_t *queue, incident_t data)
     queue->front = new;
     queue->rear = new;
 
-    list->count++
+    queue->count++;
 
     return;
   }
@@ -234,7 +234,7 @@ int incident_list_filter_by_priority(const incident_list_t *list, incident_prior
 
 int incident_list_filter_by_status(const incident_list_t *list, incident_status_t status, incident_t *incidents)
 {
-  if (list == NULL || incidets == NULL)
+  if (list == NULL || incidents == NULL)
   {
     // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_list_filter_by_status : NULL arguments)
     return 0;

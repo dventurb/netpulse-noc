@@ -2,6 +2,8 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 void hashmap_init(hashmap_t *hashmap)
 {
@@ -13,7 +15,7 @@ void hashmap_init(hashmap_t *hashmap)
   hashmap->count = 0;
 }
 
-void hashmap_destroy(hashmap_t *hashmap_t)
+void hashmap_destroy(hashmap_t *hashmap)
 {
   for (int i = 0; i < HASHMAP_SIZE; i++) 
   {
@@ -28,7 +30,7 @@ void hashmap_destroy(hashmap_t *hashmap_t)
       bucket = next;
     }
 
-    hashmap->bucket[i] = NULL;
+    hashmap->buckets[i] = NULL;
   }
 
   hashmap->count = 0;
@@ -40,7 +42,7 @@ unsigned long hash(const char *key)
   unsigned long hash = 5381;
   int c;
 
-  while (c = *key++)
+  while ((c = *key++))
   {
     hash = ((hash << 5) + hash) + tolower(c);
   }
