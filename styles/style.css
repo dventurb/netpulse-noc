@@ -1,0 +1,31 @@
+.header {
+  background-color: #f5f6f8;
+}
+
+.menu-bar {
+  background-color: #171717;
+}
+
+.menu-button {
+  all: unset; /* reset default style */
+
+  background-color: #171717;
+  padding: 0 28px;
+  border-radius: 12px 12px 0 0;
+  margin-top: 8px;
+
+  color: #ffffff;
+  opacity: 0.6;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.menu-button:hover {
+  opacity: 1.0;
+}
+
+.menu-button:active {
+  background-color: #19c37d;
+  opacity: 1.0;
+  font-weight: 600;
+}
