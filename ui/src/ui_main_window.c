@@ -8,5 +8,6 @@ void create_main_window(GtkApplication *gui, gpointer *data)
 
   GtkWidget *window = gtk_application_window_new(gui);
   gtk_window_set_title(GTK_WINDOW(window), "NetPulse NOC");
+  gtk_window_set_default_size(GTK_WINDOW(window), 1440, 900);
   gtk_window_present(GTK_WINDOW(window));
 }
