@@ -38,6 +38,16 @@ static GtkWidget *create_header(void)
   gtk_widget_set_size_request(box, -1, 52);
   gtk_widget_add_css_class(box, "header");
 
+  GtkWidget *logo = gtk_picture_new_for_filename("assets/logo.svg");
+
+  gtk_widget_set_halign(logo, GTK_ALIGN_START);
+  gtk_widget_set_valign(logo, GTK_ALIGN_CENTER);
+  gtk_widget_set_margin_start(logo, 24);
+  gtk_widget_set_margin_top(logo, 4);
+  gtk_widget_set_margin_bottom(logo, 4);
+
+  gtk_box_append(GTK_BOX(box), logo);
+
   return box;
 }
 
