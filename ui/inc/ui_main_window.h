@@ -3,6 +3,6 @@
 
 #include <gtk/gtk.h>
 
-void create_main_window(GtkApplication *gui, gpointer *data);
+void create_main_window(GtkApplication *gui, gpointer data);
 
 #endif
