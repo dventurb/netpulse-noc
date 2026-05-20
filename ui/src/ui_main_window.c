@@ -91,6 +91,8 @@ static GtkWidget *create_menu_bar(application_t *application, GtkWidget *stack)
     gtk_box_append(GTK_BOX(box), button);
   }
 
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(menu->buttons[1]), TRUE); // Inventory Button to 'pressed in' 
+
   g_object_set_data_full(G_OBJECT(box), "menu-context", menu, free); // ownership + free
 
   return box;
@@ -101,7 +103,7 @@ static GtkWidget *create_menu_button(menu_context_t *menu, const char *label)
   GtkWidget *button = widget_create_primary_button(label, "menu-button");
   g_signal_connect(button, "clicked", G_CALLBACK(on_menu_button_clicked), menu);
 
-  g_object_set_data(G_OBJECT(button), "target-page", label);
+  g_object_set_data(G_OBJECT(button), "target-page", (void *)label);
 
   return button;
 }

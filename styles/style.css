@@ -30,3 +30,9 @@
   opacity: 1.0;
   font-weight: 600;
 }
+
+.inventory-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #171717;
+}
