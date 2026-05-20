@@ -66,39 +66,52 @@ static GtkWidget *create_invetory_header(application_t *application)
 static GtkWidget *create_inventory_table(application_t *application)
 {
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+  gtk_widget_add_css_class(grid, "table");
+
+  GtkWidget *select_all_button = gtk_check_button_new();
+  gtk_widget_add_css_class(select_all_button, "table-checkbox");
+  gtk_grid_attach(GTK_GRID(grid), select_all_button, 0, 0, 1, 1);
 
   const char *headers[] = {
     "ID",
     "NAME",
     "TYPE",
+    "VENDOR",
+    "MODEL",
     "IP ADDRESS",
     "MAC ADDRESS",
     "LOCATION",
     "LAST CHECK"
   };
 
-  for (int i = 0; i < 7; i++) {
+  for (int i = 0; i < 9; i++) {
     GtkWidget *label = gtk_label_new(headers[i]);
-    gtk_widget_add_css_class(label, "header-label");
-    gtk_grid_attach(GTK_GRID(grid), label, i, 0, 1, 1);
+    gtk_widget_add_css_class(label, "table-header");
+    gtk_grid_attach(GTK_GRID(grid), label, i + 1, 0, 1, 1);
   }
 
-  if (application->equipments.head == NULL) return grid;
-
-  equipment_t equipment = application->equipments.head->data;
+  equipment_node_t *node = application->equipments.head;
+  if (node == NULL) return grid;
 
   for (int i = 1; i <= application->equipments.count; i++) {
+    equipment_t equipment = node->data;
+
+    GtkWidget *check_button = gtk_check_button_new();
+    g_object_set_data(G_OBJECT(check_button), "equipment", (void *)node);
+
     char id[10];
     snprintf(id, sizeof(id), "%d", equipment.id);
 
     char datetime[DATETIME_MAX];
     get_datetime(equipment.last_check, datetime);
 
-    GtkWidget *labels[] = {
+    GtkWidget *columns[] = {
+      check_button,
       gtk_label_new(id),
       gtk_label_new(equipment.name),
       gtk_label_new(equipment.type),
+      gtk_label_new(equipment.vendor),
+      gtk_label_new(equipment.model),
       gtk_label_new(equipment.ip_address),
       gtk_label_new(equipment.mac_address),
       gtk_label_new(equipment.location),
@@ -106,8 +119,10 @@ static GtkWidget *create_inventory_table(application_t *application)
     };
 
     for (int j = 0; j < 7; j++) {
-      gtk_grid_attach(GTK_GRID(grid), labels[j], j, i, 1, 1);
+      gtk_grid_attach(GTK_GRID(grid), columns[j], j, i, 1, 1);
     }
+
+    node = node->next;
   }
 
   return grid;

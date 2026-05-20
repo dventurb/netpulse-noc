@@ -55,3 +55,30 @@
   font-weight: 600;
   color: #ffffff;
 }
+
+.table {
+  background-color: #ffffff;
+  border: 1px solid #dedede;
+  border-radius: 8px;
+}
+
+.table-header {
+  background-color: #f8f9fa;
+  padding: 16px 24px;
+  color: #888888;
+  font-size: 12px;
+  font-weight: 600;
+  border-bottom: 1px solid #dedede;
+}
+
+.table-checkbox {
+  all: unset;
+
+  padding: 24px;
+  background-color: #f8f9fa;  
+  border-bottom: 1px solid #dedede;
+}
+
+.table-checkbox:checked {
+  border-color: #19c37d;
+}
