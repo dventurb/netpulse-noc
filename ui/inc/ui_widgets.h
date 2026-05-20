@@ -4,6 +4,7 @@
 #include <gtk/gtk.h>
 
 GtkWidget *widget_create_primary_button(const char *text, const char *css);
+GtkWidget *widget_create_secondary_button(const char *text, const char *icon, const char *css);
 GtkWidget *widget_create_stat_card(void);
 
 #endif

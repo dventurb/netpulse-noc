@@ -22,7 +22,6 @@ void create_main_window(GtkApplication *gui, gpointer data)
   gtk_window_set_child(GTK_WINDOW(window), box);
 
   GtkWidget *stack = gtk_stack_new();
-  gtk_widget_set_vexpand(stack, TRUE);
 
   GtkWidget *header = create_header();
   GtkWidget *menu_bar = create_menu_bar(application, stack);

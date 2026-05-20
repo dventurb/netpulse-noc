@@ -1,6 +1,7 @@
 #include "ui_inventory.h"
 
 #include "utils.h"
+#include "ui_widgets.h"
 
 static GtkWidget *create_side_bar(application_t *application);
 static GtkWidget *create_content(application_t *application);
@@ -45,11 +46,18 @@ static GtkWidget *create_content(application_t *application)
 static GtkWidget *create_invetory_header(application_t *application)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_widget_set_margin_top(box, 24);
 
   GtkWidget *title = gtk_label_new("Equipment Inventory");
   gtk_widget_add_css_class(title, "inventory-title");
+  gtk_widget_set_hexpand(title, TRUE);
+  gtk_widget_set_halign(title, GTK_ALIGN_START);
+
+  GtkWidget *add_device_button = widget_create_secondary_button("Add device", "assets/icon-add-device.svg", "secondary-button");
+  gtk_widget_set_margin_end(add_device_button, 24);
   
   gtk_box_append(GTK_BOX(box), title);
+  gtk_box_append(GTK_BOX(box), add_device_button);
 
   return box;
 }
