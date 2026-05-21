@@ -72,7 +72,7 @@
 }
 
 .table-checkbox {
-  all: unset;
+  all: unset; /* reset default style */
 
   padding: 24px;
   background-color: #f8f9fa;  
@@ -81,4 +81,28 @@
 
 .table-checkbox:checked {
   border-color: #19c37d;
+}
+
+.dialog {
+  border-radius: 20px;
+}
+
+.dialog-header {
+  background-color: #ffffff;
+  padding: 24px 20px;
+}
+
+.dialog-header-title {
+  color: #111827;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.dialog-header-button {
+  all: unset; /* reset default style */
+  
+  background-color: transparent;
+  color: #9ca3af;
+  font-size: 18px;
+  font-weight: 900;
 }

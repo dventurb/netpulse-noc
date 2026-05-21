@@ -7,6 +7,7 @@ static GtkWidget *create_side_bar(application_t *application);
 static GtkWidget *create_content(ui_t *ui);
 static GtkWidget *create_inventory_header(ui_t *ui);
 static GtkWidget *create_inventory_table(application_t *application);
+static GtkWidget *create_dialog_window(GtkWidget *window);
 
 // Callbacks
 static void on_add_device_button_clicked(GtkButton *button, gpointer data);
@@ -136,13 +137,39 @@ static void on_add_device_button_clicked(GtkButton *button, gpointer data)
 {
   ui_t *ui = (ui_t *) data;
 
-  GtkWidget *dialog = gtk_window_new();
-  gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
-  gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(ui->window));
-  gtk_window_set_decorated(GTK_WINDOW(dialog), FALSE);
+  GtkWidget *dialog = create_dialog_window(ui->window);
 
+  gtk_window_present(GTK_WINDOW(dialog));
+}
+
+static GtkWidget *create_dialog_window(GtkWidget *window)
+{
+  GtkWidget *dialog = gtk_window_new();
+  gtk_widget_add_css_class(dialog, "dialog");
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 672, 640);
+  gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+  gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window));
+  gtk_window_set_decorated(GTK_WINDOW(dialog), FALSE);
+  
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_window_set_child(GTK_WINDOW(dialog), box);
 
-  gtk_window_present(GTK_WINDOW(dialog));
+  GtkWidget *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_widget_add_css_class(header, "dialog-header");
+
+  GtkWidget *title = gtk_label_new("Add Equipment");
+  gtk_widget_add_css_class(title, "dialog-header-title");
+  gtk_widget_set_hexpand(title, TRUE);
+  gtk_widget_set_halign(title, GTK_ALIGN_START);
+  gtk_widget_set_margin_start(title, 24);
+
+  GtkWidget *close_button = gtk_button_new_with_label("X");
+  gtk_widget_add_css_class(close_button, "dialog-header-button");
+
+  gtk_box_append(GTK_BOX(header), title);
+  gtk_box_append(GTK_BOX(header), close_button);
+
+  gtk_box_append(GTK_BOX(box), header);
+
+  return dialog;
 }
