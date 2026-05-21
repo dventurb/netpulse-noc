@@ -5,6 +5,19 @@
 #include <time.h>
 
 typedef enum {
+  TYPE_ROUTER,
+  TYPE_SWITCH,
+  TYPE_ACCESS_POINT,
+  TYPE_FIREWALL,
+  TYPE_SERVER,
+  TYPE_NAS,
+  TYPE_PRINTER,
+  TYPE_IP_CAMERA,
+  TYPE_UPS,
+  TYPE_OTHER
+} equipment_type_t;
+
+typedef enum {
   STATUS_OPERATIONAL,
   STATUS_MAINTENANCE,
   STATUS_FAILED,
@@ -14,7 +27,7 @@ typedef enum {
 typedef struct {
   int id; // TODO: Maybe change the id to a char (ex.: EQ-xxx)
   char name[STRING_MAX];
-  char type[STRING_MAX];
+  equipment_type_t type;
   char vendor[STRING_MAX];
   char model[STRING_MAX];
   char ip_address[IP_MAX];
@@ -50,7 +63,7 @@ void equipment_list_sort_by_location(equipment_list_t *list);
 void equipment_list_sort_by_type(equipment_list_t *list);
 
 void equipment_update_name(equipment_t *equipment, const char *name);
-void equipment_update_type(equipment_t *equipment, const char *type);
+void equipment_update_type(equipment_t *equipment, equipment_type_t type);
 void equipment_update_vendor(equipment_t *equipment, const char *vendor);
 void equipment_update_model(equipment_t *equipment, const char *model);
 void equipment_update_ip_address(equipment_t *equipment, const char *ip_address);
@@ -60,6 +73,6 @@ void equipment_update_status(equipment_t *equipment, equipment_status_t status);
 void equipment_update_last_check(equipment_t *equipment);
 
 int equipment_filter_by_status(const equipment_list_t *list, equipment_status_t status, equipment_t *equipments);
-int equipment_filter_by_type(const equipment_list_t *list, const char *type, equipment_t *equipments);
+int equipment_filter_by_type(const equipment_list_t *list, equipment_type_t type, equipment_t *equipments);
 
 #endif

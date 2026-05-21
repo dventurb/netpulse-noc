@@ -106,15 +106,15 @@ void equipment_update_name(equipment_t *equipment, const char *name)
   snprintf(equipment->name, STRING_MAX, "%s", name);
 }
 
-void equipment_update_type(equipment_t *equipment, const char *type)
+void equipment_update_type(equipment_t *equipment, equipment_type_t type)
 {
-  if (equipment == NULL || type == NULL) 
+  if (equipment == NULL) 
   {
-    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_update_type : NULL arguments)
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_update_type : NULL argument)
     return;
   }
 
-  snprintf(equipment->type, STRING_MAX, "%s", type);
+  equipment->type = type;
 }
 
 void equipment_update_vendor(equipment_t *equipment, const char *vendor)
@@ -220,7 +220,7 @@ int equipment_filter_by_status(const equipment_list_t *list, equipment_status_t 
   return i;
 }
 
-int equipment_filter_by_type(const equipment_list_t *list, const char *type, equipment_t *equipments)
+int equipment_filter_by_type(const equipment_list_t *list, equipment_type_t type, equipment_t *equipments)
 {
   if (list == NULL || equipments == NULL)
   {
@@ -233,7 +233,7 @@ int equipment_filter_by_type(const equipment_list_t *list, const char *type, equ
 
   while (node != NULL && i < list->count)
   {
-    if (strcmp(node->data.type, type) == 0)
+    if (node->data.type == type)
     {
       equipments[i] = node->data;
       i++;
@@ -367,11 +367,11 @@ static int compare_by_status(const equipment_node_t *left, const equipment_node_
 }
 
 static int compare_by_location(const equipment_node_t *left, const equipment_node_t *right)
-{
+{  
   return strcmp(left->data.location, right->data.location);
 }
 
 static int compare_by_type(const equipment_node_t *left, const equipment_node_t *right)
 {
-  return strcmp(left->data.type, right->data.type);
+  return left->data.type - right->data.type;
 }

@@ -91,7 +91,7 @@ GtkWidget *create_dropdown_field(GtkWidget *grid, const char *text, const char* 
   return dropdown;
 }
 
-GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *title)
+GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *title, GCallback callback, gpointer data)
 {
   GtkWidget *dialog = gtk_window_new();
   gtk_widget_add_css_class(dialog, "dialog");
@@ -105,7 +105,7 @@ GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *
 
   gtk_box_append(GTK_BOX(box), create_dialog_header(dialog, title != NULL ? title : ""));
   gtk_box_append(GTK_BOX(box), form);
-  gtk_box_append(GTK_BOX(box), create_dialog_footer(dialog, title != NULL ? title : ""));
+  gtk_box_append(GTK_BOX(box), create_dialog_footer(dialog, title != NULL ? title : "", callback, data));
 
   return dialog;
 }
@@ -131,7 +131,7 @@ GtkWidget *create_dialog_header(GtkWidget *dialog, const char *title)
   return header;
 }
 
-GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title)
+GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, GCallback callback, gpointer data)
 {
   GtkWidget *footer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
   gtk_widget_add_css_class(footer, "dialog-footer");
@@ -143,6 +143,7 @@ GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title)
 
   GtkWidget *add_button = create_secondary_button(title, "assets/icon-add-device.svg", "dialog-footer-add-button");
   gtk_widget_set_margin_end(add_button, 24);
+  g_signal_connect(add_button, "clicked", G_CALLBACK(callback), data);
 
   gtk_box_append(GTK_BOX(footer), cancel_button);
   gtk_box_append(GTK_BOX(footer), add_button);
