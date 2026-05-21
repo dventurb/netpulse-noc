@@ -1,6 +1,6 @@
 #include "ui_widgets.h"
 
-GtkWidget *widget_create_primary_button(const char *text, const char *css)
+GtkWidget *create_primary_button(const char *text, const char *css)
 {
   GtkWidget *button = gtk_toggle_button_new_with_label(text != NULL ? text : "");
 
@@ -12,7 +12,7 @@ GtkWidget *widget_create_primary_button(const char *text, const char *css)
   return button;
 }
 
-GtkWidget *widget_create_secondary_button(const char *text, const char *icon, const char *css)
+GtkWidget *create_secondary_button(const char *text, const char *icon, const char *css)
 {
   GtkWidget *button = gtk_button_new();
 
@@ -39,7 +39,7 @@ GtkWidget *widget_create_secondary_button(const char *text, const char *icon, co
   return button;
 }
 
-GtkWidget *widget_add_text_field(GtkWidget *grid, const char *text, const char *placeholder, int row, int column)
+GtkWidget *create_text_field(GtkWidget *grid, const char *text, const char *placeholder, int row, int column)
 {
   GtkWidget *box, *label, *entry;
 
@@ -65,7 +65,7 @@ GtkWidget *widget_add_text_field(GtkWidget *grid, const char *text, const char *
   return entry;
 }
 
-GtkWidget *widget_add_dropdown_field(GtkWidget *grid, const char *text, const char* const* strings, int row, int column)
+GtkWidget *create_dropdown_field(GtkWidget *grid, const char *text, const char* const* strings, int row, int column)
 {
   GtkWidget *box, *label, *dropdown;
 
@@ -89,4 +89,63 @@ GtkWidget *widget_add_dropdown_field(GtkWidget *grid, const char *text, const ch
   gtk_grid_attach(GTK_GRID(grid), box, column, row, 1, 1);
 
   return dropdown;
+}
+
+GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *title)
+{
+  GtkWidget *dialog = gtk_window_new();
+  gtk_widget_add_css_class(dialog, "dialog");
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 672, 640);
+  gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+  gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window));
+  gtk_window_set_decorated(GTK_WINDOW(dialog), FALSE);
+  
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_window_set_child(GTK_WINDOW(dialog), box);
+
+  gtk_box_append(GTK_BOX(box), create_dialog_header(dialog, title != NULL ? title : ""));
+  gtk_box_append(GTK_BOX(box), form);
+  gtk_box_append(GTK_BOX(box), create_dialog_footer(dialog, title != NULL ? title : ""));
+
+  return dialog;
+}
+
+GtkWidget *create_dialog_header(GtkWidget *dialog, const char *title)
+{
+  GtkWidget *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_widget_add_css_class(header, "dialog-header");
+
+  GtkWidget *label = gtk_label_new(title);
+  gtk_widget_add_css_class(label, "dialog-header-title");
+  gtk_widget_set_hexpand(label, TRUE);
+  gtk_widget_set_halign(label, GTK_ALIGN_START);
+  gtk_widget_set_margin_start(label, 24);
+
+  GtkWidget *close_button = gtk_button_new_with_label("X");
+  gtk_widget_add_css_class(close_button, "dialog-header-button");
+  g_signal_connect_swapped(close_button, "clicked", G_CALLBACK(gtk_window_destroy), dialog);
+
+  gtk_box_append(GTK_BOX(header), label);
+  gtk_box_append(GTK_BOX(header), close_button);
+
+  return header;
+}
+
+GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title)
+{
+  GtkWidget *footer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
+  gtk_widget_add_css_class(footer, "dialog-footer");
+
+  GtkWidget *cancel_button = create_secondary_button("Cancel", NULL, "dialog-footer-cancel-button");
+  gtk_widget_set_hexpand(cancel_button, TRUE);
+  gtk_widget_set_halign(cancel_button, GTK_ALIGN_END);
+  g_signal_connect_swapped(cancel_button, "clicked", G_CALLBACK(gtk_window_destroy), dialog);
+
+  GtkWidget *add_button = create_secondary_button(title, "assets/icon-add-device.svg", "dialog-footer-add-button");
+  gtk_widget_set_margin_end(add_button, 24);
+
+  gtk_box_append(GTK_BOX(footer), cancel_button);
+  gtk_box_append(GTK_BOX(footer), add_button);
+
+  return footer;
 }

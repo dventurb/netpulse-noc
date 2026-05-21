@@ -3,10 +3,13 @@
 
 #include <gtk/gtk.h>
 
-GtkWidget *widget_create_primary_button(const char *text, const char *css);
-GtkWidget *widget_create_secondary_button(const char *text, const char *icon, const char *css);
-GtkWidget *widget_create_stat_card(void);
-GtkWidget *widget_add_text_field(GtkWidget *grid, const char *text, const char *placeholder, int row, int column);
-GtkWidget *widget_add_dropdown_field(GtkWidget *grid, const char *text, const char* const *strings, int row, int column);
+GtkWidget *create_primary_button(const char *text, const char *css);
+GtkWidget *create_secondary_button(const char *text, const char *icon, const char *css);
+GtkWidget *create_stat_card(void);
+GtkWidget *create_text_field(GtkWidget *grid, const char *text, const char *placeholder, int row, int column);
+GtkWidget *create_dropdown_field(GtkWidget *grid, const char *text, const char* const *strings, int row, int column);
+GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *title);
+GtkWidget *create_dialog_header(GtkWidget *dialog, const char *title);
+GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title);
 
 #endif
