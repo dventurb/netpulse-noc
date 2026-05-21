@@ -150,3 +150,20 @@ GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, GCallback 
 
   return footer;
 }
+
+void remove_all_items_table(GtkWidget *grid)
+{
+  GtkWidget *item = gtk_widget_get_first_child(grid);
+  
+  while (item != NULL)
+  {
+    GtkWidget *next = gtk_widget_get_next_sibling(item);
+    
+    int row;
+    gtk_grid_query_child(GTK_GRID(grid), item, NULL, &row, NULL, NULL);
+    
+    if (row > 0)  gtk_grid_remove(GTK_GRID(grid), item); // Skip the headers
+
+    item = next;
+  }
+}

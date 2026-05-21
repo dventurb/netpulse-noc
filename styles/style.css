@@ -62,7 +62,19 @@
   border-radius: 8px;
 }
 
-.table-header {
+.table-header-checkbox {
+  all: unset; /* reset default style */
+
+  padding: 24px;
+  background-color: #f8f9fa;  
+  border-bottom: 1px solid #dedede;
+}
+
+.table-header-checkbox:checked {
+  border-color: #19c37d;
+}
+
+.table-header-cell {
   background-color: #f8f9fa;
   padding: 16px 24px;
   color: #888888;
@@ -75,12 +87,14 @@
   all: unset; /* reset default style */
 
   padding: 24px;
-  background-color: #f8f9fa;  
+  background-color: #ffffff;
   border-bottom: 1px solid #dedede;
 }
 
-.table-checkbox:checked {
-  border-color: #19c37d;
+.table-cell {
+  color: #888888;
+  font-size: 14px;
+  padding: 24px 16px;
 }
 
 .dialog {
