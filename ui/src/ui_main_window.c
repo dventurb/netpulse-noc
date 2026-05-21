@@ -4,8 +4,8 @@
 #include "ui_inventory.h"
 
 static GtkWidget *create_header(void);
-static GtkWidget *create_menu_bar(application_t *application, GtkWidget *stack);
-static GtkWidget *create_menu_button(menu_context_t *menu, const char *label);
+static GtkWidget *create_menu_bar(ui_t *ui);
+static GtkWidget *create_menu_button(ui_t *ui, const char *label);
 
 // Callbacks
 static void on_menu_button_clicked(GtkButton *button, gpointer data);
@@ -14,31 +14,38 @@ void create_main_window(GtkApplication *gui, gpointer data)
 {
   application_t *application = (application_t *) data;
 
-  GtkWidget *window = gtk_application_window_new(gui);
-  gtk_window_set_title(GTK_WINDOW(window), "NetPulse NOC");
-  gtk_window_set_default_size(GTK_WINDOW(window), 1440, 900);
+  ui_t *ui = malloc(sizeof(ui_t));
+  if (ui == NULL) return;
+
+  ui->application = application;
+
+  ui->window = gtk_application_window_new(gui);
+  gtk_window_set_title(GTK_WINDOW(ui->window), "NetPulse NOC");
+  gtk_window_set_default_size(GTK_WINDOW(ui->window), 1440, 900);
 
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-  gtk_window_set_child(GTK_WINDOW(window), box);
+  gtk_window_set_child(GTK_WINDOW(ui->window), box);
 
-  GtkWidget *stack = gtk_stack_new();
+  ui->stack = gtk_stack_new();
 
   GtkWidget *header = create_header();
-  GtkWidget *menu_bar = create_menu_bar(application, stack);
+  GtkWidget *menu_bar = create_menu_bar(ui);
   
   gtk_box_append(GTK_BOX(box), header);
   gtk_box_append(GTK_BOX(box), menu_bar);
-  gtk_box_append(GTK_BOX(box), stack);
+  gtk_box_append(GTK_BOX(box), ui->stack);
 
-  gtk_stack_add_named(GTK_STACK(stack), create_page_inventory(application), "Inventory");
-  gtk_stack_set_visible_child_name(GTK_STACK(stack), "Inventory");
+  gtk_stack_add_named(GTK_STACK(ui->stack), create_page_inventory(ui), "Inventory");
+  gtk_stack_set_visible_child_name(GTK_STACK(ui->stack), "Inventory");
 
   GtkCssProvider *provider = gtk_css_provider_new();
   gtk_css_provider_load_from_path(provider, "styles/style.css");
   gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(provider), 800);
   g_object_unref(provider);
 
-  gtk_window_present(GTK_WINDOW(window));
+  g_object_set_data_full(G_OBJECT(ui->window), "user-interface", ui, free); // ownership + free
+
+  gtk_window_present(GTK_WINDOW(ui->window));
 }
 
 static GtkWidget *create_header(void)
@@ -60,7 +67,7 @@ static GtkWidget *create_header(void)
   return box;
 }
 
-static GtkWidget *create_menu_bar(application_t *application, GtkWidget *stack)
+static GtkWidget *create_menu_bar(ui_t *ui)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   gtk_widget_set_size_request(box, -1, 44);
@@ -76,31 +83,24 @@ static GtkWidget *create_menu_bar(application_t *application, GtkWidget *stack)
     "Configurations"
   };
 
-  menu_context_t *menu = malloc(sizeof(menu_context_t));
-  if (menu == NULL) return NULL;
+  ui->count = 6;
 
-  menu->application = application;
-  menu->stack = stack;
-  menu->count = 6;
-
-  for (int i = 0; i < menu->count; i++)
+  for (int i = 0; i < ui->count; i++)
   {
-    GtkWidget *button = create_menu_button(menu, modules[i]); 
-    menu->buttons[i] = button;
+    GtkWidget *button = create_menu_button(ui, modules[i]); 
+    ui->buttons[i] = button;
     gtk_box_append(GTK_BOX(box), button);
   }
 
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(menu->buttons[1]), TRUE); // Inventory Button to 'pressed in' 
-
-  g_object_set_data_full(G_OBJECT(box), "menu-context", menu, free); // ownership + free
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui->buttons[1]), TRUE); // Inventory Button to 'pressed in' 
 
   return box;
 }
 
-static GtkWidget *create_menu_button(menu_context_t *menu, const char *label) 
+static GtkWidget *create_menu_button(ui_t *ui, const char *label) 
 {
   GtkWidget *button = widget_create_primary_button(label, "menu-button");
-  g_signal_connect(button, "clicked", G_CALLBACK(on_menu_button_clicked), menu);
+  g_signal_connect(button, "clicked", G_CALLBACK(on_menu_button_clicked), ui);
 
   g_object_set_data(G_OBJECT(button), "target-page", (void *)label);
 
@@ -109,5 +109,5 @@ static GtkWidget *create_menu_button(menu_context_t *menu, const char *label)
 
 static void on_menu_button_clicked(GtkButton *button, gpointer data)
 {
-  // menu_context_t *menu = (menu_context_t *) data;
+  // ui_t *ui = (ui_t *) data;
 }

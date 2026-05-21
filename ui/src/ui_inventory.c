@@ -4,16 +4,19 @@
 #include "ui_widgets.h"
 
 static GtkWidget *create_side_bar(application_t *application);
-static GtkWidget *create_content(application_t *application);
-static GtkWidget *create_invetory_header(application_t *application);
+static GtkWidget *create_content(ui_t *ui);
+static GtkWidget *create_inventory_header(ui_t *ui);
 static GtkWidget *create_inventory_table(application_t *application);
 
-GtkWidget *create_page_inventory(application_t *application)
+// Callbacks
+static void on_add_device_button_clicked(GtkButton *button, gpointer data);
+
+GtkWidget *create_page_inventory(ui_t *ui)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
-  GtkWidget *side_bar = create_side_bar(application);
-  GtkWidget *content = create_content(application);
+  GtkWidget *side_bar = create_side_bar(ui->application);
+  GtkWidget *content = create_content(ui);
 
   gtk_box_append(GTK_BOX(box), side_bar);
   gtk_box_append(GTK_BOX(box), content);
@@ -29,13 +32,13 @@ static GtkWidget *create_side_bar(application_t *application)
   return box;
 }
 
-static GtkWidget *create_content(application_t *application)
+static GtkWidget *create_content(ui_t *ui)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_widget_set_size_request(box, 1160, -1);
 
-  GtkWidget *header = create_invetory_header(application);
-  GtkWidget *table = create_inventory_table(application);
+  GtkWidget *header = create_inventory_header(ui);
+  GtkWidget *table = create_inventory_table(ui->application);
 
   gtk_box_append(GTK_BOX(box), header);
   gtk_box_append(GTK_BOX(box), table);
@@ -43,7 +46,7 @@ static GtkWidget *create_content(application_t *application)
   return box;
 }
 
-static GtkWidget *create_invetory_header(application_t *application)
+static GtkWidget *create_inventory_header(ui_t *ui)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   gtk_widget_set_margin_top(box, 24);
@@ -55,6 +58,7 @@ static GtkWidget *create_invetory_header(application_t *application)
 
   GtkWidget *add_device_button = widget_create_secondary_button("Add device", "assets/icon-add-device.svg", "secondary-button");
   gtk_widget_set_margin_end(add_device_button, 24);
+  g_signal_connect(add_device_button, "clicked", G_CALLBACK(on_add_device_button_clicked), ui);
   
   gtk_box_append(GTK_BOX(box), title);
   gtk_box_append(GTK_BOX(box), add_device_button);
@@ -126,4 +130,19 @@ static GtkWidget *create_inventory_table(application_t *application)
   }
 
   return grid;
+}
+
+static void on_add_device_button_clicked(GtkButton *button, gpointer data)
+{
+  ui_t *ui = (ui_t *) data;
+
+  GtkWidget *dialog = gtk_window_new();
+  gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+  gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(ui->window));
+  gtk_window_set_decorated(GTK_WINDOW(dialog), FALSE);
+
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_window_set_child(GTK_WINDOW(dialog), box);
+
+  gtk_window_present(GTK_WINDOW(dialog));
 }

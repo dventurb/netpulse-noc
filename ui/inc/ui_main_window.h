@@ -6,10 +6,13 @@
 
 typedef struct {
   application_t *application;
+
+  GtkWidget *window;
   GtkWidget *stack;
+
   GtkWidget *buttons[6];
   int count;
-} menu_context_t;
+} ui_t;
 
 void create_main_window(GtkApplication *gui, gpointer data);
 
