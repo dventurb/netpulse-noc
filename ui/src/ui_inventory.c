@@ -10,7 +10,7 @@ static GtkWidget *create_inventory_table(application_t *application);
 static GtkWidget *create_dialog_window(GtkWidget *window);
 
 // Callbacks
-static void on_add_device_button_clicked(GtkButton *button, gpointer data);
+static void on_add_equipment_button_clicked(GtkButton *button, gpointer data);
 
 GtkWidget *create_page_inventory(ui_t *ui)
 {
@@ -51,18 +51,19 @@ static GtkWidget *create_inventory_header(ui_t *ui)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   gtk_widget_set_margin_top(box, 24);
+  gtk_widget_set_margin_bottom(box, 24);
 
   GtkWidget *title = gtk_label_new("Equipment Inventory");
   gtk_widget_add_css_class(title, "inventory-title");
   gtk_widget_set_hexpand(title, TRUE);
   gtk_widget_set_halign(title, GTK_ALIGN_START);
 
-  GtkWidget *add_device_button = widget_create_secondary_button("Add device", "assets/icon-add-device.svg", "secondary-button");
-  gtk_widget_set_margin_end(add_device_button, 24);
-  g_signal_connect(add_device_button, "clicked", G_CALLBACK(on_add_device_button_clicked), ui);
+  GtkWidget *add_equipment_button = widget_create_secondary_button("Add equipment", "assets/icon-add-device.svg", "secondary-button");
+  gtk_widget_set_margin_end(add_equipment_button, 24);
+  g_signal_connect(add_equipment_button, "clicked", G_CALLBACK(on_add_equipment_button_clicked), ui);
   
   gtk_box_append(GTK_BOX(box), title);
-  gtk_box_append(GTK_BOX(box), add_device_button);
+  gtk_box_append(GTK_BOX(box), add_equipment_button);
 
   return box;
 }
@@ -133,7 +134,7 @@ static GtkWidget *create_inventory_table(application_t *application)
   return grid;
 }
 
-static void on_add_device_button_clicked(GtkButton *button, gpointer data)
+static void on_add_equipment_button_clicked(GtkButton *button, gpointer data)
 {
   ui_t *ui = (ui_t *) data;
 
@@ -170,6 +171,70 @@ static GtkWidget *create_dialog_window(GtkWidget *window)
   gtk_box_append(GTK_BOX(header), close_button);
 
   gtk_box_append(GTK_BOX(box), header);
+
+  GtkWidget *form = gtk_grid_new();
+  gtk_widget_set_margin_start(form, 24);
+  gtk_widget_set_margin_end(form, 24);
+  gtk_widget_set_margin_top(form, 24);
+  gtk_widget_set_margin_bottom(form, 40);
+  gtk_grid_set_column_spacing(form, 24);
+  gtk_grid_set_row_spacing(form, 24);
+  gtk_widget_add_css_class(form, "dialog-form");
+
+  GtkWidget *entry_id = widget_add_text_field(form, "Equipment ID", NULL, 0, 0);
+  GtkWidget *entry_name = widget_add_text_field(form, "Equipment Name", "Core-Switch-01", 0, 1);
+
+  const char *types[] = {
+    "Select type...",
+    "Router",
+    "Switch",
+    "Acess Point",
+    "Firewall",
+    "Server",
+    "NAS",
+    "Printer",
+    "IP Camera",
+    "UPS",
+    "Other",
+    NULL
+  };
+
+  GtkWidget *dropdown_type = widget_add_dropdown_field(form, "Type", types, 1, 0);
+
+  GtkWidget *entry_vendor = widget_add_text_field(form, "Vendor", "Cisco", 1, 1);
+
+  GtkWidget *entry_model = widget_add_text_field(form, "Model", "Catalyst 9300", 2, 0);
+  GtkWidget *entry_ip = widget_add_text_field(form, "IP Address", "192.168.1.1", 2, 1);
+
+  GtkWidget *entry_mac = widget_add_text_field(form, "Mac Address", "00:1A:2B:3C:4D:5E", 3, 0);
+  GtkWidget *entry_location = widget_add_text_field(form, "Location", "Data Center Rack A4", 3, 1);
+
+  const char *status[] = {
+    "Operational",
+    "Maintenance",
+    "Failed",
+    "Disabled",
+    NULL
+  };
+
+  GtkWidget *dropdown_status = widget_add_dropdown_field(form, "Status", status, 4, 0);
+
+  gtk_box_append(GTK_BOX(box), form);
+
+  GtkWidget *footer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
+  gtk_widget_add_css_class(footer, "dialog-footer");
+
+  GtkWidget *cancel_button = widget_create_secondary_button("Cancel", NULL, "footer-cancel-button");
+  gtk_widget_set_hexpand(cancel_button, TRUE);
+  gtk_widget_set_halign(cancel_button, GTK_ALIGN_END);
+
+  GtkWidget *add_equipment_button = widget_create_secondary_button("Add Equipment", "assets/icon-add-device.svg", "footer-add-button");
+  gtk_widget_set_margin_end(add_equipment_button, 24);
+
+  gtk_box_append(GTK_BOX(footer), cancel_button);
+  gtk_box_append(GTK_BOX(footer), add_equipment_button);
+
+  gtk_box_append(GTK_BOX(box), footer);
 
   return dialog;
 }
