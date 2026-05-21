@@ -123,6 +123,16 @@
   padding: 9px 12px 10px;
 }
 
+.form-entry-disabled {
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 12px 8px;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 400;
+}
+
 .form-dropdown button {
   all: unset; /* reset default style */
 

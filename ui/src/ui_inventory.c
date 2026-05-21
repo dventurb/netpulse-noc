@@ -7,7 +7,7 @@ static GtkWidget *create_side_bar(application_t *application);
 static GtkWidget *create_content(ui_t *ui);
 static GtkWidget *create_inventory_header(ui_t *ui);
 static GtkWidget *create_inventory_table(application_t *application);
-static GtkWidget *create_equipment_form(void);
+static GtkWidget *create_equipment_form(equipment_list_t *equipments);
 
 // Callbacks
 static void on_add_equipment_button_clicked(GtkButton *button, gpointer data);
@@ -128,7 +128,7 @@ static GtkWidget *create_inventory_table(application_t *application)
   return grid;
 }
 
-static GtkWidget *create_equipment_form(void)
+static GtkWidget *create_equipment_form(equipment_list_t *equipments)
 {
   GtkWidget *grid = gtk_grid_new();
   gtk_widget_set_margin_start(grid, 24);
@@ -140,6 +140,13 @@ static GtkWidget *create_equipment_form(void)
   gtk_widget_add_css_class(grid, "dialog-form");
 
   GtkWidget *entry_id = create_text_field(grid, "Equipment ID", NULL, 0, 0);
+  gtk_widget_add_css_class(entry_id, "form-entry-disabled");
+  gtk_editable_set_editable(GTK_EDITABLE(entry_id), FALSE);
+
+  char id[ID_MAX];
+  snprintf(id, ID_MAX, "EQ-%03d", equipments->next_id);
+  gtk_editable_set_text(GTK_EDITABLE(entry_id), id);
+
   GtkWidget *entry_name = create_text_field(grid, "Equipment Name", "Core-Switch-01", 0, 1);
   GtkWidget *dropdown_type = create_dropdown_field(grid, "Type", types, 1, 0);
   GtkWidget *entry_vendor = create_text_field(grid, "Vendor", "Cisco", 1, 1);
@@ -156,7 +163,7 @@ static void on_add_equipment_button_clicked(GtkButton *button, gpointer data)
 {
   ui_t *ui = (ui_t *) data;
 
-  GtkWidget *dialog = create_dialog_window(ui->window, create_equipment_form(), "Add Equipment");
+  GtkWidget *dialog = create_dialog_window(ui->window, create_equipment_form(&ui->application->equipments), "Add Equipment");
 
   gtk_window_present(GTK_WINDOW(dialog));
 }

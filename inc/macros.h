@@ -3,7 +3,7 @@
 
 #define STRING_MAX 100
 #define DESCRIPTION_MAX 100
-#define ID_MAX 30
+#define ID_MAX 14 // "EQ-xxx" : (10 digits + '\0')
 #define IP_MAX 16 
 #define MAC_MAX 18
 #define CODE_MAX 30
