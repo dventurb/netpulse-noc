@@ -50,11 +50,14 @@ void equipment_list_insert(equipment_list_t *list, equipment_t data)
   }
 
   new->data = data;
+
+  new->data.id = list->next_id++;
+  new->data.last_check = time(NULL);
+
   new->next = NULL;
 
   if (list->head == NULL)
   {
-    new->data.id = list->next_id++;
     new->previous = NULL;
 
     list->head = new;
@@ -64,8 +67,6 @@ void equipment_list_insert(equipment_list_t *list, equipment_t data)
 
     return;
   }
-  
-  new->data.id = list->next_id++;
 
   new->previous = list->tail;
   list->tail->next = new;

@@ -6,5 +6,5 @@
 void get_datetime(time_t time, char *string)
 {
   struct tm *tm = localtime(&time);
-  strftime(string, DATETIME_MAX, "%d-%m-%Y %H-%M", tm);
+  strftime(string, DATETIME_MAX, "%d-%m-%Y %H:%M", tm);
 }

@@ -2,6 +2,7 @@
 
 #include "utils.h"
 #include "ui_widgets.h"
+#include "macros.h"
 
 static GtkWidget *create_side_bar(application_t *application);
 static GtkWidget *create_content(ui_t *ui);
@@ -15,9 +16,9 @@ static void on_add_equipment_button_clicked(GtkButton *button, gpointer data);
 static void on_submit_equipment_button_clicked(GtkButton *button, gpointer data);
 
 // TODO: look for better way
-static const char* const status[] = { "Operational", "Maintenance", "Failed", "Disabled", NULL };
-static const char* const types[] = { "Select type...", "Router", "Switch", "Access Point", "Firewall", "Server", "NAS", "Printer", "IP Camera", "UPS", "Other", NULL };
-static const char* const headers[] = { "ID", "NAME", "TYPE", "VENDOR", "MODEL", "IP ADDRESS", "MAC ADDRESS", "LOCATION", "LAST CHECK" };
+static const char* const status[] = { "Failed", "Maintenance", "Operational", "Disabled", NULL };
+static const char* const types[] = { "Select type...", "Router", "Firewall", "Switch", "Access Point", "Server", "NAS", "UPS", "IP Camera", "Printer", "Other", NULL };
+static const char* const headers[] = { "ID", "NAME", "TYPE", "VENDOR", "MODEL", "IP ADDRESS", "MAC ADDRESS", "LOCATION", "STATUS", "LAST CHECK" };
 
 
 GtkWidget *create_page_inventory(ui_t *ui)
@@ -65,6 +66,7 @@ static GtkWidget *create_inventory_header(ui_t *ui)
 
   GtkWidget *title = gtk_label_new("Equipment Inventory");
   gtk_widget_add_css_class(title, "inventory-title");
+  gtk_widget_set_margin_start(title, 24);
   gtk_widget_set_hexpand(title, TRUE);
   gtk_widget_set_halign(title, GTK_ALIGN_START);
 
@@ -82,14 +84,16 @@ static GtkWidget *create_inventory_header(ui_t *ui)
 static GtkWidget *create_inventory_table(application_t *application)
 {
   GtkWidget *grid = gtk_grid_new();
+  gtk_widget_set_margin_end(grid, 24);
   gtk_widget_add_css_class(grid, "table");
 
   GtkWidget *select_all_button = gtk_check_button_new();
   gtk_widget_add_css_class(select_all_button, "table-header-checkbox");
   gtk_grid_attach(GTK_GRID(grid), select_all_button, 0, 0, 1, 1);
 
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < 10; i++) {
     GtkWidget *label = gtk_label_new(headers[i]);
+    gtk_widget_set_hexpand(label, TRUE);
     gtk_widget_add_css_class(label, "table-header-cell");
     gtk_grid_attach(GTK_GRID(grid), label, i + 1, 0, 1, 1);
   }
@@ -113,15 +117,17 @@ static GtkWidget *create_inventory_table(application_t *application)
       check_button,
       gtk_label_new(id),
       gtk_label_new(equipment.name),
+      gtk_label_new(equipment_type_to_string(equipment.type)),
       gtk_label_new(equipment.vendor),
       gtk_label_new(equipment.model),
       gtk_label_new(equipment.ip_address),
       gtk_label_new(equipment.mac_address),
       gtk_label_new(equipment.location),
+      gtk_label_new(equipment_status_to_string(equipment.status)),
       gtk_label_new(datetime)
     };
 
-    for (int j = 0; j < 9; j++) {
+    for (int j = 0; j < 11; j++) {
       gtk_grid_attach(GTK_GRID(grid), columns[j], j, i, 1, 1);
     }
 
@@ -165,7 +171,7 @@ static GtkWidget *create_equipment_form(equipment_list_t *equipments)
   GtkWidget *entry_ip = create_text_field(grid, "IP Address", "192.168.1.1", 2, 1);
   g_object_set_data(G_OBJECT(grid), "entry-ip", entry_ip);
 
-  GtkWidget *entry_mac = create_text_field(grid, "Mac Address", "00:1A:2B:3C:4D:5E", 3, 0); 
+  GtkWidget *entry_mac = create_text_field(grid, "MAC Address", "00:1A:2B:3C:4D:5E", 3, 0); 
   g_object_set_data(G_OBJECT(grid), "entry-mac", entry_mac);
 
   GtkWidget *entry_location = create_text_field(grid, "Location", "Data Center Rack A4", 3, 1);
@@ -200,15 +206,17 @@ static void refresh_inventory_table(GtkWidget *grid, equipment_list_t *equipment
       check_button,
       gtk_label_new(id),
       gtk_label_new(equipment.name),
+      gtk_label_new(equipment_type_to_string(equipment.type)),
       gtk_label_new(equipment.vendor),
       gtk_label_new(equipment.model),
       gtk_label_new(equipment.ip_address),
       gtk_label_new(equipment.mac_address),
       gtk_label_new(equipment.location),
+      gtk_label_new(equipment_status_to_string(equipment.status)),
       gtk_label_new(datetime)
     };
 
-    for (int j = 0; j < 9; j++) {
+    for (int j = 0; j < 11; j++) {
       if (j != 0) gtk_widget_add_css_class(columns[j], "table-cell");
       else gtk_widget_add_css_class(columns[0], "table-checkbox");
 
