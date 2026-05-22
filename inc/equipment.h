@@ -6,21 +6,21 @@
 
 typedef enum {
   TYPE_ROUTER,
+  TYPE_FIREWALL,
   TYPE_SWITCH,
   TYPE_ACCESS_POINT,
-  TYPE_FIREWALL,
   TYPE_SERVER,
   TYPE_NAS,
-  TYPE_PRINTER,
-  TYPE_IP_CAMERA,
   TYPE_UPS,
+  TYPE_IP_CAMERA,
+  TYPE_PRINTER,
   TYPE_OTHER
 } equipment_type_t;
 
 typedef enum {
-  STATUS_OPERATIONAL,
-  STATUS_MAINTENANCE,
   STATUS_FAILED,
+  STATUS_MAINTENANCE,
+  STATUS_OPERATIONAL,
   STATUS_DISABLED
 } equipment_status_t;
 
@@ -74,5 +74,8 @@ void equipment_update_last_check(equipment_t *equipment);
 
 int equipment_filter_by_status(const equipment_list_t *list, equipment_status_t status, equipment_t *equipments);
 int equipment_filter_by_type(const equipment_list_t *list, equipment_type_t type, equipment_t *equipments);
+
+const char *equipment_status_to_string(equipment_status_t status);
+const char *equipment_type_to_string(equipment_type_t type);
 
 #endif

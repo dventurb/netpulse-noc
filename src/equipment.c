@@ -375,3 +375,33 @@ static int compare_by_type(const equipment_node_t *left, const equipment_node_t 
 {
   return left->data.type - right->data.type;
 }
+
+const char *equipment_status_to_string(equipment_status_t status)
+{
+  switch (status) 
+  {
+    case STATUS_MAINTENANCE: return "Maintenance";
+    case STATUS_FAILED: return "Failed";
+    case STATUS_OPERATIONAL: return "Operational";
+    case STATUS_DISABLED: return "Disabled";
+    default: return "Unknown";
+  }
+}
+
+const char *equipment_type_to_string(equipment_type_t type)
+{
+  switch (type) 
+  {
+    case TYPE_ROUTER: return "Router";
+    case TYPE_FIREWALL: return "Firewall";
+    case TYPE_SWITCH: return "Switch";
+    case TYPE_ACCESS_POINT: return "Access Point";
+    case TYPE_SERVER: return "Server";
+    case TYPE_NAS: return "NAS";
+    case TYPE_UPS: return "UPS";
+    case TYPE_IP_CAMERA: return "IP Camera";
+    case TYPE_PRINTER: return "Printer";
+    case TYPE_OTHER: return "Other";
+    default: return "Other";
+  }
+}
