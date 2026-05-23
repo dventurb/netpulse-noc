@@ -57,49 +57,104 @@
 }
 
 .table {
-  background-color: #ffffff;
+  background-color: transparent;
   border: 1px solid #dedede;
   border-radius: 8px;
 }
 
+.table-scroll scrollbar {
+  background-color: transparent;
+  padding-bottom: 2px;
+}
+
+.table-scroll scrollbar slider {
+  min-width: 4px;
+  min-height: 4px;
+  background-color: rgba(0, 0, 0, 0.18);
+  border-radius: 999px;
+}
+
+.table-scroll scrollbar slider:hover {
+  background-color: rgba(0, 0, 0, 0.32);
+}
+
+.table-scroll scrollbar slider:active {
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+.table-header-cell,
 .table-header-checkbox {
   all: unset; /* reset default style */
 
-  padding: 24px;
+  color: #888888;
+  font-size: 12px;
+  font-weight: 600;
   background-color: #f5f6f8;
   border-bottom: 1px solid #e0e0e0;
+  padding: 18px 24px;
 }
 
 .table-header-checkbox:checked {
   border-color: #19c37d;
 }
 
-.table-header-cell {
-  background-color: #f5f6f8;
-  padding: 16px 24px;
-  color: #888888;
-  font-size: 12px;
-  font-weight: 600;
-  border-bottom: 1px solid #e0e0e0;
-}
-
+.table-cell,
 .table-checkbox {
   all: unset; /* reset default style */
 
-  padding: 24px;
+  color: #888888;
+  font-size: 14px;
   background-color: #ffffff;
   border-bottom: 1px solid #e0e0e0;
+  padding: 18px 24px;
 }
 
 .table-checkbox:checked {
   border-color: #19c37d;
 }
 
-.table-cell {
-  color: #888888;
-  font-size: 14px;
-  padding: 24px 16px;
-  border-bottom: 1px solid #e0e0e0;
+.table-row-odd {
+  background-color: #ffffff;
+}
+
+.table-row-even {
+  background-color: #fafafa;
+}
+
+.table-name-cell {
+  color: #222222;
+  font-weight: 600;
+}
+
+.status-cell {
+  padding: 18px 24px;
+}
+
+.status-label {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-operational {
+  color: #52c41a;
+  background-color: #f0fdf4;
+}
+
+.status-failed {
+  color: #ff4d4f;
+  background-color: #fef2f2;
+}
+
+.status-maintenance {
+  color: #faad14;
+  background-color: #fffbeb;
+}
+
+.status-disabled {
+  color: #8c8c8c;
+  background-color: #f2f2f2;
 }
 
 .dialog {

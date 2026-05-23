@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "ui_widgets.h"
 #include "macros.h"
+#include "ui_macros.h"
 
 static GtkWidget *create_side_bar(application_t *application);
 static GtkWidget *create_content(ui_t *ui);
@@ -17,9 +18,9 @@ static void on_submit_equipment_button_clicked(GtkButton *button, gpointer data)
 
 // TODO: look for better way
 static const char* const status[] = { "Failed", "Maintenance", "Operational", "Disabled", NULL };
-static const char* const types[] = { "Select type...", "Router", "Firewall", "Switch", "Access Point", "Server", "NAS", "UPS", "IP Camera", "Printer", "Other", NULL };
+static const char* const types[] = { "Router", "Firewall", "Switch", "Access Point", "Server", "NAS", "UPS", "IP Camera", "Printer", "Other", NULL };
 static const char* const headers[] = { "ID", "NAME", "TYPE", "VENDOR", "MODEL", "IP ADDRESS", "MAC ADDRESS", "LOCATION", "STATUS", "LAST CHECK" };
-
+static const int widths[] = { CELL_ID_WIDTH, CELL_NAME_WIDTH, CELL_TYPE_WIDTH, CELL_VENDOR_WIDTH, CELL_MODEL_WIDTH, CELL_IP_ADDRESS_WIDTH, CELL_MAC_ADDRESS_WIDTH, CELL_LOCATION_WIDTH, CELL_STATUS_WIDTH, CELL_LAST_CHECK_WIDTH };
 
 GtkWidget *create_page_inventory(ui_t *ui)
 {
@@ -50,7 +51,7 @@ static GtkWidget *create_content(ui_t *ui)
   GtkWidget *header = create_inventory_header(ui);
   GtkWidget *table = create_inventory_table(ui->application);
 
-  g_object_set_data(G_OBJECT(ui->stack), "inventory-table", table);
+  g_object_set_data(G_OBJECT(ui->stack), "inventory-window", table);
 
   gtk_box_append(GTK_BOX(box), header);
   gtk_box_append(GTK_BOX(box), table);
@@ -83,23 +84,31 @@ static GtkWidget *create_inventory_header(ui_t *ui)
 // TODO: Not finished yet.
 static GtkWidget *create_inventory_table(application_t *application)
 {
+  GtkWidget *scrolled_window = gtk_scrolled_window_new();
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
+  gtk_widget_set_margin_end(scrolled_window, 24);
+  gtk_widget_add_css_class(scrolled_window, "table-scroll");
+
   GtkWidget *grid = gtk_grid_new();
-  gtk_widget_set_margin_end(grid, 24);
+  gtk_widget_set_hexpand(grid, TRUE);
+  gtk_widget_set_halign(grid, GTK_ALIGN_FILL);
   gtk_widget_add_css_class(grid, "table");
+
+  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), grid);
+
+  g_object_set_data(G_OBJECT(scrolled_window), "inventory-table", grid);
 
   GtkWidget *select_all_button = gtk_check_button_new();
   gtk_widget_add_css_class(select_all_button, "table-header-checkbox");
   gtk_grid_attach(GTK_GRID(grid), select_all_button, 0, 0, 1, 1);
 
   for (int i = 0; i < 10; i++) {
-    GtkWidget *label = gtk_label_new(headers[i]);
-    gtk_widget_set_hexpand(label, TRUE);
-    gtk_widget_add_css_class(label, "table-header-cell");
+    GtkWidget *label = create_table_label(headers[i], "table-header-cell", widths[i]);
     gtk_grid_attach(GTK_GRID(grid), label, i + 1, 0, 1, 1);
   }
 
   equipment_node_t *node = application->equipments.head;
-  if (node == NULL) return grid;
+  if (node == NULL) return scrolled_window;
 
   for (int i = 1; i <= application->equipments.count; i++) {
     equipment_t equipment = node->data;
@@ -115,16 +124,16 @@ static GtkWidget *create_inventory_table(application_t *application)
 
     GtkWidget *columns[] = {
       check_button,
-      gtk_label_new(id),
-      gtk_label_new(equipment.name),
-      gtk_label_new(equipment_type_to_string(equipment.type)),
-      gtk_label_new(equipment.vendor),
-      gtk_label_new(equipment.model),
-      gtk_label_new(equipment.ip_address),
-      gtk_label_new(equipment.mac_address),
-      gtk_label_new(equipment.location),
-      gtk_label_new(equipment_status_to_string(equipment.status)),
-      gtk_label_new(datetime)
+      create_table_label(id, "table-cell", CELL_ID_WIDTH),
+      create_table_label(equipment.name, "table-cell", CELL_NAME_WIDTH),
+      create_table_label(equipment_type_to_string(equipment.type), "table-cell", CELL_TYPE_WIDTH),
+      create_table_label(equipment.vendor, "table-cell", CELL_VENDOR_WIDTH),
+      create_table_label(equipment.model, "table-cell", CELL_MODEL_WIDTH),
+      create_table_label(equipment.ip_address, "table-cell", CELL_IP_ADDRESS_WIDTH),
+      create_table_label(equipment.mac_address, "table-cell", CELL_MAC_ADDRESS_WIDTH),
+      create_table_label(equipment.location, "table-cell", CELL_LOCATION_WIDTH),
+      create_table_label(equipment_status_to_string(equipment.status), "table-cell", CELL_STATUS_WIDTH),
+      create_table_label(datetime, "table-cell", CELL_LAST_CHECK_WIDTH)
     };
 
     for (int j = 0; j < 11; j++) {
@@ -134,7 +143,7 @@ static GtkWidget *create_inventory_table(application_t *application)
     node = node->next;
   }
 
-  return grid;
+  return scrolled_window;
 }
 
 static GtkWidget *create_equipment_form(equipment_list_t *equipments)
@@ -193,8 +202,11 @@ static void refresh_inventory_table(GtkWidget *grid, equipment_list_t *equipment
   for (int i = 1; i <= equipments->count; i++) {
     equipment_t equipment = node->data;
 
+    const char *css_class = (i % 2 == 0) ? "table-row-even" : "table-row-odd";
+
     GtkWidget *check_button = gtk_check_button_new();
     g_object_set_data(G_OBJECT(check_button), "equipment", (void *)node);
+    gtk_widget_add_css_class(check_button, css_class);
 
     char id[ID_MAX];
     snprintf(id, ID_MAX, "EQ-%03d", equipment.id);
@@ -204,21 +216,21 @@ static void refresh_inventory_table(GtkWidget *grid, equipment_list_t *equipment
 
     GtkWidget *columns[] = {
       check_button,
-      gtk_label_new(id),
-      gtk_label_new(equipment.name),
-      gtk_label_new(equipment_type_to_string(equipment.type)),
-      gtk_label_new(equipment.vendor),
-      gtk_label_new(equipment.model),
-      gtk_label_new(equipment.ip_address),
-      gtk_label_new(equipment.mac_address),
-      gtk_label_new(equipment.location),
-      gtk_label_new(equipment_status_to_string(equipment.status)),
-      gtk_label_new(datetime)
+      create_table_label(id, css_class, CELL_ID_WIDTH),
+      create_table_label(equipment.name, css_class, CELL_NAME_WIDTH),
+      create_table_label(equipment_type_to_string(equipment.type), css_class, CELL_TYPE_WIDTH),
+      create_table_label(equipment.vendor, css_class, CELL_VENDOR_WIDTH),
+      create_table_label(equipment.model, css_class, CELL_MODEL_WIDTH),
+      create_table_label(equipment.ip_address, css_class, CELL_IP_ADDRESS_WIDTH),
+      create_table_label(equipment.mac_address, css_class, CELL_MAC_ADDRESS_WIDTH),
+      create_table_label(equipment.location, css_class, CELL_LOCATION_WIDTH),
+      create_status_cell(equipment.status),
+      create_table_label(datetime, css_class, CELL_LAST_CHECK_WIDTH)
     };
 
     for (int j = 0; j < 11; j++) {
-      if (j != 0) gtk_widget_add_css_class(columns[j], "table-cell");
-      else gtk_widget_add_css_class(columns[0], "table-checkbox");
+      gtk_widget_add_css_class(columns[j], j == 0 ? "table-checkbox" : "table-cell");
+      if (j == 2) gtk_widget_add_css_class(columns[j], "table-name-cell");
 
       gtk_grid_attach(GTK_GRID(grid), columns[j], j, i, 1, 1);
     }
@@ -241,8 +253,8 @@ static void on_add_equipment_button_clicked(GtkButton *button, gpointer data)
 
   equipment_form->dialog = dialog;
 
-  GtkWidget *table = g_object_get_data(G_OBJECT(ui->stack), "inventory-table");
-  g_object_set_data(G_OBJECT(equipment_form->dialog), "inventory-table", table);
+  GtkWidget *table = g_object_get_data(G_OBJECT(ui->stack), "inventory-window");
+  g_object_set_data(G_OBJECT(equipment_form->dialog), "inventory-window", table);
 
   g_object_set_data_full(G_OBJECT(dialog), "equipment-form", equipment_form, free); // ownership + free
 
@@ -271,18 +283,18 @@ static void on_submit_equipment_button_clicked(GtkButton *button, gpointer data)
     snprintf(fields[i].dest, STRING_MAX, "%s", text);
   }
 
-  // TODO: Check if position != 0
   GtkWidget *dropdown_type = g_object_get_data(G_OBJECT(equipment_form->form), "dropdown-type");
-  new.type = gtk_drop_down_get_selected(GTK_DROP_DOWN(dropdown_type)) - 1; // The placeholder don't count
+  new.type = gtk_drop_down_get_selected(GTK_DROP_DOWN(dropdown_type));
 
   GtkWidget *dropdown_status = g_object_get_data(G_OBJECT(equipment_form->form), "dropdown-status");
   new.status = gtk_drop_down_get_selected(GTK_DROP_DOWN(dropdown_status));
 
   equipment_list_insert(equipment_form->equipments, new);
 
-  GtkWidget *table = g_object_get_data(G_OBJECT(equipment_form->dialog), "inventory-table");
+  GtkWidget *inventory_window = g_object_get_data(G_OBJECT(equipment_form->dialog), "inventory-window");
+  GtkWidget *inventory_table = g_object_get_data(G_OBJECT(inventory_window), "inventory-table");
 
-  refresh_inventory_table(table, equipment_form->equipments);
+  refresh_inventory_table(inventory_table, equipment_form->equipments);
 
   gtk_window_destroy(GTK_WINDOW(equipment_form->dialog));
 }

@@ -3,6 +3,8 @@
 
 #include <gtk/gtk.h>
 
+#include "equipment.h"
+
 typedef struct {
   const char *key;
   char *dest;
@@ -16,6 +18,8 @@ GtkWidget *create_dropdown_field(GtkWidget *grid, const char *text, const char* 
 GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *title, GCallback callback, gpointer data);
 GtkWidget *create_dialog_header(GtkWidget *dialog, const char *title);
 GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, GCallback callback, gpointer data);
+GtkWidget *create_table_label(const char *text, const char *css, int width);
+GtkWidget *create_status_cell(equipment_status_t status);
 void remove_all_items_table(GtkWidget *grid);
 
 #endif

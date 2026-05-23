@@ -151,6 +151,56 @@ GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, GCallback 
   return footer;
 }
 
+GtkWidget *create_table_label(const char *text, const char *css, int width)
+{
+  GtkWidget *label = gtk_label_new(text != NULL ? text : "");
+  
+  gtk_widget_add_css_class(label, css);
+
+  gtk_widget_set_size_request(label, width, -1);
+  gtk_label_set_single_line_mode(GTK_LABEL(label), TRUE);
+  gtk_widget_set_hexpand(label, FALSE);
+  gtk_widget_set_halign(label, GTK_ALIGN_FILL);
+
+  gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_END);
+  gtk_label_set_width_chars(GTK_LABEL(label), 1);
+  gtk_label_set_max_width_chars(GTK_LABEL(label), 1);
+
+  gtk_label_set_xalign(GTK_LABEL(label), 0.0);
+  gtk_widget_set_tooltip_text(label, text);
+
+  return label;
+}
+
+GtkWidget *create_status_cell(equipment_status_t status)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_widget_add_css_class(box, "table-cell");
+  gtk_widget_add_css_class(box, "status-cell");
+
+  GtkWidget *label = gtk_label_new(equipment_status_to_string(status));
+  gtk_widget_add_css_class(label, "status-label");
+
+  switch (status) 
+  {
+    case STATUS_OPERATIONAL: 
+      gtk_widget_add_css_class(label, "status-operational");
+      break;
+    case STATUS_FAILED: 
+      gtk_widget_add_css_class(label, "status-failed");
+      break;
+    case STATUS_MAINTENANCE: 
+      gtk_widget_add_css_class(label, "status-maintenance");
+      break;
+    case STATUS_DISABLED:
+      gtk_widget_add_css_class(label, "status-disabled");
+  }
+
+  gtk_box_append(GTK_BOX(box), label);
+
+  return box;
+}
+
 void remove_all_items_table(GtkWidget *grid)
 {
   GtkWidget *item = gtk_widget_get_first_child(grid);
