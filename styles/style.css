@@ -82,7 +82,7 @@
   background-color: rgba(0, 0, 0, 0.45);
 }
 
-.table-header-cell,
+.table-header,
 .table-header-checkbox {
   all: unset; /* reset default style */
 

@@ -9,6 +9,8 @@ static GtkWidget *create_side_bar(application_t *application);
 static GtkWidget *create_content(ui_t *ui);
 static GtkWidget *create_inventory_header(ui_t *ui);
 static GtkWidget *create_inventory_table(application_t *application);
+static void create_inventory_table_header(GtkWidget *grid);
+static void create_inventory_table_row(GtkWidget *grid, equipment_node_t *node, int row);
 static GtkWidget *create_equipment_form(equipment_list_t *equipments);
 static void refresh_inventory_table(GtkWidget *grid, equipment_list_t *equipments);
 
@@ -98,52 +100,68 @@ static GtkWidget *create_inventory_table(application_t *application)
 
   g_object_set_data(G_OBJECT(scrolled_window), "inventory-table", grid);
 
-  GtkWidget *select_all_button = gtk_check_button_new();
-  gtk_widget_add_css_class(select_all_button, "table-header-checkbox");
-  gtk_grid_attach(GTK_GRID(grid), select_all_button, 0, 0, 1, 1);
-
-  for (int i = 0; i < 10; i++) {
-    GtkWidget *label = create_table_label(headers[i], "table-header-cell", widths[i]);
-    gtk_grid_attach(GTK_GRID(grid), label, i + 1, 0, 1, 1);
-  }
+  create_inventory_table_header(grid);
 
   equipment_node_t *node = application->equipments.head;
   if (node == NULL) return scrolled_window;
 
   for (int i = 1; i <= application->equipments.count; i++) {
-    equipment_t equipment = node->data;
-
-    GtkWidget *check_button = gtk_check_button_new();
-    g_object_set_data(G_OBJECT(check_button), "equipment", (void *)node);
-
-    char id[ID_MAX];
-    snprintf(id, ID_MAX, "EQ-%03d", equipment.id);
-
-    char datetime[DATETIME_MAX];
-    get_datetime(equipment.last_check, datetime);
-
-    GtkWidget *columns[] = {
-      check_button,
-      create_table_label(id, "table-cell", CELL_ID_WIDTH),
-      create_table_label(equipment.name, "table-cell", CELL_NAME_WIDTH),
-      create_table_label(equipment_type_to_string(equipment.type), "table-cell", CELL_TYPE_WIDTH),
-      create_table_label(equipment.vendor, "table-cell", CELL_VENDOR_WIDTH),
-      create_table_label(equipment.model, "table-cell", CELL_MODEL_WIDTH),
-      create_table_label(equipment.ip_address, "table-cell", CELL_IP_ADDRESS_WIDTH),
-      create_table_label(equipment.mac_address, "table-cell", CELL_MAC_ADDRESS_WIDTH),
-      create_table_label(equipment.location, "table-cell", CELL_LOCATION_WIDTH),
-      create_table_label(equipment_status_to_string(equipment.status), "table-cell", CELL_STATUS_WIDTH),
-      create_table_label(datetime, "table-cell", CELL_LAST_CHECK_WIDTH)
-    };
-
-    for (int j = 0; j < 11; j++) {
-      gtk_grid_attach(GTK_GRID(grid), columns[j], j, i, 1, 1);
-    }
+    create_inventory_table_row(grid, node, i);
 
     node = node->next;
   }
 
   return scrolled_window;
+}
+
+static void create_inventory_table_header(GtkWidget *grid)
+{
+  GtkWidget *select_all_button = gtk_check_button_new();
+  gtk_widget_add_css_class(select_all_button, "table-header-checkbox");
+  gtk_grid_attach(GTK_GRID(grid), select_all_button, 0, 0, 1, 1);
+
+  for (int i = 0; i < 10; i++) {
+    GtkWidget *label = create_table_header(headers[i], widths[i]);
+    gtk_grid_attach(GTK_GRID(grid), label, i + 1, 0, 1, 1);
+  }
+}
+
+static void create_inventory_table_row(GtkWidget *grid, equipment_node_t *node, int row)
+{
+  equipment_t equipment = node->data;
+
+  const char *css_class = (row % 2 == 0) ? "table-row-even" : "table-row-odd";
+  
+  GtkWidget *check_button = create_table_checkbox();
+  g_object_set_data(G_OBJECT(check_button), "equipment", (void *)node);
+
+  char id[ID_MAX];
+  snprintf(id, ID_MAX, "EQ-%03d", equipment.id);
+
+  char datetime[DATETIME_MAX];
+  get_datetime(equipment.last_check, datetime);
+
+  GtkWidget *columns[] = {
+    check_button,
+    create_table_cell(id, CELL_ID_WIDTH),
+    create_table_cell(equipment.name, CELL_NAME_WIDTH),
+    create_table_cell(equipment_type_to_string(equipment.type), CELL_TYPE_WIDTH),
+    create_table_cell(equipment.vendor, CELL_VENDOR_WIDTH),
+    create_table_cell(equipment.model, CELL_MODEL_WIDTH),
+    create_table_cell(equipment.ip_address, CELL_IP_ADDRESS_WIDTH),
+    create_table_cell(equipment.mac_address, CELL_MAC_ADDRESS_WIDTH),
+    create_table_cell(equipment.location, CELL_LOCATION_WIDTH),
+    create_table_status_cell(equipment_status_to_string(equipment.status)),
+    create_table_cell(datetime, CELL_LAST_CHECK_WIDTH)
+  };
+
+  for (int i = 0; i < 11; i++) {
+    if (i == 2) gtk_widget_add_css_class(columns[i], "table-name-cell");
+
+    gtk_widget_add_css_class(columns[i], css_class);
+
+    gtk_grid_attach(GTK_GRID(grid), columns[i], i, row, 1, 1);
+  }
 }
 
 static GtkWidget *create_equipment_form(equipment_list_t *equipments)
@@ -200,40 +218,7 @@ static void refresh_inventory_table(GtkWidget *grid, equipment_list_t *equipment
   if (node == NULL) return;
 
   for (int i = 1; i <= equipments->count; i++) {
-    equipment_t equipment = node->data;
-
-    const char *css_class = (i % 2 == 0) ? "table-row-even" : "table-row-odd";
-
-    GtkWidget *check_button = gtk_check_button_new();
-    g_object_set_data(G_OBJECT(check_button), "equipment", (void *)node);
-    gtk_widget_add_css_class(check_button, css_class);
-
-    char id[ID_MAX];
-    snprintf(id, ID_MAX, "EQ-%03d", equipment.id);
-
-    char datetime[DATETIME_MAX];
-    get_datetime(equipment.last_check, datetime);
-
-    GtkWidget *columns[] = {
-      check_button,
-      create_table_label(id, css_class, CELL_ID_WIDTH),
-      create_table_label(equipment.name, css_class, CELL_NAME_WIDTH),
-      create_table_label(equipment_type_to_string(equipment.type), css_class, CELL_TYPE_WIDTH),
-      create_table_label(equipment.vendor, css_class, CELL_VENDOR_WIDTH),
-      create_table_label(equipment.model, css_class, CELL_MODEL_WIDTH),
-      create_table_label(equipment.ip_address, css_class, CELL_IP_ADDRESS_WIDTH),
-      create_table_label(equipment.mac_address, css_class, CELL_MAC_ADDRESS_WIDTH),
-      create_table_label(equipment.location, css_class, CELL_LOCATION_WIDTH),
-      create_status_cell(equipment.status),
-      create_table_label(datetime, css_class, CELL_LAST_CHECK_WIDTH)
-    };
-
-    for (int j = 0; j < 11; j++) {
-      gtk_widget_add_css_class(columns[j], j == 0 ? "table-checkbox" : "table-cell");
-      if (j == 2) gtk_widget_add_css_class(columns[j], "table-name-cell");
-
-      gtk_grid_attach(GTK_GRID(grid), columns[j], j, i, 1, 1);
-    }
+    create_inventory_table_row(grid, node, i);
 
     node = node->next;
   }
