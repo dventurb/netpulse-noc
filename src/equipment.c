@@ -40,7 +40,7 @@ void equipment_list_destroy(equipment_list_t *list)
   list->next_id = 0;
 }
 
-void equipment_list_insert(equipment_list_t *list, equipment_t data)
+equipment_node_t *equipment_list_insert(equipment_list_t *list, equipment_t data)
 {
   equipment_node_t *new = malloc(sizeof(equipment_node_t));
   if (new == NULL)
@@ -65,7 +65,7 @@ void equipment_list_insert(equipment_list_t *list, equipment_t data)
 
     list->count++;
 
-    return;
+    return new;
   }
 
   new->previous = list->tail;
@@ -73,6 +73,8 @@ void equipment_list_insert(equipment_list_t *list, equipment_t data)
   list->tail = new;
 
   list->count++;
+
+  return new;
 }
 
 void equipment_list_remove(equipment_list_t *list, equipment_node_t *node) 

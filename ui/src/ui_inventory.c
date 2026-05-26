@@ -290,8 +290,8 @@ static void on_add_equipment_button_clicked(GtkButton *button, gpointer data)
   equipment_form_t *equipment_form = malloc(sizeof(equipment_form_t));
   if (equipment_form == NULL) return;
 
-  equipment_form->equipments = &ui->application->equipments;
-  equipment_form->form = create_equipment_form(equipment_form->equipments);
+  equipment_form->application = ui->application;
+  equipment_form->form = create_equipment_form(&equipment_form->application->equipments);
 
   GtkWidget *dialog = create_dialog_window(ui->window, equipment_form->form, "Add Equipment", G_CALLBACK(on_submit_equipment_button_clicked), equipment_form);
 
@@ -355,12 +355,19 @@ static void on_submit_equipment_button_clicked(GtkButton *button, gpointer data)
   GtkWidget *dropdown_status = g_object_get_data(G_OBJECT(equipment_form->form), "dropdown-status");
   new.status = gtk_drop_down_get_selected(GTK_DROP_DOWN(dropdown_status));
 
-  equipment_list_insert(equipment_form->equipments, new);
+  equipment_node_t *node = equipment_list_insert(&equipment_form->application->equipments, new);
+
+  char id[ID_MAX];
+  snprintf(id, ID_MAX, "%d", node->data.id);
+
+  hashmap_insert(&equipment_form->application->id_index, id, node);
+  hashmap_insert(&equipment_form->application->ip_index, node->data.ip_address, node);
+  hashmap_insert(&equipment_form->application->mac_index, node->data.mac_address, node);
 
   GtkWidget *inventory_window = g_object_get_data(G_OBJECT(equipment_form->dialog), DATA_INVENTORY_TABLE_SCROLL);
   GtkWidget *inventory_table = g_object_get_data(G_OBJECT(inventory_window), DATA_INVENTORY_GRID);
 
-  refresh_inventory_table(inventory_table, equipment_form->equipments);
+  refresh_inventory_table(inventory_table, &equipment_form->application->equipments);
 
   gtk_window_destroy(GTK_WINDOW(equipment_form->dialog));
 }

@@ -1,12 +1,12 @@
 #ifndef UI_INVENTORY_H
 #define UI_INVENTORY_H
 
-#include "equipment.h"
+#include "application.h"
 #include "ui_main_window.h"
 #include <gtk/gtk.h>
 
 typedef struct {
-  equipment_list_t *equipments;
+  application_t *application;
   GtkWidget *dialog;
   GtkWidget *form;
 } equipment_form_t;
