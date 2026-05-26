@@ -21,7 +21,6 @@ GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, GCallback 
 GtkWidget *create_table_header(const char *text, int width);
 GtkWidget *create_table_cell(const char *text, int width);
 GtkWidget *create_table_checkbox(void);
-GtkWidget *create_table_status_cell(const char *text);
-void remove_all_items_table(GtkWidget *grid);
+void remove_table_rows(GtkWidget *grid);
 
 #endif

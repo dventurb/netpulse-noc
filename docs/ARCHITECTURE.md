@@ -247,3 +247,5 @@ https://stackoverflow.com/questions/840501/how-do-function-pointers-in-c-work
 https://www.cs.cmu.edu/~ab/15-123N09/lectures/Lecture%2008%20-%20Function%20Pointers.pdf
 https://stackoverflow.com/questions/714100/os-detecting-makefile
 https://linuxvox.com/blog/makefile-that-distinguishes-between-windows-and-unix-like-systems/
+https://stackoverflow.com/questions/791982/determine-if-a-string-is-a-valid-ipv4-address-in-c
+https://www.tutorialspoint.com/c_standard_library/c_function_sscanf.htm
