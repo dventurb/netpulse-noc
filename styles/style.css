@@ -130,9 +130,12 @@
   padding: 18px 24px;
 }
 
-.status-label {
-  padding: 4px 10px;
+.status-badge {
   border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.status-label {
   font-size: 12px;
   font-weight: 600;
 }

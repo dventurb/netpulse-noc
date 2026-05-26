@@ -82,7 +82,7 @@ static GtkWidget *create_inventory_header(ui_t *ui)
   gtk_widget_set_hexpand(title, TRUE);
   gtk_widget_set_halign(title, GTK_ALIGN_START);
 
-  GtkWidget *add_equipment_button = create_secondary_button("Add Equipment", "assets/icon-add-device.svg", "secondary-button");
+  GtkWidget *add_equipment_button = create_secondary_button("Add Equipment", "assets/icon-add.svg", "secondary-button");
   gtk_widget_set_margin_end(add_equipment_button, 24);
   g_signal_connect(add_equipment_button, "clicked", G_CALLBACK(on_add_equipment_button_clicked), ui);
   
@@ -180,26 +180,39 @@ static GtkWidget *create_inventory_status_cell(equipment_status_t status)
   gtk_widget_add_css_class(box, "table-cell");
   gtk_widget_add_css_class(box, "status-cell");
 
-  GtkWidget *label = gtk_label_new(equipment_status_to_string(status));
+  GtkWidget *border, *label, *image;
+
+  border = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  gtk_widget_add_css_class(border, "status-badge");
+
+  label = gtk_label_new(equipment_status_to_string(status));
   gtk_widget_add_css_class(label, "status-label");
 
   switch (status) 
   {
     case STATUS_FAILED:
-      gtk_widget_add_css_class(label, "status-failed");
+      image = gtk_image_new_from_file("assets/status-failed.svg");
+      gtk_widget_add_css_class(border, "status-failed");
       break;
     case STATUS_MAINTENANCE:
-      gtk_widget_add_css_class(label, "status-maintenance");
+      image = gtk_image_new_from_file("assets/status-maintenance.svg");
+      gtk_widget_add_css_class(border, "status-maintenance");
       break;
     case STATUS_OPERATIONAL:
-      gtk_widget_add_css_class(label, "status-operational");
+      image = gtk_image_new_from_file("assets/status-operational.svg");
+      gtk_widget_add_css_class(border, "status-operational");
       break;
     case STATUS_DISABLED:
-      gtk_widget_add_css_class(label, "status-disabled");
+      image = gtk_image_new_from_file("assets/status-disabled.svg");
+      gtk_widget_add_css_class(border, "status-disabled");
       break;
   }
 
-  gtk_box_append(GTK_BOX(box), label);
+  gtk_image_set_pixel_size(GTK_IMAGE(image), 6);
+
+  gtk_box_append(GTK_BOX(box), border);
+  gtk_box_append(GTK_BOX(border), image);
+  gtk_box_append(GTK_BOX(border), label);
 
   return box;
 }

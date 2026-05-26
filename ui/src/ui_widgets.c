@@ -141,7 +141,7 @@ GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, GCallback 
   gtk_widget_set_halign(cancel_button, GTK_ALIGN_END);
   g_signal_connect_swapped(cancel_button, "clicked", G_CALLBACK(gtk_window_destroy), dialog);
 
-  GtkWidget *add_button = create_secondary_button(title, "assets/icon-add-device.svg", "dialog-footer-add-button");
+  GtkWidget *add_button = create_secondary_button(title, "assets/icon-add.svg", "dialog-footer-add-button");
   gtk_widget_set_margin_end(add_button, 24);
   g_signal_connect(add_button, "clicked", G_CALLBACK(callback), data);
 
