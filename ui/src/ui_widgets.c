@@ -96,6 +96,7 @@ GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *
   GtkWidget *dialog = gtk_window_new();
   gtk_widget_add_css_class(dialog, "dialog");
   gtk_window_set_default_size(GTK_WINDOW(dialog), 672, 640);
+
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window));
   gtk_window_set_decorated(GTK_WINDOW(dialog), FALSE);
@@ -113,6 +114,7 @@ GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *
 GtkWidget *create_dialog_header(GtkWidget *dialog, const char *title)
 {
   GtkWidget *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_widget_set_size_request(header, 672, 72);
   gtk_widget_add_css_class(header, "dialog-header");
 
   GtkWidget *label = gtk_label_new(title);
@@ -134,6 +136,7 @@ GtkWidget *create_dialog_header(GtkWidget *dialog, const char *title)
 GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, GCallback callback, gpointer data)
 {
   GtkWidget *footer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
+  gtk_widget_set_size_request(footer, 672, 68);
   gtk_widget_add_css_class(footer, "dialog-footer");
 
   GtkWidget *cancel_button = create_secondary_button("Cancel", NULL, "dialog-footer-cancel-button");
