@@ -58,3 +58,20 @@ bool validate_mac_address(const char *mac_address)
 
   return true;
 }
+
+// TODO: Add SEARCH_EQUIPMENT_ID, SEARCH_INCIDENT_ID, SEARCH_TECHNICIAN_ID
+search_type_t detect_search_type(const char *text)
+{
+  if (text == NULL) return SEARCH_INVALID;
+
+  if (validate_ip_address(text)) return SEARCH_IP;
+
+  if (validate_mac_address(text)) return SEARCH_MAC;
+
+  int id;
+  char garbage;
+
+  if (sscanf(text, "EQ-%d%c", &id, &garbage) == 1) return SEARCH_ID;
+
+  return SEARCH_INVALID;
+}

@@ -56,6 +56,27 @@
   color: #ffffff;
 }
 
+.inventory-search {
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.inventory-filter button {
+  all: unset; /* reset default style */
+
+  background-color: #ffffff;
+  padding: 8.5px 16px 9.5px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  color: #888888;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .table {
   background-color: transparent;
   border: 1px solid #dedede;

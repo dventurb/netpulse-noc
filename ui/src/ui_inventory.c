@@ -20,6 +20,7 @@ static const int INVENTORY_TABLE_COLUMN_COUNT = 11;
 static GtkWidget *create_side_bar(application_t *application);
 static GtkWidget *create_content(ui_t *ui);
 static GtkWidget *create_inventory_header(ui_t *ui);
+static GtkWidget *create_inventory_filters(ui_t *ui);
 static GtkWidget *create_inventory_table(application_t *application);
 static void create_inventory_table_header(GtkWidget *grid);
 static void create_inventory_table_row(GtkWidget *grid, equipment_node_t *node, int row);
@@ -30,6 +31,7 @@ static void refresh_inventory_table(GtkWidget *grid, equipment_list_t *equipment
 // Callbacks
 static void on_add_equipment_button_clicked(GtkButton *button, gpointer data);
 static void on_submit_equipment_button_clicked(GtkButton *button, gpointer data);
+static void on_equipment_search_changed(GtkSearchEntry *search, gpointer data);
 
 
 GtkWidget *create_page_inventory(ui_t *ui)
@@ -55,16 +57,22 @@ static GtkWidget *create_side_bar(application_t *application)
 
 static GtkWidget *create_content(ui_t *ui)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
   gtk_widget_set_hexpand(box, TRUE);
+  gtk_widget_set_margin_start(box, 24);
+  gtk_widget_set_margin_end(box, 24);
+  gtk_widget_set_margin_top(box, 24);
+  gtk_widget_set_margin_bottom(box, 24);
   //gtk_widget_set_size_request(box, 1160, -1);
 
   GtkWidget *header = create_inventory_header(ui);
+  GtkWidget *filters = create_inventory_filters(ui);
   GtkWidget *table = create_inventory_table(ui->application);
 
   g_object_set_data(G_OBJECT(ui->window), DATA_INVENTORY_TABLE_SCROLL, table);
 
   gtk_box_append(GTK_BOX(box), header);
+  gtk_box_append(GTK_BOX(box), filters);
   gtk_box_append(GTK_BOX(box), table);
 
   return box;
@@ -73,21 +81,41 @@ static GtkWidget *create_content(ui_t *ui)
 static GtkWidget *create_inventory_header(ui_t *ui)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  gtk_widget_set_margin_top(box, 24);
-  gtk_widget_set_margin_bottom(box, 24);
 
   GtkWidget *title = gtk_label_new("Equipment Inventory");
   gtk_widget_add_css_class(title, "inventory-title");
-  gtk_widget_set_margin_start(title, 24);
   gtk_widget_set_hexpand(title, TRUE);
   gtk_widget_set_halign(title, GTK_ALIGN_START);
 
   GtkWidget *add_equipment_button = create_secondary_button("Add Equipment", "assets/icon-add.svg", "secondary-button");
-  gtk_widget_set_margin_end(add_equipment_button, 24);
   g_signal_connect(add_equipment_button, "clicked", G_CALLBACK(on_add_equipment_button_clicked), ui);
   
   gtk_box_append(GTK_BOX(box), title);
   gtk_box_append(GTK_BOX(box), add_equipment_button);
+
+  return box;
+}
+
+static GtkWidget *create_inventory_filters(ui_t *ui)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
+  gtk_widget_set_hexpand(box, TRUE);
+
+  GtkWidget *search = gtk_search_entry_new();
+  gtk_search_entry_set_placeholder_text(GTK_SEARCH_ENTRY(search), "Search by ID, IP or MAC...");
+  gtk_widget_add_css_class(search, "inventory-search");
+  gtk_widget_set_hexpand(search, TRUE);
+  g_signal_connect(search, "search-changed", G_CALLBACK(on_equipment_search_changed), ui);
+
+  GtkWidget *types_filter = gtk_drop_down_new_from_strings(types);
+  gtk_widget_add_css_class(types_filter, "inventory-filter");
+
+  GtkWidget *status_filter = gtk_drop_down_new_from_strings(status);
+  gtk_widget_add_css_class(status_filter, "inventory-filter");
+
+  gtk_box_append(GTK_BOX(box), search);
+  gtk_box_append(GTK_BOX(box), types_filter);
+  gtk_box_append(GTK_BOX(box), status_filter);
 
   return box;
 }
@@ -97,7 +125,6 @@ static GtkWidget *create_inventory_table(application_t *application)
 {
   GtkWidget *scrolled_window = gtk_scrolled_window_new();
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
-  gtk_widget_set_margin_end(scrolled_window, 24);
   gtk_widget_add_css_class(scrolled_window, "table-scroll");
 
   GtkWidget *grid = gtk_grid_new();
@@ -358,7 +385,7 @@ static void on_submit_equipment_button_clicked(GtkButton *button, gpointer data)
   equipment_node_t *node = equipment_list_insert(&equipment_form->application->equipments, new);
 
   char id[ID_MAX];
-  snprintf(id, ID_MAX, "%d", node->data.id);
+  snprintf(id, ID_MAX, "EQ-%03d", node->data.id);
 
   hashmap_insert(&equipment_form->application->id_index, id, node);
   hashmap_insert(&equipment_form->application->ip_index, node->data.ip_address, node);
@@ -370,4 +397,48 @@ static void on_submit_equipment_button_clicked(GtkButton *button, gpointer data)
   refresh_inventory_table(inventory_table, &equipment_form->application->equipments);
 
   gtk_window_destroy(GTK_WINDOW(equipment_form->dialog));
+}
+
+static void on_equipment_search_changed(GtkSearchEntry *search, gpointer data)
+{
+  ui_t *ui = (ui_t *) data;
+
+  GtkWidget *inventory_window = g_object_get_data(G_OBJECT(ui->window), DATA_INVENTORY_TABLE_SCROLL);  
+  GtkWidget *inventory_table = g_object_get_data(G_OBJECT(inventory_window), DATA_INVENTORY_GRID);
+
+  const char *text = gtk_editable_get_text(GTK_EDITABLE(search));
+
+  equipment_node_t *node = NULL;
+
+  switch (detect_search_type(text)) 
+  {
+    case SEARCH_ID:
+      node = (equipment_node_t *) hashmap_get(&ui->application->id_index, text);
+      break;
+    case SEARCH_IP:
+      node = (equipment_node_t *) hashmap_get(&ui->application->ip_index, text);
+      break;
+    case SEARCH_MAC:
+      node = (equipment_node_t *) hashmap_get(&ui->application->mac_index, text);
+      break;
+    case SEARCH_INVALID:
+      refresh_inventory_table(inventory_table, &ui->application->equipments);
+      return;
+  }
+
+  if (node == NULL) 
+  {
+    refresh_inventory_table(inventory_table, &ui->application->equipments);
+    return;
+  }
+
+  equipment_list_t list; // Temporary list
+  equipment_list_init(&list);
+
+  equipment_node_t *new = equipment_list_insert(&list, node->data);
+  new->data = node->data;
+
+  refresh_inventory_table(inventory_table, &list);
+
+  equipment_list_destroy(&list);
 }
