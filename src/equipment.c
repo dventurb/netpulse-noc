@@ -46,7 +46,7 @@ equipment_node_t *equipment_list_insert(equipment_list_t *list, equipment_t data
   if (new == NULL)
   {
     // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_list_insert : malloc failed)
-    return;
+    return NULL;
   }
 
   new->data = data;
@@ -197,55 +197,70 @@ void equipment_update_last_check(equipment_t *equipment)
   equipment->last_check = time(NULL);
 }
 
-
-int equipment_filter_by_status(const equipment_list_t *list, equipment_status_t status, equipment_t *equipments)
+void equipment_filter(const equipment_list_t *list, equipment_status_t status, equipment_type_t type, equipment_list_t *filtered)
 {
-  if (list == NULL || equipments == NULL)
+  if (list == NULL || filtered == NULL)
   {
-    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_filter_by_status: NULL arguments)
-    return 0;
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_filter: NULL arguments)
+    return;
   }
 
   equipment_node_t *node = list->head;
-  int i = 0;
 
-  while (node != NULL && i < list->count)
+  while (node != NULL)
   {
-    if (node->data.status == status)
+    if (node->data.status == status && node->data.type == type)
     {
-      equipments[i] = node->data;
-      i++;
+      equipment_node_t *new = equipment_list_insert(filtered, node->data);
+      new->data = node->data;
     }
 
     node = node->next;
   }
-
-  return i;
 }
 
-int equipment_filter_by_type(const equipment_list_t *list, equipment_type_t type, equipment_t *equipments)
+void equipment_filter_by_status(const equipment_list_t *list, equipment_status_t status, equipment_list_t *filtered)
 {
-  if (list == NULL || equipments == NULL)
+  if (list == NULL || filtered == NULL)
   {
-    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_filter_by_type: NULL arguments)
-    return 0;
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_filter_by_status: NULL arguments)
+    return;
   }
 
   equipment_node_t *node = list->head;
-  int i = 0;
 
-  while (node != NULL && i < list->count)
+  while (node != NULL)
+  {
+    if (node->data.status == status)
+    {
+      equipment_node_t *new = equipment_list_insert(filtered, node->data);
+      new->data = node->data;
+    }
+
+    node = node->next;
+  }
+}
+
+void equipment_filter_by_type(const equipment_list_t *list, equipment_type_t type, equipment_list_t *filtered)
+{
+  if (list == NULL || filtered == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_filter_by_type: NULL arguments)
+    return;
+  }
+
+  equipment_node_t *node = list->head;
+
+  while (node != NULL)
   {
     if (node->data.type == type)
     {
-      equipments[i] = node->data;
-      i++;
+      equipment_node_t *new = equipment_list_insert(filtered, node->data);
+      new->data = node->data;
     }
     
     node = node->next;
   }
-
-  return i;
 }
 
 void equipment_list_sort_by_status(equipment_list_t *list)

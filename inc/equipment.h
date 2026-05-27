@@ -72,8 +72,9 @@ void equipment_update_location(equipment_t *equipment, const char *location);
 void equipment_update_status(equipment_t *equipment, equipment_status_t status);
 void equipment_update_last_check(equipment_t *equipment);
 
-int equipment_filter_by_status(const equipment_list_t *list, equipment_status_t status, equipment_t *equipments);
-int equipment_filter_by_type(const equipment_list_t *list, equipment_type_t type, equipment_t *equipments);
+void equipment_filter(const equipment_list_t *list, equipment_status_t status, equipment_type_t type, equipment_list_t *filtered);
+void equipment_filter_by_status(const equipment_list_t *list, equipment_status_t status, equipment_list_t *filtered);
+void equipment_filter_by_type(const equipment_list_t *list, equipment_type_t type, equipment_list_t *filtered);
 
 const char *equipment_status_to_string(equipment_status_t status);
 const char *equipment_type_to_string(equipment_type_t type);
