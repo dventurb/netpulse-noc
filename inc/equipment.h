@@ -73,4 +73,7 @@ void equipment_filter_by_type(const equipment_list_t *list, equipment_type_t typ
 const char *equipment_status_to_string(equipment_status_t status);
 const char *equipment_type_to_string(equipment_type_t type);
 
+int equipment_get_count(equipment_list_t *list);
+int equipment_get_number_status(equipment_list_t *list, equipment_status_t status);
+
 #endif

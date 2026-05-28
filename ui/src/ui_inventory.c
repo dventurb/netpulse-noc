@@ -19,6 +19,8 @@ static const char* DATA_TYPE_FILTER = "inventory-type-filter";
 static const char* DATA_STATUS_FILTER = "inventory-status-filter";
 static const char* DATA_REMOVE_BUTTON = "inventory-remove";
 static const char* DATA_EDIT_BUTTON = "inventory-edit";
+static const char* DATA_STATS_CARDS = "inventory-stats-cards";
+
 static const int INVENTORY_HEADER_COLUMN_COUNT = 10;
 static const int INVENTORY_TABLE_COLUMN_COUNT = 11;
 
@@ -30,14 +32,17 @@ static GtkWidget *create_inventory_filters(ui_inventory_t *ui_inventory);
 static GtkWidget *create_inventory_table(ui_inventory_t *ui_inventory);
 static void create_inventory_table_header(GtkWidget *grid);
 static void create_inventory_table_row(GtkWidget *grid, equipment_node_t *node, int row);
-static GtkWidget *create_inventory_status_cell(equipment_status_t status);
-static GtkWidget *create_equipment_form(equipment_list_t *equipments);
-static void refresh_inventory_table(GtkWidget *grid, equipment_list_t *equipments);
-static void apply_inventory_filters(ui_inventory_t *ui_inventory);
-static void update_inventory_header(ui_inventory_t *ui_inventory);
-static void update_equipment_form(GtkWidget *form, equipment_t equipment);
 static GtkWidget *create_remove_form(equipment_t equipment);
 static GtkWidget *create_equipment_summary_card(equipment_t equipment);
+static GtkWidget *create_inventory_status_cell(equipment_status_t status);
+static GtkWidget *create_equipment_form(equipment_list_t *equipments);
+
+static void ui_inventory_refresh(ui_inventory_t *ui_inventory);
+static void ui_inventory_update_stats_cards(ui_inventory_t *ui_inventory);
+static void ui_inventory_refresh_table(GtkWidget *grid, equipment_list_t *equipments);
+static void ui_inventory_apply_filters(ui_inventory_t *ui_inventory);
+static void ui_inventory_update_header(ui_inventory_t *ui_inventory);
+static void ui_equipment_form_update(GtkWidget *form, equipment_t equipment);
 
 // Callbacks
 static void on_add_equipment_clicked(GtkButton *button, gpointer data);
@@ -142,11 +147,19 @@ static GtkWidget *create_inventory_stats_cards(ui_inventory_t *ui_inventory)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
   gtk_widget_set_hexpand(box, TRUE);
+  g_object_set_data(G_OBJECT(ui_inventory->container), DATA_STATS_CARDS, box);
 
-  GtkWidget *total_card = create_stats_card("Total Equipments", "4", "default-card");
-  GtkWidget *operational_card = create_stats_card("Operational", "2", "operational-card");
-  GtkWidget *failed_card = create_stats_card("Failed", "1", "failed-card");
-  GtkWidget *maintenance_card = create_stats_card("Maintenance", "1", "maintenance-card");
+  equipment_list_t *list = &ui_inventory->application->equipments;
+
+  int total = equipment_get_count(list);
+  int operational = equipment_get_number_status(list, STATUS_OPERATIONAL);
+  int failed = equipment_get_number_status(list, STATUS_FAILED);
+  int maintenance = equipment_get_number_status(list, STATUS_MAINTENANCE);
+
+  GtkWidget *total_card = create_stats_card("Total Equipments", total, "default-card");
+  GtkWidget *operational_card = create_stats_card("Operational", operational, "operational-card");
+  GtkWidget *failed_card = create_stats_card("Failed", failed, "failed-card");
+  GtkWidget *maintenance_card = create_stats_card("Maintenance", maintenance, "maintenance-card");
 
   gtk_box_append(GTK_BOX(box), total_card);
   gtk_box_append(GTK_BOX(box), operational_card);
@@ -368,7 +381,43 @@ static GtkWidget *create_equipment_form(equipment_list_t *equipments)
   return grid;
 }
 
-static void refresh_inventory_table(GtkWidget *grid, equipment_list_t *equipments)
+static void ui_inventory_refresh(ui_inventory_t *ui_inventory)
+{
+  equipment_list_t *list = &ui_inventory->application->equipments;
+
+  ui_inventory->selected_count = 0;
+  ui_inventory->selected_node = NULL;
+
+  ui_inventory_update_stats_cards(ui_inventory);
+  ui_inventory_update_header(ui_inventory);
+  ui_inventory_refresh_table(ui_inventory->table, list);
+}
+
+static void ui_inventory_update_stats_cards(ui_inventory_t *ui_inventory)
+{
+  GtkWidget *box = g_object_get_data(G_OBJECT(ui_inventory->container), DATA_STATS_CARDS);
+
+  remove_all_children_from_widget(box);
+
+  equipment_list_t *list = &ui_inventory->application->equipments;
+
+  int total = equipment_get_count(list);
+  int operational = equipment_get_number_status(list, STATUS_OPERATIONAL);
+  int failed = equipment_get_number_status(list, STATUS_FAILED);
+  int maintenance = equipment_get_number_status(list, STATUS_MAINTENANCE);
+
+  GtkWidget *total_card = create_stats_card("Total Equipments", total, "default-card");
+  GtkWidget *operational_card = create_stats_card("Operational", operational, "operational-card");
+  GtkWidget *failed_card = create_stats_card("Failed", failed, "failed-card");
+  GtkWidget *maintenance_card = create_stats_card("Maintenance", maintenance, "maintenance-card");
+
+  gtk_box_append(GTK_BOX(box), total_card);
+  gtk_box_append(GTK_BOX(box), operational_card);
+  gtk_box_append(GTK_BOX(box), failed_card);
+  gtk_box_append(GTK_BOX(box), maintenance_card);
+}
+
+static void ui_inventory_refresh_table(GtkWidget *grid, equipment_list_t *equipments)
 {
   remove_table_rows(grid);
 
@@ -385,7 +434,16 @@ static void refresh_inventory_table(GtkWidget *grid, equipment_list_t *equipment
   }
 }
 
-static void apply_inventory_filters(ui_inventory_t *ui_inventory)
+static void ui_inventory_update_header(ui_inventory_t *ui_inventory)
+{
+  GtkWidget *edit_button = g_object_get_data(G_OBJECT(ui_inventory->container), DATA_EDIT_BUTTON);
+  GtkWidget *remove_button = g_object_get_data(G_OBJECT(ui_inventory->container), DATA_REMOVE_BUTTON);
+
+  gtk_widget_set_visible(edit_button, ui_inventory->selected_count != 0);
+  gtk_widget_set_visible(remove_button, ui_inventory->selected_count != 0);
+}
+
+static void ui_inventory_apply_filters(ui_inventory_t *ui_inventory)
 {
   GtkWidget *dropdown_status = g_object_get_data(G_OBJECT(ui_inventory->container), DATA_STATUS_FILTER);
   GtkWidget *dropdown_type = g_object_get_data(G_OBJECT(ui_inventory->container), DATA_TYPE_FILTER);
@@ -395,7 +453,7 @@ static void apply_inventory_filters(ui_inventory_t *ui_inventory)
 
   if (position_status == 0 && position_type == 0) 
   {
-    refresh_inventory_table(ui_inventory->table, &ui_inventory->application->equipments);
+    ui_inventory_refresh_table(ui_inventory->table, &ui_inventory->application->equipments);
     return;
   }
 
@@ -411,21 +469,12 @@ static void apply_inventory_filters(ui_inventory_t *ui_inventory)
   else 
     equipment_filter(&ui_inventory->application->equipments, position_status - 1, position_type - 1, &filtered);
 
-  refresh_inventory_table(ui_inventory->table, &filtered);
+  ui_inventory_refresh_table(ui_inventory->table, &filtered);
 
   equipment_list_destroy(&filtered);
 }
 
-static void update_inventory_header(ui_inventory_t *ui_inventory)
-{
-  GtkWidget *edit_button = g_object_get_data(G_OBJECT(ui_inventory->container), DATA_EDIT_BUTTON);
-  GtkWidget *remove_button = g_object_get_data(G_OBJECT(ui_inventory->container), DATA_REMOVE_BUTTON);
-
-  gtk_widget_set_visible(edit_button, ui_inventory->selected_count == 1);
-  gtk_widget_set_visible(remove_button, ui_inventory->selected_count == 1);
-}
-
-static void update_equipment_form(GtkWidget *form, equipment_t equipment)
+static void ui_equipment_form_update(GtkWidget *form, equipment_t equipment)
 {
   char id[ID_MAX];
   snprintf(id, ID_MAX, "EQ-%03d", equipment.id);
@@ -561,12 +610,6 @@ static void on_add_equipment_clicked(GtkButton *button, gpointer data)
   g_object_set_data_full(G_OBJECT(equipment_form->dialog), "equipment-form", equipment_form, free); // ownership + free
 
   gtk_window_present(GTK_WINDOW(equipment_form->dialog));
-
-  ui_inventory->selected_count = 0;
-  ui_inventory->selected_node =  NULL;
-
-  update_inventory_header(ui_inventory);
-  refresh_inventory_table(equipment_form->table, &equipment_form->application->equipments);
 }
 
 static void on_edit_equipment_clicked(GtkButton *button, gpointer data)
@@ -597,7 +640,7 @@ static void on_edit_equipment_clicked(GtkButton *button, gpointer data)
       }
   };
 
-  update_equipment_form(equipment_form->form, ui_inventory->selected_node->data);
+  ui_equipment_form_update(equipment_form->form, ui_inventory->selected_node->data);
   
   equipment_form->mode = EQUIPMENT_FORM_EDIT;
   equipment_form->selected_node = ui_inventory->selected_node;
@@ -608,12 +651,6 @@ static void on_edit_equipment_clicked(GtkButton *button, gpointer data)
   g_object_set_data_full(G_OBJECT(equipment_form->dialog), "equipment-form", equipment_form, free); // ownership + free
 
   gtk_window_present(GTK_WINDOW(equipment_form->dialog));
-
-  ui_inventory->selected_count = 0;
-  ui_inventory->selected_node =  NULL;
-
-  update_inventory_header(ui_inventory);
-  refresh_inventory_table(equipment_form->table, &equipment_form->application->equipments);
 }
 
 static void on_remove_equipment_clicked(GtkButton *button, gpointer data)
@@ -654,12 +691,6 @@ static void on_remove_equipment_clicked(GtkButton *button, gpointer data)
   g_object_set_data_full(G_OBJECT(equipment_form->dialog), "equipment-form", equipment_form, free); // ownership + free
 
   gtk_window_present(GTK_WINDOW(equipment_form->dialog));
-
-  ui_inventory->selected_count = 0;
-  ui_inventory->selected_node =  NULL;
-
-  update_inventory_header(ui_inventory);
-  refresh_inventory_table(equipment_form->table, &equipment_form->application->equipments);
 }
 
 static void on_add_equipment_confirmed(GtkButton *button, gpointer data)
@@ -723,7 +754,8 @@ static void on_add_equipment_confirmed(GtkButton *button, gpointer data)
   hashmap_insert(&equipment_form->application->ip_index, node->data.ip_address, node);
   hashmap_insert(&equipment_form->application->mac_index, node->data.mac_address, node);
 
-  refresh_inventory_table(equipment_form->table, &equipment_form->application->equipments);
+  ui_inventory_t *ui_inventory = g_object_get_data(G_OBJECT(equipment_form->table), DATA_UI_INVENTORY);
+  ui_inventory_refresh(ui_inventory);
 
   gtk_window_destroy(GTK_WINDOW(equipment_form->dialog));
 }
@@ -787,7 +819,8 @@ static void on_edit_equipment_confirmed(GtkButton *button, gpointer data)
   
   equipment_update(&node->data, update_equipment);
 
-  refresh_inventory_table(equipment_form->table, &equipment_form->application->equipments);
+  ui_inventory_t *ui_inventory = g_object_get_data(G_OBJECT(equipment_form->table), DATA_UI_INVENTORY);
+  ui_inventory_refresh(ui_inventory);
 
   gtk_window_destroy(GTK_WINDOW(equipment_form->dialog));
 }
@@ -809,7 +842,8 @@ static void on_remove_equipment_confirmed(GtkButton *button, gpointer data)
 
   equipment_list_remove(&equipment_form->application->equipments, node);
 
-  refresh_inventory_table(equipment_form->table, &equipment_form->application->equipments);
+  ui_inventory_t *ui_inventory = g_object_get_data(G_OBJECT(equipment_form->table), DATA_UI_INVENTORY);
+  ui_inventory_refresh(ui_inventory);
 
   gtk_window_destroy(GTK_WINDOW(equipment_form->dialog));
 }
@@ -834,13 +868,13 @@ static void on_equipment_search_changed(GtkSearchEntry *search, gpointer data)
       node = (equipment_node_t *) hashmap_get(&ui_inventory->application->mac_index, text);
       break;
     case SEARCH_INVALID:
-      refresh_inventory_table(ui_inventory->table, &ui_inventory->application->equipments);
+      ui_inventory_refresh_table(ui_inventory->table, &ui_inventory->application->equipments);
       return;
   }
 
   if (node == NULL) 
   {
-    refresh_inventory_table(ui_inventory->table, &ui_inventory->application->equipments);
+    ui_inventory_refresh_table(ui_inventory->table, &ui_inventory->application->equipments);
     return;
   }
 
@@ -850,7 +884,7 @@ static void on_equipment_search_changed(GtkSearchEntry *search, gpointer data)
   equipment_node_t *new = equipment_list_insert(&list, node->data);
   new->data = node->data;
 
-  refresh_inventory_table(ui_inventory->table, &list);
+  ui_inventory_refresh_table(ui_inventory->table, &list);
 
   equipment_list_destroy(&list);
 }
@@ -862,7 +896,7 @@ static void on_inventory_filter_changed(GObject *self, GParamSpec *pspec, gpoint
 
   ui_inventory_t *ui_inventory = (ui_inventory_t *) data;
 
-  apply_inventory_filters(ui_inventory);
+  ui_inventory_apply_filters(ui_inventory);
 }
 
 static void on_equipment_check_button_toggled(GtkCheckButton *button, gpointer data)
@@ -877,15 +911,15 @@ static void on_equipment_check_button_toggled(GtkCheckButton *button, gpointer d
   if (is_active == TRUE)
   {
     ui_inventory->selected_node = node;
-    ui_inventory->selected_count = 1;
+    ui_inventory->selected_count++;
   }
 
   else 
   {
     ui_inventory->selected_node = NULL;
-    ui_inventory->selected_count = 0;
+    ui_inventory->selected_count--;
   }
 
-  update_inventory_header(ui_inventory);
+  ui_inventory_update_header(ui_inventory);
 }
 
