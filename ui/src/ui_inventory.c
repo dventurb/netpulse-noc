@@ -25,6 +25,7 @@ static const int INVENTORY_TABLE_COLUMN_COUNT = 11;
 static GtkWidget *create_side_bar(application_t *application);
 static GtkWidget *create_content(ui_inventory_t *ui_inventory);
 static GtkWidget *create_inventory_header(ui_inventory_t *ui_inventory);
+static GtkWidget *create_inventory_stats_cards(ui_inventory_t *ui_inventory);
 static GtkWidget *create_inventory_filters(ui_inventory_t *ui_inventory);
 static GtkWidget *create_inventory_table(ui_inventory_t *ui_inventory);
 static void create_inventory_table_header(GtkWidget *grid);
@@ -95,10 +96,12 @@ static GtkWidget *create_content(ui_inventory_t *ui_inventory)
   //gtk_widget_set_size_request(box, 1160, -1);
 
   GtkWidget *header = create_inventory_header(ui_inventory);
+  GtkWidget *stats_cards = create_inventory_stats_cards(ui_inventory);
   GtkWidget *filters = create_inventory_filters(ui_inventory);
   GtkWidget *table = create_inventory_table(ui_inventory);
 
   gtk_box_append(GTK_BOX(box), header);
+  gtk_box_append(GTK_BOX(box), stats_cards);
   gtk_box_append(GTK_BOX(box), filters);
   gtk_box_append(GTK_BOX(box), table);
 
@@ -131,6 +134,24 @@ static GtkWidget *create_inventory_header(ui_inventory_t *ui_inventory)
   gtk_box_append(GTK_BOX(box), edit_button);
   gtk_box_append(GTK_BOX(box), remove_button);
   gtk_box_append(GTK_BOX(box), add_equipment_button);
+
+  return box;
+}
+
+static GtkWidget *create_inventory_stats_cards(ui_inventory_t *ui_inventory)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
+  gtk_widget_set_hexpand(box, TRUE);
+
+  GtkWidget *total_card = create_stats_card("Total Equipments", "4", "default-card");
+  GtkWidget *operational_card = create_stats_card("Operational", "2", "operational-card");
+  GtkWidget *failed_card = create_stats_card("Failed", "1", "failed-card");
+  GtkWidget *maintenance_card = create_stats_card("Maintenance", "1", "maintenance-card");
+
+  gtk_box_append(GTK_BOX(box), total_card);
+  gtk_box_append(GTK_BOX(box), operational_card);
+  gtk_box_append(GTK_BOX(box), failed_card);
+  gtk_box_append(GTK_BOX(box), maintenance_card);
 
   return box;
 }

@@ -39,6 +39,27 @@ GtkWidget *create_secondary_button(const char *text, const char *icon, const cha
   return button;
 }
 
+GtkWidget *create_stats_card(const char *title, const char *value, const char *css)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+  gtk_widget_set_hexpand(box, TRUE);
+  gtk_widget_add_css_class(box, "stats-card");
+  gtk_widget_add_css_class(box, css != NULL ? css : "");
+
+  GtkWidget *title_label = gtk_label_new(title != NULL ? title : "");
+  gtk_widget_set_halign(title_label, GTK_ALIGN_START);
+  gtk_widget_add_css_class(title_label, "stats-card-title");
+
+  GtkWidget *value_label = gtk_label_new(value != NULL ? value : "");
+  gtk_widget_set_halign(value_label, GTK_ALIGN_START);
+  gtk_widget_add_css_class(value_label, "stats-card-value");
+
+  gtk_box_append(GTK_BOX(box), title_label);
+  gtk_box_append(GTK_BOX(box), value_label);
+
+  return box;
+}
+
 GtkWidget *create_text_field(GtkWidget *grid, const char *text, const char *placeholder, int row, int column)
 {
   GtkWidget *box, *label, *entry;
