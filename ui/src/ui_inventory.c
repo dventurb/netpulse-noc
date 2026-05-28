@@ -76,6 +76,8 @@ GtkWidget *create_page_inventory(ui_t *ui)
 // TODO
 static GtkWidget *create_side_bar(application_t *application)
 {
+  (void)application; // unused parameter
+
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_widget_set_size_request(box, 280, -1);
 
@@ -505,6 +507,8 @@ static GtkWidget *create_equipment_summary_card(equipment_t equipment)
 
 static void on_add_equipment_clicked(GtkButton *button, gpointer data)
 {
+  (void)button; // unused parameter
+  
   ui_inventory_t *ui_inventory = (ui_inventory_t *) data;
 
   equipment_form_t *equipment_form = malloc(sizeof(equipment_form_t));
@@ -546,6 +550,8 @@ static void on_add_equipment_clicked(GtkButton *button, gpointer data)
 
 static void on_edit_equipment_clicked(GtkButton *button, gpointer data)
 {
+  (void)button; // unused parameter
+
   ui_inventory_t *ui_inventory = (ui_inventory_t *) data;
 
   if (ui_inventory->selected_node == NULL) return;
@@ -591,6 +597,8 @@ static void on_edit_equipment_clicked(GtkButton *button, gpointer data)
 
 static void on_remove_equipment_clicked(GtkButton *button, gpointer data)
 {
+  (void)button; // unused parameter
+
   ui_inventory_t *ui_inventory = (ui_inventory_t *) data;
 
   if (ui_inventory->selected_node == NULL) return;
@@ -635,6 +643,8 @@ static void on_remove_equipment_clicked(GtkButton *button, gpointer data)
 
 static void on_add_equipment_confirmed(GtkButton *button, gpointer data)
 {
+  (void)button; // unused parameter
+  
   equipment_form_t *equipment_form = (equipment_form_t *) data;
 
   equipment_t new;
@@ -699,6 +709,8 @@ static void on_add_equipment_confirmed(GtkButton *button, gpointer data)
 
 static void on_edit_equipment_confirmed(GtkButton *button, gpointer data)
 {
+  (void)button; // unused parameter
+  
   equipment_form_t *equipment_form = (equipment_form_t *) data;
 
   equipment_t update_equipment;
@@ -761,6 +773,8 @@ static void on_edit_equipment_confirmed(GtkButton *button, gpointer data)
 
 static void on_remove_equipment_confirmed(GtkButton *button, gpointer data)
 {
+  (void)button; // unused parameter
+
   equipment_form_t *equipment_form = (equipment_form_t *) data;
 
   equipment_node_t *node = equipment_form->selected_node;
@@ -822,6 +836,9 @@ static void on_equipment_search_changed(GtkSearchEntry *search, gpointer data)
 
 static void on_inventory_filter_changed(GObject *self, GParamSpec *pspec, gpointer data)
 {
+  (void)self; // unused parameter
+  (void)pspec; // unused parameter
+
   ui_inventory_t *ui_inventory = (ui_inventory_t *) data;
 
   apply_inventory_filters(ui_inventory);

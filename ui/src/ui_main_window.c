@@ -109,5 +109,7 @@ static GtkWidget *create_menu_button(ui_t *ui, const char *label)
 
 static void on_menu_button_clicked(GtkButton *button, gpointer data)
 {
+  (void)button; // unused parameter
+  (void)data; // unused parameter
   // ui_t *ui = (ui_t *) data;
 }
