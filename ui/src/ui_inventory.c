@@ -512,10 +512,26 @@ static void on_add_equipment_clicked(GtkButton *button, gpointer data)
 
   equipment_form->application = ui_inventory->application;
   equipment_form->form = create_equipment_form(&equipment_form->application->equipments);
+  dialog_config_t dialog_config = 
+  {
+      .window = ui_inventory->window,
+      .form = equipment_form->form,
+      .title = "Add Equipment",
+      .dialog_action = 
+      {
+        .label = "Add Equipment",
+        .icon = "assets/icon-add.svg",
+        .css = "dialog-footer-add-button",
+        .callback = G_CALLBACK(on_add_equipment_confirmed),
+        .data = equipment_form
+      }
+  };
+
   equipment_form->mode = EQUIPMENT_FORM_ADD;
   equipment_form->selected_node = NULL;
+
   equipment_form->table = ui_inventory->table;
-  equipment_form->dialog = create_dialog_window(ui_inventory->window, equipment_form->form, "Add Equipment", "assets/icon-add.svg", "dialog-footer-add-button", G_CALLBACK(on_add_equipment_confirmed), equipment_form);
+  equipment_form->dialog = create_dialog_window(dialog_config);
 
   g_object_set_data_full(G_OBJECT(equipment_form->dialog), "equipment-form", equipment_form, free); // ownership + free
 
@@ -523,6 +539,9 @@ static void on_add_equipment_clicked(GtkButton *button, gpointer data)
 
   ui_inventory->selected_count = 0;
   ui_inventory->selected_node =  NULL;
+
+  update_inventory_header(ui_inventory);
+  refresh_inventory_table(equipment_form->table, &equipment_form->application->equipments);
 }
 
 static void on_edit_equipment_clicked(GtkButton *button, gpointer data)
@@ -536,13 +555,28 @@ static void on_edit_equipment_clicked(GtkButton *button, gpointer data)
 
   equipment_form->application = ui_inventory->application;
   equipment_form->form = create_equipment_form(&equipment_form->application->equipments);
+  dialog_config_t dialog_config = 
+  {
+      .window = ui_inventory->window,
+      .form = equipment_form->form,
+      .title = "Edit Equipment",
+      .dialog_action = 
+      {
+        .label = "Edit",
+        .icon = "assets/icon-edit.svg",
+        .css = "edit-button",
+        .callback = G_CALLBACK(on_edit_equipment_confirmed),
+        .data = equipment_form
+      }
+  };
+
   update_equipment_form(equipment_form->form, ui_inventory->selected_node->data);
   
   equipment_form->mode = EQUIPMENT_FORM_EDIT;
   equipment_form->selected_node = ui_inventory->selected_node;
 
   equipment_form->table = ui_inventory->table;
-  equipment_form->dialog = create_dialog_window(ui_inventory->window, equipment_form->form, "Edit Equipment", "assets/icon-edit.svg", "edit-button", G_CALLBACK(on_edit_equipment_confirmed), equipment_form);
+  equipment_form->dialog = create_dialog_window(dialog_config);
 
   g_object_set_data_full(G_OBJECT(equipment_form->dialog), "equipment-form", equipment_form, free); // ownership + free
 
@@ -550,6 +584,9 @@ static void on_edit_equipment_clicked(GtkButton *button, gpointer data)
 
   ui_inventory->selected_count = 0;
   ui_inventory->selected_node =  NULL;
+
+  update_inventory_header(ui_inventory);
+  refresh_inventory_table(equipment_form->table, &equipment_form->application->equipments);
 }
 
 static void on_remove_equipment_clicked(GtkButton *button, gpointer data)
@@ -564,11 +601,26 @@ static void on_remove_equipment_clicked(GtkButton *button, gpointer data)
   equipment_form->application = ui_inventory->application;
   equipment_form->form = create_remove_form(ui_inventory->selected_node->data);
 
+  dialog_config_t dialog_config = 
+  {
+      .window = ui_inventory->window,
+      .form = equipment_form->form,
+      .title = "Remove Equipment",
+      .dialog_action = 
+      {
+        .label = "Remove",
+        .icon = "assets/icon-remove.svg",
+        .css = "remove-button",
+        .callback = G_CALLBACK(on_remove_equipment_confirmed),
+        .data = equipment_form
+      }
+  };
+
   equipment_form->mode = EQUIPMENT_FORM_REMOVE;
   equipment_form->selected_node = ui_inventory->selected_node;
 
   equipment_form->table = ui_inventory->table;
-  equipment_form->dialog = create_dialog_window(ui_inventory->window, equipment_form->form, "Remove Equipment", "assets/icon-remove.svg", "remove-button", G_CALLBACK(on_remove_equipment_confirmed), equipment_form);
+  equipment_form->dialog = create_dialog_window(dialog_config);
 
   g_object_set_data_full(G_OBJECT(equipment_form->dialog), "equipment-form", equipment_form, free); // ownership + free
 
@@ -576,6 +628,9 @@ static void on_remove_equipment_clicked(GtkButton *button, gpointer data)
 
   ui_inventory->selected_count = 0;
   ui_inventory->selected_node =  NULL;
+
+  update_inventory_header(ui_inventory);
+  refresh_inventory_table(equipment_form->table, &equipment_form->application->equipments);
 }
 
 static void on_add_equipment_confirmed(GtkButton *button, gpointer data)

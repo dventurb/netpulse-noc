@@ -91,22 +91,22 @@ GtkWidget *create_dropdown_field(GtkWidget *grid, const char *text, const char* 
   return dropdown;
 }
 
-GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *title, const char *image, const char *css, GCallback callback, gpointer data)
+GtkWidget *create_dialog_window(dialog_config_t dialog_config)
 {
   GtkWidget *dialog = gtk_window_new();
   gtk_widget_add_css_class(dialog, "dialog");
   gtk_window_set_default_size(GTK_WINDOW(dialog), 672, 640);
 
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
-  gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window));
+  gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(dialog_config.window));
   gtk_window_set_decorated(GTK_WINDOW(dialog), FALSE);
   
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_window_set_child(GTK_WINDOW(dialog), box);
 
-  gtk_box_append(GTK_BOX(box), create_dialog_header(dialog, title != NULL ? title : ""));
-  gtk_box_append(GTK_BOX(box), form);
-  gtk_box_append(GTK_BOX(box), create_dialog_footer(dialog, title != NULL ? title : "", image != NULL ? image : "", css != NULL ? css : "", callback, data));
+  gtk_box_append(GTK_BOX(box), create_dialog_header(dialog, dialog_config.title));
+  gtk_box_append(GTK_BOX(box), dialog_config.form);
+  gtk_box_append(GTK_BOX(box), create_dialog_footer(dialog, dialog_config.dialog_action));
 
   return dialog;
 }
@@ -117,7 +117,7 @@ GtkWidget *create_dialog_header(GtkWidget *dialog, const char *title)
   gtk_widget_set_size_request(header, 672, 72);
   gtk_widget_add_css_class(header, "dialog-header");
 
-  GtkWidget *label = gtk_label_new(title);
+  GtkWidget *label = gtk_label_new(title != NULL ? title : "");
   gtk_widget_add_css_class(label, "dialog-header-title");
   gtk_widget_set_hexpand(label, TRUE);
   gtk_widget_set_halign(label, GTK_ALIGN_START);
@@ -133,7 +133,7 @@ GtkWidget *create_dialog_header(GtkWidget *dialog, const char *title)
   return header;
 }
 
-GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, const char *image, const char *css, GCallback callback, gpointer data)
+GtkWidget *create_dialog_footer(GtkWidget *dialog, dialog_action_t dialog_action)
 {
   GtkWidget *footer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
   gtk_widget_set_size_request(footer, 672, 68);
@@ -144,12 +144,12 @@ GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, const char
   gtk_widget_set_halign(cancel_button, GTK_ALIGN_END);
   g_signal_connect_swapped(cancel_button, "clicked", G_CALLBACK(gtk_window_destroy), dialog);
 
-  GtkWidget *add_button = create_secondary_button(title, image, css);
-  gtk_widget_set_margin_end(add_button, 24);
-  g_signal_connect(add_button, "clicked", G_CALLBACK(callback), data);
+  GtkWidget *button = create_secondary_button(dialog_action.label, dialog_action.icon, dialog_action.css);
+  gtk_widget_set_margin_end(button, 24);
+  g_signal_connect(button, "clicked", G_CALLBACK(dialog_action.callback), dialog_action.data);
 
   gtk_box_append(GTK_BOX(footer), cancel_button);
-  gtk_box_append(GTK_BOX(footer), add_button);
+  gtk_box_append(GTK_BOX(footer), button);
 
   return footer;
 }

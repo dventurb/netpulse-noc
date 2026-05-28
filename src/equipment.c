@@ -107,7 +107,7 @@ void equipment_update(equipment_t *equipment, equipment_t data)
   }
 
   strcpy(equipment->name, data.name);
-  strcpy(equipment->name, data.name);
+  strcpy(equipment->vendor, data.vendor);
   strcpy(equipment->model, data.model);
   strcpy(equipment->ip_address, data.ip_address);
   strcpy(equipment->mac_address, data.mac_address);

@@ -3,21 +3,36 @@
 
 #include <gtk/gtk.h>
 
-#include "equipment.h"
-
 typedef struct {
   const char *key;
   char *dest;
 } form_field_t;
+
+typedef struct {
+  const char *label;
+  const char *icon;
+  const char *css;
+  GCallback callback;
+  void *data;
+} dialog_action_t;
+
+typedef struct {
+  GtkWidget *window;
+  GtkWidget *form;
+
+  const char *title;
+  
+  dialog_action_t dialog_action;
+} dialog_config_t;
 
 GtkWidget *create_primary_button(const char *text, const char *css);
 GtkWidget *create_secondary_button(const char *text, const char *icon, const char *css);
 GtkWidget *create_stat_card(void);
 GtkWidget *create_text_field(GtkWidget *grid, const char *text, const char *placeholder, int row, int column);
 GtkWidget *create_dropdown_field(GtkWidget *grid, const char *text, const char* const *strings, int row, int column);
-GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *title, const char *image, const char *css, GCallback callback, gpointer data);
+GtkWidget *create_dialog_window(dialog_config_t dialog_config);
 GtkWidget *create_dialog_header(GtkWidget *dialog, const char *title);
-GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, const char *image, const char *css, GCallback callback, gpointer data);
+GtkWidget *create_dialog_footer(GtkWidget *dialog, dialog_action_t dialog_action);
 GtkWidget *create_table_header(const char *text, int width);
 GtkWidget *create_table_cell(const char *text, int width);
 GtkWidget *create_table_checkbox(void);
