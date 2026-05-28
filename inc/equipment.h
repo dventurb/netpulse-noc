@@ -62,13 +62,7 @@ void equipment_list_sort_by_status(equipment_list_t *list);
 void equipment_list_sort_by_location(equipment_list_t *list);
 void equipment_list_sort_by_type(equipment_list_t *list);
 
-void equipment_update_name(equipment_t *equipment, const char *name);
-void equipment_update_type(equipment_t *equipment, equipment_type_t type);
-void equipment_update_vendor(equipment_t *equipment, const char *vendor);
-void equipment_update_model(equipment_t *equipment, const char *model);
-void equipment_update_ip_address(equipment_t *equipment, const char *ip_address);
-void equipment_update_mac_address(equipment_t *equipment, const char *mac_address);
-void equipment_update_location(equipment_t *equipment, const char *location);
+void equipment_update(equipment_t *equipment, equipment_t data);
 void equipment_update_status(equipment_t *equipment, equipment_status_t status);
 void equipment_update_last_check(equipment_t *equipment);
 

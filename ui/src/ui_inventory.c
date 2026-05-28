@@ -34,10 +34,17 @@ static GtkWidget *create_equipment_form(equipment_list_t *equipments);
 static void refresh_inventory_table(GtkWidget *grid, equipment_list_t *equipments);
 static void apply_inventory_filters(ui_inventory_t *ui_inventory);
 static void update_inventory_header(ui_inventory_t *ui_inventory);
+static void update_equipment_form(GtkWidget *form, equipment_t equipment);
+static GtkWidget *create_remove_form(equipment_t equipment);
+static GtkWidget *create_equipment_summary_card(equipment_t equipment);
 
 // Callbacks
-static void on_add_equipment_button_clicked(GtkButton *button, gpointer data);
-static void on_submit_equipment_button_clicked(GtkButton *button, gpointer data);
+static void on_add_equipment_clicked(GtkButton *button, gpointer data);
+static void on_edit_equipment_clicked(GtkButton *button, gpointer data);
+static void on_remove_equipment_clicked(GtkButton *button, gpointer data);
+static void on_add_equipment_confirmed(GtkButton *button, gpointer data);
+static void on_edit_equipment_confirmed(GtkButton *button, gpointer data);
+static void on_remove_equipment_confirmed(GtkButton *button, gpointer data);
 static void on_equipment_search_changed(GtkSearchEntry *search, gpointer data);
 static void on_inventory_filter_changed(GObject *self, GParamSpec *pspec, gpointer data);
 static void on_equipment_check_button_toggled(GtkCheckButton *button, gpointer data);
@@ -106,15 +113,17 @@ static GtkWidget *create_inventory_header(ui_inventory_t *ui_inventory)
   gtk_widget_set_halign(title, GTK_ALIGN_START);
 
   GtkWidget *add_equipment_button = create_secondary_button("Add Equipment", "assets/icon-add.svg", "secondary-button");
-  g_signal_connect(add_equipment_button, "clicked", G_CALLBACK(on_add_equipment_button_clicked), ui_inventory);
+  g_signal_connect(add_equipment_button, "clicked", G_CALLBACK(on_add_equipment_clicked), ui_inventory);
 
   GtkWidget *remove_button = create_secondary_button("Remove", "assets/icon-remove.svg", "remove-button");
   gtk_widget_set_visible(remove_button, FALSE);
   g_object_set_data(G_OBJECT(ui_inventory->container), DATA_REMOVE_BUTTON, remove_button);
+  g_signal_connect(remove_button, "clicked", G_CALLBACK(on_remove_equipment_clicked), ui_inventory);
 
   GtkWidget *edit_button = create_secondary_button("Edit", "assets/icon-edit.svg", "edit-button");
   gtk_widget_set_visible(edit_button, FALSE);
   g_object_set_data(G_OBJECT(ui_inventory->container), DATA_EDIT_BUTTON, edit_button);
+  g_signal_connect(edit_button, "clicked", G_CALLBACK(on_edit_equipment_clicked), ui_inventory);
 
   gtk_box_append(GTK_BOX(box), title);
   gtk_box_append(GTK_BOX(box), edit_button);
@@ -297,6 +306,7 @@ static GtkWidget *create_equipment_form(equipment_list_t *equipments)
   GtkWidget *entry_id = create_text_field(grid, "Equipment ID", NULL, 0, 0);
   gtk_widget_add_css_class(entry_id, "form-entry-disabled");
   gtk_editable_set_editable(GTK_EDITABLE(entry_id), FALSE);
+  g_object_set_data(G_OBJECT(grid), "entry-id", entry_id);
 
   char id[ID_MAX];
   snprintf(id, ID_MAX, "EQ-%03d", equipments->next_id);
@@ -392,7 +402,108 @@ static void update_inventory_header(ui_inventory_t *ui_inventory)
   gtk_widget_set_visible(remove_button, ui_inventory->selected_count == 1);
 }
 
-static void on_add_equipment_button_clicked(GtkButton *button, gpointer data)
+static void update_equipment_form(GtkWidget *form, equipment_t equipment)
+{
+  char id[ID_MAX];
+  snprintf(id, ID_MAX, "EQ-%03d", equipment.id);
+
+  gtk_editable_set_text(GTK_EDITABLE(g_object_get_data(G_OBJECT(form), "entry-id")), id);
+  gtk_editable_set_text(GTK_EDITABLE(g_object_get_data(G_OBJECT(form), "entry-name")), equipment.name);
+  gtk_editable_set_text(GTK_EDITABLE(g_object_get_data(G_OBJECT(form), "entry-vendor")), equipment.vendor);
+  gtk_editable_set_text(GTK_EDITABLE(g_object_get_data(G_OBJECT(form), "entry-model")), equipment.model);
+  gtk_editable_set_text(GTK_EDITABLE(g_object_get_data(G_OBJECT(form), "entry-ip")), equipment.ip_address);
+  gtk_editable_set_text(GTK_EDITABLE(g_object_get_data(G_OBJECT(form), "entry-mac")), equipment.mac_address);
+  gtk_editable_set_text(GTK_EDITABLE(g_object_get_data(G_OBJECT(form), "entry-location")), equipment.location);
+  gtk_drop_down_set_selected(GTK_DROP_DOWN(g_object_get_data(G_OBJECT(form), "dropdown-type")), equipment.type);
+  gtk_drop_down_set_selected(GTK_DROP_DOWN(g_object_get_data(G_OBJECT(form), "dropdown-status")), equipment.status);
+}
+
+static GtkWidget *create_remove_form(equipment_t equipment)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
+  gtk_widget_set_size_request(box, 672, 500);
+  gtk_widget_set_margin_top(box, 24);
+  gtk_widget_set_margin_bottom(box, 24);
+  gtk_widget_set_margin_start(box, 24);
+  gtk_widget_set_margin_end(box, 24);
+  gtk_widget_add_css_class(box, "dialog-form");
+
+  GtkWidget *image = create_alert_icon();
+  GtkWidget *primary_label = create_remove_primary_label("Are you sure you want to remove this equipment?");
+  GtkWidget *secundary_label = create_remove_secundary_label("This action cannot be undone.\nEquipment with pending incidents cannot be removed.");
+  GtkWidget *summary_box = create_equipment_summary_card(equipment);
+
+  gtk_box_append(GTK_BOX(box), image);
+  gtk_box_append(GTK_BOX(box), primary_label);
+  gtk_box_append(GTK_BOX(box), secundary_label);
+  gtk_box_append(GTK_BOX(box), summary_box);
+
+  return box;
+}
+
+static GtkWidget *create_equipment_summary_card(equipment_t equipment)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_widget_add_css_class(box, "equipment-summary-card");
+  
+  GtkWidget *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+
+  GtkWidget *left = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_widget_set_hexpand(left, TRUE);
+  gtk_widget_set_halign(left, GTK_ALIGN_START);
+
+  char id[ID_MAX + strlen("ID: ")];
+  snprintf(id, ID_MAX + strlen("ID: "), "ID: EQ-%03d", equipment.id);
+  
+  GtkWidget *id_label = gtk_label_new(id);
+  gtk_label_set_xalign(GTK_LABEL(id_label), 0.0);
+  gtk_widget_add_css_class(id_label, "equipment-summary-id");
+
+  GtkWidget *name_label = gtk_label_new(equipment.name);
+  gtk_label_set_xalign(GTK_LABEL(name_label), 0.0);
+  gtk_widget_add_css_class(name_label, "equipment-summary-name");
+
+  gtk_box_append(GTK_BOX(left), id_label);
+  gtk_box_append(GTK_BOX(left), name_label);
+
+  GtkWidget *status = create_inventory_status_cell(equipment.status);
+  gtk_widget_set_halign(status, GTK_ALIGN_END);
+  gtk_widget_remove_css_class(status, "table-cell");
+
+  gtk_box_append(GTK_BOX(header), left);
+  gtk_box_append(GTK_BOX(header), status);
+  
+  GtkWidget *grid = gtk_grid_new();
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 8);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 12);
+
+  char type[STRING_MAX];
+  snprintf(type, STRING_MAX, "%s", equipment_type_to_string(equipment.type));
+
+  GtkWidget *type_box = create_summary_detail("Type:", type);
+  gtk_widget_set_hexpand(type_box, TRUE);
+  gtk_widget_set_halign(type_box, GTK_ALIGN_START);
+
+  GtkWidget *ip_box = create_summary_detail("IP:", equipment.ip_address);
+
+  GtkWidget *location_box = create_summary_detail("Location:", equipment.location);
+  gtk_widget_set_hexpand(location_box, TRUE);
+  gtk_widget_set_halign(location_box, GTK_ALIGN_START);
+ 
+  GtkWidget *mac_box = create_summary_detail("MAC:", equipment.mac_address);
+
+  gtk_grid_attach(GTK_GRID(grid), type_box, 0, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), ip_box, 1, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), location_box, 0, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), mac_box, 1, 1, 1, 1);
+
+  gtk_box_append(GTK_BOX(box), header);
+  gtk_box_append(GTK_BOX(box), grid);
+
+  return box;
+}
+
+static void on_add_equipment_clicked(GtkButton *button, gpointer data)
 {
   ui_inventory_t *ui_inventory = (ui_inventory_t *) data;
 
@@ -401,15 +512,73 @@ static void on_add_equipment_button_clicked(GtkButton *button, gpointer data)
 
   equipment_form->application = ui_inventory->application;
   equipment_form->form = create_equipment_form(&equipment_form->application->equipments);
+  equipment_form->mode = EQUIPMENT_FORM_ADD;
+  equipment_form->selected_node = NULL;
   equipment_form->table = ui_inventory->table;
-  equipment_form->dialog = create_dialog_window(ui_inventory->window, equipment_form->form, "Add Equipment", G_CALLBACK(on_submit_equipment_button_clicked), equipment_form);
+  equipment_form->dialog = create_dialog_window(ui_inventory->window, equipment_form->form, "Add Equipment", "assets/icon-add.svg", "dialog-footer-add-button", G_CALLBACK(on_add_equipment_confirmed), equipment_form);
 
   g_object_set_data_full(G_OBJECT(equipment_form->dialog), "equipment-form", equipment_form, free); // ownership + free
 
   gtk_window_present(GTK_WINDOW(equipment_form->dialog));
+
+  ui_inventory->selected_count = 0;
+  ui_inventory->selected_node =  NULL;
 }
 
-static void on_submit_equipment_button_clicked(GtkButton *button, gpointer data)
+static void on_edit_equipment_clicked(GtkButton *button, gpointer data)
+{
+  ui_inventory_t *ui_inventory = (ui_inventory_t *) data;
+
+  if (ui_inventory->selected_node == NULL) return;
+
+  equipment_form_t *equipment_form = malloc(sizeof(equipment_form_t));
+  if (equipment_form == NULL) return;
+
+  equipment_form->application = ui_inventory->application;
+  equipment_form->form = create_equipment_form(&equipment_form->application->equipments);
+  update_equipment_form(equipment_form->form, ui_inventory->selected_node->data);
+  
+  equipment_form->mode = EQUIPMENT_FORM_EDIT;
+  equipment_form->selected_node = ui_inventory->selected_node;
+
+  equipment_form->table = ui_inventory->table;
+  equipment_form->dialog = create_dialog_window(ui_inventory->window, equipment_form->form, "Edit Equipment", "assets/icon-edit.svg", "edit-button", G_CALLBACK(on_edit_equipment_confirmed), equipment_form);
+
+  g_object_set_data_full(G_OBJECT(equipment_form->dialog), "equipment-form", equipment_form, free); // ownership + free
+
+  gtk_window_present(GTK_WINDOW(equipment_form->dialog));
+
+  ui_inventory->selected_count = 0;
+  ui_inventory->selected_node =  NULL;
+}
+
+static void on_remove_equipment_clicked(GtkButton *button, gpointer data)
+{
+  ui_inventory_t *ui_inventory = (ui_inventory_t *) data;
+
+  if (ui_inventory->selected_node == NULL) return;
+
+  equipment_form_t *equipment_form = malloc(sizeof(equipment_form_t));
+  if (equipment_form == NULL) return;
+
+  equipment_form->application = ui_inventory->application;
+  equipment_form->form = create_remove_form(ui_inventory->selected_node->data);
+
+  equipment_form->mode = EQUIPMENT_FORM_REMOVE;
+  equipment_form->selected_node = ui_inventory->selected_node;
+
+  equipment_form->table = ui_inventory->table;
+  equipment_form->dialog = create_dialog_window(ui_inventory->window, equipment_form->form, "Remove Equipment", "assets/icon-remove.svg", "remove-button", G_CALLBACK(on_remove_equipment_confirmed), equipment_form);
+
+  g_object_set_data_full(G_OBJECT(equipment_form->dialog), "equipment-form", equipment_form, free); // ownership + free
+
+  gtk_window_present(GTK_WINDOW(equipment_form->dialog));
+
+  ui_inventory->selected_count = 0;
+  ui_inventory->selected_node =  NULL;
+}
+
+static void on_add_equipment_confirmed(GtkButton *button, gpointer data)
 {
   equipment_form_t *equipment_form = (equipment_form_t *) data;
 
@@ -473,6 +642,88 @@ static void on_submit_equipment_button_clicked(GtkButton *button, gpointer data)
   gtk_window_destroy(GTK_WINDOW(equipment_form->dialog));
 }
 
+static void on_edit_equipment_confirmed(GtkButton *button, gpointer data)
+{
+  equipment_form_t *equipment_form = (equipment_form_t *) data;
+
+  equipment_t update_equipment;
+
+  form_field_t fields[] = {
+    { "entry-name", update_equipment.name },
+    { "entry-vendor", update_equipment.vendor },
+    { "entry-model", update_equipment.model },
+    { "entry-ip", update_equipment.ip_address },
+    { "entry-mac", update_equipment.mac_address },
+    { "entry-location", update_equipment.location },
+  };
+
+  for (int i = 0; i < 6; i++)
+  {
+    GtkWidget *entry = g_object_get_data(G_OBJECT(equipment_form->form), fields[i].key);
+    const char *text = gtk_editable_get_text(GTK_EDITABLE(entry));
+    snprintf(fields[i].dest, STRING_MAX, "%s", text);
+  }
+
+  if (validate_ip_address(update_equipment.ip_address) == FALSE) 
+  {
+    gtk_widget_add_css_class(g_object_get_data(G_OBJECT(equipment_form->form), "entry-ip"), "form-entry-error");
+    return;
+  }
+  
+  else 
+  {
+    gtk_widget_remove_css_class(g_object_get_data(G_OBJECT(equipment_form->form), "entry-ip"), "form-entry-error");
+  }
+
+  if (validate_mac_address(update_equipment.mac_address) == FALSE)
+  {
+    gtk_widget_add_css_class(g_object_get_data(G_OBJECT(equipment_form->form), "entry-mac"), "form-entry-error");
+    return;
+  }
+
+  else 
+  {
+    gtk_widget_remove_css_class(g_object_get_data(G_OBJECT(equipment_form->form), "entry-mac"), "form-entry-error");
+  }
+
+  GtkWidget *dropdown_type = g_object_get_data(G_OBJECT(equipment_form->form), "dropdown-type");
+  update_equipment.type = gtk_drop_down_get_selected(GTK_DROP_DOWN(dropdown_type));
+
+  GtkWidget *dropdown_status = g_object_get_data(G_OBJECT(equipment_form->form), "dropdown-status");
+  update_equipment.status = gtk_drop_down_get_selected(GTK_DROP_DOWN(dropdown_status));
+
+  equipment_node_t *node = equipment_form->selected_node;
+
+  hashmap_update(&equipment_form->application->ip_index, node->data.ip_address, update_equipment.ip_address, node);
+  hashmap_update(&equipment_form->application->mac_index, node->data.mac_address, update_equipment.mac_address, node);
+  
+  equipment_update(&node->data, update_equipment);
+
+  refresh_inventory_table(equipment_form->table, &equipment_form->application->equipments);
+
+  gtk_window_destroy(GTK_WINDOW(equipment_form->dialog));
+}
+
+static void on_remove_equipment_confirmed(GtkButton *button, gpointer data)
+{
+  equipment_form_t *equipment_form = (equipment_form_t *) data;
+
+  equipment_node_t *node = equipment_form->selected_node;
+
+  char id[ID_MAX];
+  snprintf(id, ID_MAX, "EQ-%03d", node->data.id);
+
+  hashmap_remove(&equipment_form->application->id_index, id);
+  hashmap_remove(&equipment_form->application->ip_index, node->data.ip_address);
+  hashmap_remove(&equipment_form->application->mac_index, node->data.mac_address);
+
+  equipment_list_remove(&equipment_form->application->equipments, node);
+
+  refresh_inventory_table(equipment_form->table, &equipment_form->application->equipments);
+
+  gtk_window_destroy(GTK_WINDOW(equipment_form->dialog));
+}
+
 static void on_equipment_search_changed(GtkSearchEntry *search, gpointer data)
 {
   ui_inventory_t *ui_inventory = (ui_inventory_t *) data;
@@ -529,17 +780,19 @@ static void on_equipment_check_button_toggled(GtkCheckButton *button, gpointer d
 
   bool is_active = gtk_check_button_get_active(button);
 
+  // TODO: selected multiple rows 
   if (is_active == TRUE)
   {
     ui_inventory->selected_node = node;
-    ui_inventory->selected_count++;
+    ui_inventory->selected_count = 1;
   }
 
   else 
   {
     ui_inventory->selected_node = NULL;
-    ui_inventory->selected_count--;
+    ui_inventory->selected_count = 0;
   }
 
   update_inventory_header(ui_inventory);
 }
+

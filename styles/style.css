@@ -328,3 +328,46 @@
   font-size: 14px;
   font-weight: 500;
 }
+
+.remove-primary-label {
+  color: #111827;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.remove-secundary-label {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.equipment-summary-card {
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.equipment-summary-id {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.equipment-summary-name {
+  color: #111827;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.summary-title-label {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.summary-value-label {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 500;
+}

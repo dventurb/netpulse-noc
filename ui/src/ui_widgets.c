@@ -91,7 +91,7 @@ GtkWidget *create_dropdown_field(GtkWidget *grid, const char *text, const char* 
   return dropdown;
 }
 
-GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *title, GCallback callback, gpointer data)
+GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *title, const char *image, const char *css, GCallback callback, gpointer data)
 {
   GtkWidget *dialog = gtk_window_new();
   gtk_widget_add_css_class(dialog, "dialog");
@@ -106,7 +106,7 @@ GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *
 
   gtk_box_append(GTK_BOX(box), create_dialog_header(dialog, title != NULL ? title : ""));
   gtk_box_append(GTK_BOX(box), form);
-  gtk_box_append(GTK_BOX(box), create_dialog_footer(dialog, title != NULL ? title : "", callback, data));
+  gtk_box_append(GTK_BOX(box), create_dialog_footer(dialog, title != NULL ? title : "", image != NULL ? image : "", css != NULL ? css : "", callback, data));
 
   return dialog;
 }
@@ -133,7 +133,7 @@ GtkWidget *create_dialog_header(GtkWidget *dialog, const char *title)
   return header;
 }
 
-GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, GCallback callback, gpointer data)
+GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, const char *image, const char *css, GCallback callback, gpointer data)
 {
   GtkWidget *footer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
   gtk_widget_set_size_request(footer, 672, 68);
@@ -144,7 +144,7 @@ GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, GCallback 
   gtk_widget_set_halign(cancel_button, GTK_ALIGN_END);
   g_signal_connect_swapped(cancel_button, "clicked", G_CALLBACK(gtk_window_destroy), dialog);
 
-  GtkWidget *add_button = create_secondary_button(title, "assets/icon-add.svg", "dialog-footer-add-button");
+  GtkWidget *add_button = create_secondary_button(title, image, css);
   gtk_widget_set_margin_end(add_button, 24);
   g_signal_connect(add_button, "clicked", G_CALLBACK(callback), data);
 
@@ -215,4 +215,49 @@ void remove_table_rows(GtkWidget *grid)
 
     item = next;
   }
+}
+
+GtkWidget *create_alert_icon(void)
+{
+  GtkWidget *image = gtk_image_new_from_file("assets/icon-alert.svg");
+  gtk_image_set_pixel_size(GTK_IMAGE(image), 72);
+
+  return image;
+}
+
+GtkWidget *create_remove_primary_label(const char *text)
+{
+  if (text == NULL) return NULL;
+
+  GtkWidget *label = gtk_label_new(text);
+  gtk_widget_add_css_class(label, "remove-primary-label");
+
+  return label;
+}
+
+GtkWidget *create_remove_secundary_label(const char *text)
+{
+  if (text == NULL) return NULL;
+
+  GtkWidget *label = gtk_label_new(text);
+  gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
+  gtk_widget_add_css_class(label, "remove-secundary-label");
+
+  return label;
+}
+
+GtkWidget *create_summary_detail(const char *title, const char *value)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+
+  GtkWidget *title_label = gtk_label_new(title != NULL ? title : "");
+  gtk_widget_add_css_class(title_label, "summary-title-label");
+
+  GtkWidget *value_label = gtk_label_new(value != NULL ? value : "");
+  gtk_widget_add_css_class(value_label, "summary-value-label");
+
+  gtk_box_append(GTK_BOX(box), title_label);
+  gtk_box_append(GTK_BOX(box), value_label);
+
+  return box;
 }

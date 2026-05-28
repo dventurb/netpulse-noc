@@ -6,6 +6,12 @@
 #include "equipment.h"
 #include <gtk/gtk.h>
 
+typedef enum {
+  EQUIPMENT_FORM_ADD,
+  EQUIPMENT_FORM_EDIT,
+  EQUIPMENT_FORM_REMOVE
+} equipment_form_mode_t;
+
 typedef struct {
   application_t *application;
   
@@ -23,6 +29,9 @@ typedef struct {
   GtkWidget *dialog;
   GtkWidget *form;
   GtkWidget *table;
+
+  equipment_form_mode_t mode;
+  equipment_node_t *selected_node;
 } equipment_form_t;
 
 GtkWidget *create_page_inventory(ui_t *ui);

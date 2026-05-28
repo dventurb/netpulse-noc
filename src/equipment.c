@@ -98,81 +98,22 @@ void equipment_list_remove(equipment_list_t *list, equipment_node_t *node)
   list->count--;
 }
 
-void equipment_update_name(equipment_t *equipment, const char *name)
-{
-  if (equipment == NULL || name == NULL) 
-  {
-    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_update_name : NULL arguments)
-    return;
-  }
-
-  snprintf(equipment->name, STRING_MAX, "%s", name);
-}
-
-void equipment_update_type(equipment_t *equipment, equipment_type_t type)
+void equipment_update(equipment_t *equipment, equipment_t data)
 {
   if (equipment == NULL) 
   {
-    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_update_type : NULL argument)
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_update : NULL argument)
     return;
   }
 
-  equipment->type = type;
-}
-
-void equipment_update_vendor(equipment_t *equipment, const char *vendor)
-{
-  if (equipment == NULL || vendor == NULL) 
-  {
-    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_update_vendor : NULL arguments)
-    return;
-  }
-
-  snprintf(equipment->vendor, STRING_MAX, "%s", vendor);
-}
-
-void equipment_update_model(equipment_t *equipment, const char *model)
-{
-  if (equipment == NULL || model == NULL) 
-  {
-    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_update_model : NULL arguments)
-    return;
-  }
-
-  snprintf(equipment->model, STRING_MAX, "%s", model);
-}
-
-void equipment_update_ip_address(equipment_t *equipment, const char *ip_address)
-{
-  if (equipment == NULL || ip_address == NULL) 
-  {
-    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_update_ip_address : NULL arguments)
-    return;
-  }
-
-  snprintf(equipment->ip_address, IP_MAX, "%s", ip_address);
-}
-
-void equipment_update_mac_address(equipment_t *equipment, const char *mac_address)
-{
-  if (equipment == NULL || mac_address == NULL) 
-  {
-    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_update_mac_address : NULL arguments)
-    return;
-  }
-
-  snprintf(equipment->mac_address, MAC_MAX, "%s", mac_address);
-}
-
-void equipment_update_location(equipment_t *equipment, const char *location)
-{
-  if (equipment == NULL || location == NULL) 
-  {
-    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_update_location : NULL arguments)
-    return;
-  }
-
-  snprintf(equipment->location, STRING_MAX, "%s", location);
+  strcpy(equipment->name, data.name);
+  strcpy(equipment->name, data.name);
+  strcpy(equipment->model, data.model);
+  strcpy(equipment->ip_address, data.ip_address);
+  strcpy(equipment->mac_address, data.mac_address);
+  strcpy(equipment->location, data.location);
+  equipment->type = data.type;
+  equipment->status = data.status;
 }
 
 void equipment_update_status(equipment_t *equipment, equipment_status_t status)

@@ -18,6 +18,7 @@ void hashmap_init(hashmap_t *hashmap);
 void hashmap_destroy(hashmap_t *hashmap);
 void hashmap_insert(hashmap_t *hashmap, const char *key, void *reference);
 void hashmap_remove(hashmap_t *hashmap, const char *key);
+void hashmap_update(hashmap_t *hashmap, const char *old_key, const char *new_key, void *reference);
 void *hashmap_get(hashmap_t *hashmap, const char *key);
 
 #endif

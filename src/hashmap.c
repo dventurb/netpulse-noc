@@ -51,6 +51,12 @@ unsigned long hash(const char *key)
 
 void hashmap_insert(hashmap_t *hashmap, const char *key, void *reference)
 {
+  if (hashmap == NULL || key == NULL || reference == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] hashmap_insert : NULL arguments)
+    return;
+  }
+
   hashmap_bucket_t *new = malloc(sizeof(hashmap_bucket_t));
   if (new == NULL)
   {
@@ -72,7 +78,11 @@ void hashmap_insert(hashmap_t *hashmap, const char *key, void *reference)
 
 void hashmap_remove(hashmap_t *hashmap, const char *key)
 {
-  if (hashmap == NULL || key == NULL) return;
+  if (hashmap == NULL || key == NULL) 
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] hashmap_remove : NULL arguments)
+    return;
+  }
 
   unsigned long h = hash(key);
   
@@ -97,6 +107,18 @@ void hashmap_remove(hashmap_t *hashmap, const char *key)
     bucket_previous = bucket_current;
     bucket_current = bucket_current->next;
   }
+}
+
+void hashmap_update(hashmap_t *hashmap, const char *old_key, const char *new_key, void *reference)
+{
+  if (hashmap == NULL || old_key == NULL || new_key == NULL || reference == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] hashmap_update : NULL arguments)
+    return;
+  }
+
+  hashmap_remove(hashmap, old_key);
+  hashmap_insert(hashmap, new_key, reference);
 }
 
 void *hashmap_get(hashmap_t *hashmap, const char *key)

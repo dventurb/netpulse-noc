@@ -15,12 +15,16 @@ GtkWidget *create_secondary_button(const char *text, const char *icon, const cha
 GtkWidget *create_stat_card(void);
 GtkWidget *create_text_field(GtkWidget *grid, const char *text, const char *placeholder, int row, int column);
 GtkWidget *create_dropdown_field(GtkWidget *grid, const char *text, const char* const *strings, int row, int column);
-GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *title, GCallback callback, gpointer data);
+GtkWidget *create_dialog_window(GtkWidget *window, GtkWidget *form, const char *title, const char *image, const char *css, GCallback callback, gpointer data);
 GtkWidget *create_dialog_header(GtkWidget *dialog, const char *title);
-GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, GCallback callback, gpointer data);
+GtkWidget *create_dialog_footer(GtkWidget *dialog, const char *title, const char *image, const char *css, GCallback callback, gpointer data);
 GtkWidget *create_table_header(const char *text, int width);
 GtkWidget *create_table_cell(const char *text, int width);
 GtkWidget *create_table_checkbox(void);
 void remove_table_rows(GtkWidget *grid);
+GtkWidget *create_alert_icon(void);
+GtkWidget *create_remove_primary_label(const char *text);
+GtkWidget *create_remove_secundary_label(const char *text);
+GtkWidget *create_summary_detail(const char *title, const char *value);
 
 #endif
