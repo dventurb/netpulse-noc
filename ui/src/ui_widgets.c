@@ -304,9 +304,9 @@ void remove_all_children_from_widget(GtkWidget *parent)
   }
 }
 
-int pagination_total_pages(const pagination_t *pagination)
+int pagination_total_pages(const pagination_t *pagination, int count)
 {
-  return (pagination->total + pagination->page_size - 1) / pagination->page_size;
+  return (count + pagination->page_size - 1) / pagination->page_size;
 }
 
 int pagination_start(const pagination_t *pagination)

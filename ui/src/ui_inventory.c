@@ -74,8 +74,8 @@ GtkWidget *create_page_inventory(ui_t *ui)
   ui_inventory->selected_node = NULL;
 
   ui_inventory->pagination.page = 0;
-  ui_inventory->pagination.page_size = 1;
-  ui_inventory->pagination.total = 3;
+  ui_inventory->pagination.page_size = 6;
+  ui_inventory->pagination.total = pagination_total_pages(&ui_inventory->pagination, ui_inventory->application->equipments.count);
 
   ui_inventory->container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
@@ -279,23 +279,12 @@ static GtkWidget *create_pagination_bar(ui_inventory_t *ui_inventory)
   g_signal_connect(previous_button, "clicked", G_CALLBACK(on_previous_page_clicked), ui_inventory);
   gtk_box_append(GTK_BOX(box), previous_button);
 
-
   int start = ui_inventory->pagination.page - 1;
   int end = ui_inventory->pagination.page + 1;
-  int total = ui_inventory->pagination.total;
+  int total = ui_inventory->pagination.total - 1;
 
-  if (start < 0)
-  {
-    start = 0;
-    end = 2;
-  }
-
-  if (end > total)
-  {
-    end = total - 1;
-    start = total - 3;
-    if (start < 0) start = 0;
-  }
+  if (start < 0) start = 0;
+  if (end > total) end = total;
 
   for (int i = start; i <= end; i++) 
   {
@@ -570,23 +559,12 @@ static void ui_inventory_update_pagination_bar(ui_inventory_t *ui_inventory)
   g_signal_connect(previous_button, "clicked", G_CALLBACK(on_previous_page_clicked), ui_inventory);
   gtk_box_append(GTK_BOX(box), previous_button);
 
-
   int start = ui_inventory->pagination.page - 1;
   int end = ui_inventory->pagination.page + 1;
-  int total = ui_inventory->pagination.total;
+  int total = ui_inventory->pagination.total - 1;
 
-  if (start < 0)
-  {
-    start = 0;
-    end = 2;
-  }
-
-  if (end > total)
-  {
-    end = total - 1;
-    start = end - 3;
-    if (start < 0) start = 0;
-  }
+  if (start < 0) start = 0;
+  if (end > total) end = total;
 
   for (int i = start; i <= end; i++) 
   {
@@ -618,6 +596,11 @@ static void ui_inventory_update_pagination_bar(ui_inventory_t *ui_inventory)
 
 static void ui_inventory_apply_filters(ui_inventory_t *ui_inventory)
 {
+  equipment_list_t filtered;
+  equipment_list_init(&filtered);
+
+  equipment_list_t *list = &ui_inventory->application->equipments;
+
   GtkWidget *dropdown_status = g_object_get_data(G_OBJECT(ui_inventory->container), DATA_STATUS_FILTER);
   GtkWidget *dropdown_type = g_object_get_data(G_OBJECT(ui_inventory->container), DATA_TYPE_FILTER);
 
@@ -626,25 +609,30 @@ static void ui_inventory_apply_filters(ui_inventory_t *ui_inventory)
 
   if (position_status == 0 && position_type == 0) 
   {
-    ui_inventory_refresh_table(ui_inventory, &ui_inventory->application->equipments);
-    return;
+    equipment_node_t *node = list->head;
+    
+    while (node)
+    {
+      equipment_node_t *new = equipment_list_insert(&filtered, node->data);
+      new->data = node->data;
+
+      node = node->next;
+    }
   }
 
-  equipment_list_t filtered; // Temporary list
-  equipment_list_init(&filtered);
-
-  if (position_status == 0 && position_type != 0) 
-    equipment_filter_by_type(&ui_inventory->application->equipments, position_type - 1, &filtered);
+  else if (position_status == 0 && position_type != 0) 
+    equipment_filter_by_type(list, position_type - 1, &filtered);
 
   else if (position_type == 0 && position_status != 0)
-    equipment_filter_by_status(&ui_inventory->application->equipments, position_status - 1, &filtered);
+    equipment_filter_by_status(list, position_status - 1, &filtered);
 
   else 
-    equipment_filter(&ui_inventory->application->equipments, position_status - 1, position_type - 1, &filtered);
+    equipment_filter(list, position_status - 1, position_type - 1, &filtered);
 
+  ui_inventory->pagination.total = pagination_total_pages(&ui_inventory->pagination, filtered.count);
+
+  ui_inventory_update_pagination_bar(ui_inventory);
   ui_inventory_refresh_table(ui_inventory, &filtered);
-
-  equipment_list_destroy(&filtered);
 }
 
 static void ui_equipment_form_update(GtkWidget *form, equipment_t equipment)
@@ -928,6 +916,15 @@ static void on_add_equipment_confirmed(GtkButton *button, gpointer data)
   hashmap_insert(&equipment_form->application->mac_index, node->data.mac_address, node);
 
   ui_inventory_t *ui_inventory = g_object_get_data(G_OBJECT(equipment_form->table), DATA_UI_INVENTORY);
+
+  ui_inventory->pagination.total = pagination_total_pages(&ui_inventory->pagination, ui_inventory->application->equipments.count);
+
+  if (ui_inventory->pagination.page >= ui_inventory->pagination.total)
+    ui_inventory->pagination.page = ui_inventory->pagination.total - 1;
+
+  if (ui_inventory->pagination.page < 0)
+    ui_inventory->pagination.page = 0;
+
   ui_inventory_refresh(ui_inventory);
 
   gtk_window_destroy(GTK_WINDOW(equipment_form->dialog));
@@ -1016,6 +1013,15 @@ static void on_remove_equipment_confirmed(GtkButton *button, gpointer data)
   equipment_list_remove(&equipment_form->application->equipments, node);
 
   ui_inventory_t *ui_inventory = g_object_get_data(G_OBJECT(equipment_form->table), DATA_UI_INVENTORY);
+
+  ui_inventory->pagination.total = pagination_total_pages(&ui_inventory->pagination, ui_inventory->application->equipments.count);
+
+  if (ui_inventory->pagination.page >= ui_inventory->pagination.total)
+    ui_inventory->pagination.page = ui_inventory->pagination.total - 1;
+
+  if (ui_inventory->pagination.page < 0)
+    ui_inventory->pagination.page = 0;
+
   ui_inventory_refresh(ui_inventory);
 
   gtk_window_destroy(GTK_WINDOW(equipment_form->dialog));
@@ -1041,25 +1047,34 @@ static void on_equipment_search_changed(GtkSearchEntry *search, gpointer data)
       node = (equipment_node_t *) hashmap_get(&ui_inventory->application->mac_index, text);
       break;
     case SEARCH_INVALID:
-      ui_inventory_refresh_table(ui_inventory, &ui_inventory->application->equipments);
-      return;
+      break;
   }
 
   if (node == NULL) 
   {
+    ui_inventory->pagination.page = 0;
+    ui_inventory->pagination.total = pagination_total_pages(&ui_inventory->pagination, ui_inventory->application->equipments.count);
+
+    ui_inventory_update_pagination_bar(ui_inventory);
     ui_inventory_refresh_table(ui_inventory, &ui_inventory->application->equipments);
-    return;
   }
 
-  equipment_list_t list; // Temporary list
-  equipment_list_init(&list);
+  else 
+  {
+    equipment_list_t filtered;
+    equipment_list_init(&filtered);
 
-  equipment_node_t *new = equipment_list_insert(&list, node->data);
-  new->data = node->data;
+    equipment_node_t *new = equipment_list_insert(&filtered, node->data);
+    new->data = node->data;
 
-  ui_inventory_refresh_table(ui_inventory, &list);
+    ui_inventory->pagination.page = 0;
+    ui_inventory->pagination.total = pagination_total_pages(&ui_inventory->pagination, filtered.count);
 
-  equipment_list_destroy(&list);
+    ui_inventory_update_pagination_bar(ui_inventory);
+    ui_inventory_refresh_table(ui_inventory, &filtered);
+
+    equipment_list_destroy(&filtered);
+  }
 }
 
 static void on_inventory_filter_changed(GObject *self, GParamSpec *pspec, gpointer data)
@@ -1068,6 +1083,8 @@ static void on_inventory_filter_changed(GObject *self, GParamSpec *pspec, gpoint
   (void)pspec; // unused parameter
 
   ui_inventory_t *ui_inventory = (ui_inventory_t *) data;
+
+  ui_inventory->pagination.page = 0;
 
   ui_inventory_apply_filters(ui_inventory);
 }
@@ -1107,7 +1124,7 @@ static void on_previous_page_clicked(GtkButton *button, gpointer data)
   if (ui_inventory->pagination.page < 0) 
     ui_inventory->pagination.page = 0; 
 
-  ui_inventory_refresh(ui_inventory);
+  ui_inventory_apply_filters(ui_inventory);
 }
 
 static void on_next_page_clicked(GtkButton *button, gpointer data)
@@ -1121,7 +1138,7 @@ static void on_next_page_clicked(GtkButton *button, gpointer data)
   if (ui_inventory->pagination.page > ui_inventory->pagination.total - 1) 
     ui_inventory->pagination.page = ui_inventory->pagination.total - 1;
 
-  ui_inventory_refresh(ui_inventory);
+  ui_inventory_apply_filters(ui_inventory);
 }
 
 static void on_page_clicked(GtkButton *button, gpointer data)
@@ -1134,5 +1151,5 @@ static void on_page_clicked(GtkButton *button, gpointer data)
 
   ui_inventory->pagination.page = page_number;
 
-  ui_inventory_refresh(ui_inventory);
+  ui_inventory_apply_filters(ui_inventory);
 }

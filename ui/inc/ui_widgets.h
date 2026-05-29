@@ -30,7 +30,6 @@ typedef struct {
 typedef struct {
   int total;
   int page;
-  int next_page;
   int page_size;
 } pagination_t;
 
@@ -51,7 +50,7 @@ GtkWidget *create_remove_primary_label(const char *text);
 GtkWidget *create_remove_secundary_label(const char *text);
 GtkWidget *create_summary_detail(const char *title, const char *value);
 void remove_all_children_from_widget(GtkWidget *parent);
-int pagination_total_pages(const pagination_t *pagination);
+int pagination_total_pages(const pagination_t *pagination, int count);
 int pagination_start(const pagination_t *pagination);
 int pagination_end(const pagination_t *pagination);
 
