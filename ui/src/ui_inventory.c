@@ -241,7 +241,7 @@ static GtkWidget *create_inventory_table(ui_inventory_t *ui_inventory)
   int start = pagination_start(&ui_inventory->pagination);
   int end = pagination_end(&ui_inventory->pagination);
 
-  int i = 1;
+  int i = 0;
 
   while (node != NULL && i < start)
   {
@@ -534,14 +534,15 @@ static void ui_inventory_refresh_table(ui_inventory_t *ui_inventory, equipment_l
   int start = pagination_start(&ui_inventory->pagination);
   int end = pagination_end(&ui_inventory->pagination);
 
-  int row = 1;
-  int i = 1;
+  int i = 0;
 
   while (node != NULL && i < start)
   {
     node = node->next;
     i++;
   }
+
+  int row = 1;
 
   while (node != NULL && i < end)
   {
@@ -572,25 +573,25 @@ static void ui_inventory_update_pagination_bar(ui_inventory_t *ui_inventory)
 
   int start = ui_inventory->pagination.page - 1;
   int end = ui_inventory->pagination.page + 1;
-  //int total = pagination_total_pages(&ui_inventory->pagination);
+  int total = ui_inventory->pagination.total;
 
-  if (start < 1)
+  if (start < 0)
   {
-    start = 1;
-    end = start + 2;
+    start = 0;
+    end = 2;
   }
 
-  if (end > ui_inventory->pagination.total)
+  if (end > total)
   {
-    end = ui_inventory->pagination.total;
-    start = end - 2;
-    if (start < 1) start = 1;
+    end = total - 1;
+    start = end - 3;
+    if (start < 0) start = 0;
   }
 
   for (int i = start; i <= end; i++) 
   {
     char buffer[11];
-    snprintf(buffer, sizeof(buffer), "%d", i);
+    snprintf(buffer, sizeof(buffer), "%d", i + 1);
 
     GtkWidget *button = create_secondary_button(buffer, NULL, "default-page");
     gtk_widget_set_margin_top(button, 16);
@@ -1103,8 +1104,8 @@ static void on_previous_page_clicked(GtkButton *button, gpointer data)
 
   ui_inventory->pagination.page--;
 
-  if (ui_inventory->pagination.page < 1) 
-    ui_inventory->pagination.page = 1; 
+  if (ui_inventory->pagination.page < 0) 
+    ui_inventory->pagination.page = 0; 
 
   ui_inventory_refresh(ui_inventory);
 }
@@ -1117,8 +1118,8 @@ static void on_next_page_clicked(GtkButton *button, gpointer data)
 
   ui_inventory->pagination.page++;
 
-  if (ui_inventory->pagination.page > ui_inventory->pagination.total) 
-    ui_inventory->pagination.page = ui_inventory->pagination.total;
+  if (ui_inventory->pagination.page > ui_inventory->pagination.total - 1) 
+    ui_inventory->pagination.page = ui_inventory->pagination.total - 1;
 
   ui_inventory_refresh(ui_inventory);
 }
