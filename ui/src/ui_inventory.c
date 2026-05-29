@@ -633,6 +633,8 @@ static void ui_inventory_apply_filters(ui_inventory_t *ui_inventory)
 
   ui_inventory_update_pagination_bar(ui_inventory);
   ui_inventory_refresh_table(ui_inventory, &filtered);
+
+  equipment_list_destroy(&filtered);
 }
 
 static void ui_equipment_form_update(GtkWidget *form, equipment_t equipment)
@@ -685,8 +687,8 @@ static GtkWidget *create_equipment_summary_card(equipment_t equipment)
   gtk_widget_set_hexpand(left, TRUE);
   gtk_widget_set_halign(left, GTK_ALIGN_START);
 
-  char id[ID_MAX + strlen("ID: ")];
-  snprintf(id, ID_MAX + strlen("ID: "), "ID: EQ-%03d", equipment.id);
+  char id[ID_MAX + 4];
+  snprintf(id, ID_MAX + 4, "ID: EQ-%03d", equipment.id);
   
   GtkWidget *id_label = gtk_label_new(id);
   gtk_label_set_xalign(GTK_LABEL(id_label), 0.0);
