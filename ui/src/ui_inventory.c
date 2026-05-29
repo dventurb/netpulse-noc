@@ -20,6 +20,7 @@ static const char* DATA_STATUS_FILTER = "inventory-status-filter";
 static const char* DATA_REMOVE_BUTTON = "inventory-remove";
 static const char* DATA_EDIT_BUTTON = "inventory-edit";
 static const char* DATA_STATS_CARDS = "inventory-stats-cards";
+static const char* DATA_PAGINATION_BAR = "inventory-pagination-bar";
 
 static const int INVENTORY_HEADER_COLUMN_COUNT = 10;
 static const int INVENTORY_TABLE_COLUMN_COUNT = 11;
@@ -30,18 +31,21 @@ static GtkWidget *create_inventory_header(ui_inventory_t *ui_inventory);
 static GtkWidget *create_inventory_stats_cards(ui_inventory_t *ui_inventory);
 static GtkWidget *create_inventory_filters(ui_inventory_t *ui_inventory);
 static GtkWidget *create_inventory_table(ui_inventory_t *ui_inventory);
+static GtkWidget *create_pagination_bar(ui_inventory_t *ui_inventory);
 static void create_inventory_table_header(GtkWidget *grid);
 static void create_inventory_table_row(GtkWidget *grid, equipment_node_t *node, int row);
+
 static GtkWidget *create_remove_form(equipment_t equipment);
 static GtkWidget *create_equipment_summary_card(equipment_t equipment);
 static GtkWidget *create_inventory_status_cell(equipment_status_t status);
 static GtkWidget *create_equipment_form(equipment_list_t *equipments);
 
 static void ui_inventory_refresh(ui_inventory_t *ui_inventory);
-static void ui_inventory_update_stats_cards(ui_inventory_t *ui_inventory);
-static void ui_inventory_refresh_table(GtkWidget *grid, equipment_list_t *equipments);
-static void ui_inventory_apply_filters(ui_inventory_t *ui_inventory);
 static void ui_inventory_update_header(ui_inventory_t *ui_inventory);
+static void ui_inventory_update_stats_cards(ui_inventory_t *ui_inventory);
+static void ui_inventory_refresh_table(ui_inventory_t *ui_inventory, equipment_list_t *list);
+static void ui_inventory_update_pagination_bar(ui_inventory_t *ui_inventory);
+static void ui_inventory_apply_filters(ui_inventory_t *ui_inventory);
 static void ui_equipment_form_update(GtkWidget *form, equipment_t equipment);
 
 // Callbacks
@@ -54,7 +58,9 @@ static void on_remove_equipment_confirmed(GtkButton *button, gpointer data);
 static void on_equipment_search_changed(GtkSearchEntry *search, gpointer data);
 static void on_inventory_filter_changed(GObject *self, GParamSpec *pspec, gpointer data);
 static void on_equipment_check_button_toggled(GtkCheckButton *button, gpointer data);
-
+static void on_previous_page_clicked(GtkButton *button, gpointer data);
+static void on_next_page_clicked(GtkButton *button, gpointer data);
+static void on_page_clicked(GtkButton *button, gpointer data);
 
 GtkWidget *create_page_inventory(ui_t *ui)
 {
@@ -63,8 +69,13 @@ GtkWidget *create_page_inventory(ui_t *ui)
 
   ui_inventory->application = ui->application;
   ui_inventory->window = ui->window;
+
   ui_inventory->selected_count = 0;
   ui_inventory->selected_node = NULL;
+
+  ui_inventory->pagination.page = 0;
+  ui_inventory->pagination.page_size = 1;
+  ui_inventory->pagination.total = 3;
 
   ui_inventory->container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
@@ -200,7 +211,11 @@ static GtkWidget *create_inventory_filters(ui_inventory_t *ui_inventory)
 // TODO: Not finished yet.
 static GtkWidget *create_inventory_table(ui_inventory_t *ui_inventory)
 {
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_widget_add_css_class(box, "inventory");
+
   GtkWidget *scrolled_window = gtk_scrolled_window_new();
+  gtk_widget_set_size_request(scrolled_window, -1, 456);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
   gtk_widget_add_css_class(scrolled_window, "table-scroll");
 
@@ -215,19 +230,101 @@ static GtkWidget *create_inventory_table(ui_inventory_t *ui_inventory)
 
   create_inventory_table_header(ui_inventory->table);
 
+  GtkWidget *pagination_bar = create_pagination_bar(ui_inventory);
+
+  gtk_box_append(GTK_BOX(box), scrolled_window);
+  gtk_box_append(GTK_BOX(box), pagination_bar);
+
   equipment_node_t *node = ui_inventory->application->equipments.head;
-  if (node == NULL) return scrolled_window;
+  if (node == NULL) return box;
+
+  int start = pagination_start(&ui_inventory->pagination);
+  int end = pagination_end(&ui_inventory->pagination);
+
+  int i = 1;
+
+  while (node != NULL && i < start)
+  {
+    node = node->next;
+    i++;
+  }
 
   int row = 1;
 
-  while (node != NULL)
+  while (node != NULL && i < end)
   {
     create_inventory_table_row(ui_inventory->table, node, row);
+
     node = node->next;
+    i++;
     row++;
   }
 
-  return scrolled_window;
+  return box;
+}
+
+static GtkWidget *create_pagination_bar(ui_inventory_t *ui_inventory)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+  gtk_widget_set_size_request(box, -1, 64);
+  gtk_widget_set_hexpand(box, TRUE);
+  gtk_widget_set_halign(box, GTK_ALIGN_END);
+  g_object_set_data(G_OBJECT(ui_inventory->container), DATA_PAGINATION_BAR, box);
+
+  GtkWidget *previous_button = create_secondary_button(NULL, "assets/left-arrow.svg", "arrow-page");
+  gtk_widget_set_margin_top(previous_button, 16);
+  gtk_widget_set_margin_bottom(previous_button, 16);
+  gtk_widget_set_size_request(previous_button, 32, 32);
+  
+  g_signal_connect(previous_button, "clicked", G_CALLBACK(on_previous_page_clicked), ui_inventory);
+  gtk_box_append(GTK_BOX(box), previous_button);
+
+
+  int start = ui_inventory->pagination.page - 1;
+  int end = ui_inventory->pagination.page + 1;
+  int total = ui_inventory->pagination.total;
+
+  if (start < 0)
+  {
+    start = 0;
+    end = 2;
+  }
+
+  if (end > total)
+  {
+    end = total - 1;
+    start = total - 3;
+    if (start < 0) start = 0;
+  }
+
+  for (int i = start; i <= end; i++) 
+  {
+    char buffer[11];
+    snprintf(buffer, sizeof(buffer), "%d", i + 1);
+
+    GtkWidget *button = create_secondary_button(buffer, NULL, "default-page");
+    gtk_widget_set_margin_top(button, 16);
+    gtk_widget_set_margin_bottom(button, 16);
+    gtk_widget_set_size_request(button, 32, 32);
+    g_object_set_data(G_OBJECT(button), "page-number", GINT_TO_POINTER(i));
+    g_signal_connect(button, "clicked", G_CALLBACK(on_page_clicked), ui_inventory);
+
+    if (i == ui_inventory->pagination.page) 
+      gtk_widget_add_css_class(button, "active-page");
+
+    gtk_box_append(GTK_BOX(box), button);
+  }
+
+  GtkWidget *next_button = create_secondary_button(NULL, "assets/right-arrow.svg", "arrow-page");
+  gtk_widget_set_margin_top(next_button, 16);
+  gtk_widget_set_margin_bottom(next_button, 16);
+  gtk_widget_set_margin_end(next_button, 24);
+  g_signal_connect(next_button, "clicked", G_CALLBACK(on_next_page_clicked), ui_inventory);
+  gtk_widget_set_size_request(next_button, 32, 32);
+ 
+  gtk_box_append(GTK_BOX(box), next_button);
+
+  return box;
 }
 
 static void create_inventory_table_header(GtkWidget *grid)
@@ -390,7 +487,17 @@ static void ui_inventory_refresh(ui_inventory_t *ui_inventory)
 
   ui_inventory_update_stats_cards(ui_inventory);
   ui_inventory_update_header(ui_inventory);
-  ui_inventory_refresh_table(ui_inventory->table, list);
+  ui_inventory_refresh_table(ui_inventory, list);
+  ui_inventory_update_pagination_bar(ui_inventory);
+}
+
+static void ui_inventory_update_header(ui_inventory_t *ui_inventory)
+{
+  GtkWidget *edit_button = g_object_get_data(G_OBJECT(ui_inventory->container), DATA_EDIT_BUTTON);
+  GtkWidget *remove_button = g_object_get_data(G_OBJECT(ui_inventory->container), DATA_REMOVE_BUTTON);
+
+  gtk_widget_set_visible(edit_button, ui_inventory->selected_count != 0);
+  gtk_widget_set_visible(remove_button, ui_inventory->selected_count != 0);
 }
 
 static void ui_inventory_update_stats_cards(ui_inventory_t *ui_inventory)
@@ -417,30 +524,95 @@ static void ui_inventory_update_stats_cards(ui_inventory_t *ui_inventory)
   gtk_box_append(GTK_BOX(box), maintenance_card);
 }
 
-static void ui_inventory_refresh_table(GtkWidget *grid, equipment_list_t *equipments)
+static void ui_inventory_refresh_table(ui_inventory_t *ui_inventory, equipment_list_t *list)
 {
-  remove_table_rows(grid);
+  remove_table_rows(ui_inventory->table);
 
-  equipment_node_t *node = equipments->head;
+  equipment_node_t *node = list->head;
   if (node == NULL) return;
 
-  int row = 1;
+  int start = pagination_start(&ui_inventory->pagination);
+  int end = pagination_end(&ui_inventory->pagination);
 
-  while (node != NULL)
+  int row = 1;
+  int i = 1;
+
+  while (node != NULL && i < start)
   {
-    create_inventory_table_row(grid, node, row);
     node = node->next;
+    i++;
+  }
+
+  while (node != NULL && i < end)
+  {
+    create_inventory_table_row(ui_inventory->table, node, row);
+   
+    node = node->next;
+    i++;
     row++;
   }
 }
 
-static void ui_inventory_update_header(ui_inventory_t *ui_inventory)
+static void ui_inventory_update_pagination_bar(ui_inventory_t *ui_inventory)
 {
-  GtkWidget *edit_button = g_object_get_data(G_OBJECT(ui_inventory->container), DATA_EDIT_BUTTON);
-  GtkWidget *remove_button = g_object_get_data(G_OBJECT(ui_inventory->container), DATA_REMOVE_BUTTON);
+  GtkWidget *box = g_object_get_data(G_OBJECT(ui_inventory->container), DATA_PAGINATION_BAR);
+  gtk_widget_set_hexpand(box, TRUE);
+  gtk_widget_set_halign(box, GTK_ALIGN_END);
 
-  gtk_widget_set_visible(edit_button, ui_inventory->selected_count != 0);
-  gtk_widget_set_visible(remove_button, ui_inventory->selected_count != 0);
+  remove_all_children_from_widget(box);
+
+  GtkWidget *previous_button = create_secondary_button(NULL, "assets/left-arrow.svg", "arrow-page");
+  gtk_widget_set_margin_top(previous_button, 16);
+  gtk_widget_set_margin_bottom(previous_button, 16);
+  gtk_widget_set_size_request(previous_button, 32, 32);
+  
+  g_signal_connect(previous_button, "clicked", G_CALLBACK(on_previous_page_clicked), ui_inventory);
+  gtk_box_append(GTK_BOX(box), previous_button);
+
+
+  int start = ui_inventory->pagination.page - 1;
+  int end = ui_inventory->pagination.page + 1;
+  //int total = pagination_total_pages(&ui_inventory->pagination);
+
+  if (start < 1)
+  {
+    start = 1;
+    end = start + 2;
+  }
+
+  if (end > ui_inventory->pagination.total)
+  {
+    end = ui_inventory->pagination.total;
+    start = end - 2;
+    if (start < 1) start = 1;
+  }
+
+  for (int i = start; i <= end; i++) 
+  {
+    char buffer[11];
+    snprintf(buffer, sizeof(buffer), "%d", i);
+
+    GtkWidget *button = create_secondary_button(buffer, NULL, "default-page");
+    gtk_widget_set_margin_top(button, 16);
+    gtk_widget_set_margin_bottom(button, 16);
+    gtk_widget_set_size_request(button, 32, 32);
+    g_object_set_data(G_OBJECT(button), "page-number", GINT_TO_POINTER(i));
+    g_signal_connect(button, "clicked", G_CALLBACK(on_page_clicked), ui_inventory);
+
+    if (i == ui_inventory->pagination.page) 
+      gtk_widget_add_css_class(button, "active-page");
+
+    gtk_box_append(GTK_BOX(box), button);
+  }
+
+  GtkWidget *next_button = create_secondary_button(NULL, "assets/right-arrow.svg", "arrow-page");
+  gtk_widget_set_margin_top(next_button, 16);
+  gtk_widget_set_margin_bottom(next_button, 16);
+  gtk_widget_set_margin_end(next_button, 24);
+  g_signal_connect(next_button, "clicked", G_CALLBACK(on_next_page_clicked), ui_inventory);
+  gtk_widget_set_size_request(next_button, 32, 32);
+ 
+  gtk_box_append(GTK_BOX(box), next_button);
 }
 
 static void ui_inventory_apply_filters(ui_inventory_t *ui_inventory)
@@ -453,7 +625,7 @@ static void ui_inventory_apply_filters(ui_inventory_t *ui_inventory)
 
   if (position_status == 0 && position_type == 0) 
   {
-    ui_inventory_refresh_table(ui_inventory->table, &ui_inventory->application->equipments);
+    ui_inventory_refresh_table(ui_inventory, &ui_inventory->application->equipments);
     return;
   }
 
@@ -469,7 +641,7 @@ static void ui_inventory_apply_filters(ui_inventory_t *ui_inventory)
   else 
     equipment_filter(&ui_inventory->application->equipments, position_status - 1, position_type - 1, &filtered);
 
-  ui_inventory_refresh_table(ui_inventory->table, &filtered);
+  ui_inventory_refresh_table(ui_inventory, &filtered);
 
   equipment_list_destroy(&filtered);
 }
@@ -868,13 +1040,13 @@ static void on_equipment_search_changed(GtkSearchEntry *search, gpointer data)
       node = (equipment_node_t *) hashmap_get(&ui_inventory->application->mac_index, text);
       break;
     case SEARCH_INVALID:
-      ui_inventory_refresh_table(ui_inventory->table, &ui_inventory->application->equipments);
+      ui_inventory_refresh_table(ui_inventory, &ui_inventory->application->equipments);
       return;
   }
 
   if (node == NULL) 
   {
-    ui_inventory_refresh_table(ui_inventory->table, &ui_inventory->application->equipments);
+    ui_inventory_refresh_table(ui_inventory, &ui_inventory->application->equipments);
     return;
   }
 
@@ -884,7 +1056,7 @@ static void on_equipment_search_changed(GtkSearchEntry *search, gpointer data)
   equipment_node_t *new = equipment_list_insert(&list, node->data);
   new->data = node->data;
 
-  ui_inventory_refresh_table(ui_inventory->table, &list);
+  ui_inventory_refresh_table(ui_inventory, &list);
 
   equipment_list_destroy(&list);
 }
@@ -923,3 +1095,43 @@ static void on_equipment_check_button_toggled(GtkCheckButton *button, gpointer d
   ui_inventory_update_header(ui_inventory);
 }
 
+static void on_previous_page_clicked(GtkButton *button, gpointer data)
+{
+  (void)button; // unused parameter
+  
+  ui_inventory_t *ui_inventory = (ui_inventory_t *)data;
+
+  ui_inventory->pagination.page--;
+
+  if (ui_inventory->pagination.page < 1) 
+    ui_inventory->pagination.page = 1; 
+
+  ui_inventory_refresh(ui_inventory);
+}
+
+static void on_next_page_clicked(GtkButton *button, gpointer data)
+{
+  (void)button; // unused parameter 
+
+  ui_inventory_t *ui_inventory = (ui_inventory_t *)data;
+
+  ui_inventory->pagination.page++;
+
+  if (ui_inventory->pagination.page > ui_inventory->pagination.total) 
+    ui_inventory->pagination.page = ui_inventory->pagination.total;
+
+  ui_inventory_refresh(ui_inventory);
+}
+
+static void on_page_clicked(GtkButton *button, gpointer data)
+{
+  (void)button; // unused parameter 
+  
+  ui_inventory_t *ui_inventory = (ui_inventory_t *)data;
+
+  int page_number = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "page-number"));
+
+  ui_inventory->pagination.page = page_number;
+
+  ui_inventory_refresh(ui_inventory);
+}

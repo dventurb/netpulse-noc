@@ -149,6 +149,45 @@
   font-weight: 500;
 }
 
+.inventory {
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.default-page {
+  all: unset; /* reset default style */
+
+  background-color: #ffffff;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.default-page label {
+  color: #171717;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.active-page {
+  background-color: #19c37d;
+  padding-top: 7.5px;
+  padding-bottom: 8.5px;
+}
+
+.active-page label {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.arrow-page {
+  all: unset; /* reset default style */
+
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
 .table {
   background-color: transparent;
   border: 1px solid #dedede;

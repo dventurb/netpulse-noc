@@ -4,6 +4,7 @@
 #include "ui_main_window.h"
 #include "application.h"
 #include "equipment.h"
+#include "ui_widgets.h"
 #include <gtk/gtk.h>
 
 typedef enum {
@@ -21,6 +22,8 @@ typedef struct {
 
   int selected_count;
   equipment_node_t *selected_node;
+
+  pagination_t pagination;
 } ui_inventory_t;
 
 typedef struct {

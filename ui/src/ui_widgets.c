@@ -17,6 +17,8 @@ GtkWidget *create_secondary_button(const char *text, const char *icon, const cha
   GtkWidget *button = gtk_button_new();
 
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  gtk_widget_set_halign(box, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
   gtk_button_set_child(GTK_BUTTON(button), box);
 
   if (icon != NULL)
@@ -300,4 +302,19 @@ void remove_all_children_from_widget(GtkWidget *parent)
 
     child = next;
   }
+}
+
+int pagination_total_pages(const pagination_t *pagination)
+{
+  return (pagination->total + pagination->page_size - 1) / pagination->page_size;
+}
+
+int pagination_start(const pagination_t *pagination)
+{
+  return pagination->page * pagination->page_size;
+}
+
+int pagination_end(const pagination_t *pagination)
+{
+  return pagination->page * pagination->page_size + pagination->page_size;
 }
