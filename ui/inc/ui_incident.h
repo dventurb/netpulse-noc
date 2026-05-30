@@ -1,0 +1,26 @@
+#ifndef UI_INCIDENT_H
+#define UI_INCIDENT_H
+
+#include "ui_main_window.h"
+#include "application.h"
+#include "incident.h"
+#include "ui_widgets.h"
+#include <gtk/gtk.h>
+
+typedef struct {
+  application_t *application;
+  
+  GtkWidget *window;
+  GtkWidget *container;
+  GtkWidget *table;
+
+  int selected_count;
+  incident_node_t *selected_node;
+
+  pagination_t pagination;
+} ui_incident_t;
+
+GtkWidget *create_page_incident(ui_t *ui);
+
+#endif
+

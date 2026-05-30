@@ -31,6 +31,7 @@
   font-weight: 600;
 }
 
+.incident-title,
 .inventory-title {
   font-size: 22px;
   font-weight: 600;
@@ -116,6 +117,7 @@
   color: #888888;
 }
 
+.concluded-card, 
 .operational-card {
   color: #52c41a; 
 }
@@ -124,10 +126,16 @@
   color: #ff4d4f;
 }
 
+.pending-card,
 .maintenance-card {
   color: #faad14;
 }
 
+.in-progress-card {
+  color: #007bff;
+}
+
+.incident-search,
 .inventory-search {
   background-color: #ffffff;
   border-radius: 8px;
@@ -137,6 +145,7 @@
   font-weight: 400;
 }
 
+.incident-filter button,
 .inventory-filter button {
   all: unset; /* reset default style */
 
@@ -149,6 +158,7 @@
   font-weight: 500;
 }
 
+.incident,
 .inventory {
   background-color: #ffffff;
   border-radius: 8px;
@@ -253,25 +263,30 @@
   background-color: #fafafa;
 }
 
+.table-bold-cell,
 .table-name-cell {
   color: #222222;
   font-weight: 600;
 }
 
+.priority-cell,
 .status-cell {
   padding: 18px 24px;
 }
 
+.priority-badge,
 .status-badge {
   border-radius: 999px;
   padding: 4px 10px;
 }
 
+.priority-label,
 .status-label {
   font-size: 12px;
   font-weight: 600;
 }
 
+.status-concluded,
 .status-operational {
   color: #52c41a;
   background-color: #f0fdf4;
@@ -282,14 +297,44 @@
   background-color: #fef2f2;
 }
 
+.status-pending,
 .status-maintenance {
   color: #faad14;
   background-color: #fffbeb;
 }
 
+.status-in-progress {
+  color: #007bff;
+  background-color: #E6F4FF;
+}
+
 .status-disabled {
   color: #8c8c8c;
   background-color: #f2f2f2;
+}
+
+.priority-critical {
+  background-color: #fef2f2; 
+  border: 1px solid #ff4d4f;
+  color: #ff4d4f;
+}
+
+.priority-high {
+  background-color: #fffbeb; 
+  border: 1px solid #faad14;
+  color: #faad14;
+}
+
+.priority-medium {
+  background-color: #f5f6f8; 
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  color: #888888;
+}
+
+.priority-low {
+  background-color: #f5f6f8; 
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  color: #9ca3af;
 }
 
 .dialog {

@@ -281,3 +281,56 @@ int incident_list_filter_by_source_id(const incident_list_t *list, const char *s
 
   return i;
 }
+
+int incident_get_count(incident_queue_t *queue, incident_list_t *list)
+{
+  return incident_queue_get_count(queue) + incident_list_get_count(list);
+}
+
+int incident_queue_get_count(incident_queue_t *queue)
+{
+  return queue->count;
+}
+
+int incident_list_get_count(incident_list_t *list)
+{
+  return list->count;
+}
+
+int incident_list_get_number_status(incident_list_t *list, incident_status_t status)
+{
+  int i = 0;
+
+  incident_node_t *node = list->head;
+
+  while (node != NULL)
+  {
+    if (node->data.status == status) i++;
+
+    node = node->next;
+  }
+
+  return i;
+}
+
+const char *incident_priority_to_string(incident_priority_t priority)
+{
+  switch (priority) 
+  {
+    case PRIORITY_LOW: return "LOW";
+    case PRIORITY_MEDIUM: return "MEDIUM";
+    case PRIORITY_HIGH: return "HIGH";
+    case PRIORITY_CRITICAL: return "CRITICAL";
+  }
+}
+
+const char *incident_status_to_string(incident_status_t status)
+{
+  switch (status) 
+  {
+    case INCIDENT_PENDING: return "Pending";
+    case INCIDENT_IN_PROGRESS: return "In Progress";
+    case INCIDENT_CONCLUDED: return "Concluded";
+  }
+}
+

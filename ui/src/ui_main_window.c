@@ -2,6 +2,7 @@
 
 #include "ui_widgets.h"
 #include "ui_inventory.h"
+#include "ui_incident.h"
 
 static GtkWidget *create_header(void);
 static GtkWidget *create_menu_bar(ui_t *ui);
@@ -36,6 +37,8 @@ void create_main_window(GtkApplication *gui, gpointer data)
   gtk_box_append(GTK_BOX(box), ui->stack);
 
   gtk_stack_add_named(GTK_STACK(ui->stack), create_page_inventory(ui), "Inventory");
+  gtk_stack_add_named(GTK_STACK(ui->stack), create_page_incident(ui), "Incidents");
+
   gtk_stack_set_visible_child_name(GTK_STACK(ui->stack), "Inventory");
 
   GtkCssProvider *provider = gtk_css_provider_new();
@@ -109,7 +112,17 @@ static GtkWidget *create_menu_button(ui_t *ui, const char *label)
 
 static void on_menu_button_clicked(GtkButton *button, gpointer data)
 {
-  (void)button; // unused parameter
-  (void)data; // unused parameter
-  // ui_t *ui = (ui_t *) data;
+  ui_t *ui = (ui_t *) data;
+
+  const char *label = g_object_get_data(G_OBJECT(button), "target-page");
+
+  gtk_stack_set_visible_child_name(GTK_STACK(ui->stack), label);
+
+  for (int i = 0; i < ui->count; i++) 
+  {
+    if (ui->buttons[i] != GTK_WIDGET(button))
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui->buttons[i]), FALSE);
+    else 
+       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui->buttons[i]), TRUE);
+  }
 }

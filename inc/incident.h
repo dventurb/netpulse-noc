@@ -69,4 +69,12 @@ int incident_list_filter_by_priority(const incident_list_t *list, incident_prior
 int incident_list_filter_by_status(const incident_list_t *list, incident_status_t status, incident_t *incidents);
 int incident_list_filter_by_source_id(const incident_list_t *list, const char *source_id, incident_t *incidents);
 
+int incident_get_count(incident_queue_t *queue, incident_list_t *list);
+int incident_queue_get_count(incident_queue_t *queue);
+int incident_list_get_count(incident_list_t *list);
+int incident_list_get_number_status(incident_list_t *list, incident_status_t status);
+
+const char *incident_priority_to_string(incident_priority_t priority);
+const char *incident_status_to_string(incident_status_t status);
+
 #endif
