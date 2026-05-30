@@ -20,6 +20,16 @@ typedef struct {
   pagination_t pagination;
 } ui_incident_t;
 
+typedef struct {
+  application_t *application;
+
+  GtkWidget *dialog;
+  GtkWidget *form;
+  GtkWidget *table;
+
+  incident_node_t *selected_node;
+} incident_form_t;
+
 GtkWidget *create_page_incident(ui_t *ui);
 
 #endif

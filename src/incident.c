@@ -59,6 +59,11 @@ void incident_queue_enqueue(incident_queue_t *queue, incident_t data)
   }
 
   new->data = data;
+  new->data.number = queue->next_number++;
+  new->data.status = INCIDENT_PENDING;
+  new->data.created_at = time(NULL);
+  new->data.concluded_at = 0;
+
   new->next = NULL;
 
   if (queue->front == NULL)
@@ -90,6 +95,7 @@ incident_node_t *incident_queue_dequeue(incident_queue_t *queue)
   }
 
   incident_node_t *node = queue->front;
+  node->data.status = INCIDENT_IN_PROGRESS;
   
   queue->front = queue->front->next;
   if (queue->front == NULL) queue->rear = NULL;
@@ -116,6 +122,28 @@ incident_node_t *incident_queue_peek(incident_queue_t *queue)
   }
 
   return queue->front;
+}
+
+int incident_queue_get_position(incident_queue_t *queue, incident_node_t *target)
+{  
+  if (queue == NULL || target == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_get_position : NULL arguments)
+    return 0;
+  }
+
+  int i = 1;
+
+  incident_node_t *node = queue->front;
+
+  while (node != NULL)
+  {
+    if (node == target) return i;
+
+    node = node->next;
+  }
+  
+  return 0;
 }
 
 

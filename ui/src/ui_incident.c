@@ -8,6 +8,7 @@
 // TODO: look for better way
 static const char* const incident_status[] = { "Pending", "In Progress", "Concluded", NULL };
 static const char* const incident_priority[] = { "Low", "Medium", "High", "Critical", NULL };
+static const char* const incident_type[] = { "Equipment", "Sensor", NULL };
 static const char* const filter_status[] = { "All", "Pending", "In Progress", "Concluded", NULL };
 static const char* const filter_priority[] = { "All", "Low", "Medium", "High", "Critical", NULL };
 static const char* const headers[] = { "ID", "QUEUE", "SOURCE", "TYPE", "DESCRIPTION", "PRIORITY", "STATUS", "TECHNICIAN", "CREATED", "CONCLUDED"};
@@ -30,9 +31,19 @@ static GtkWidget *create_incident_table(ui_incident_t *ui_incident);
 static GtkWidget *create_pagination_bar(ui_incident_t *ui_incident);
 static void create_incident_table_header(GtkWidget *grid);
 static void create_incident_table_row(GtkWidget *grid, incident_node_t *node, int row);
-
 static GtkWidget *create_incident_priority_cell(incident_priority_t priority);
 static GtkWidget *create_incident_status_cell(incident_status_t status);
+static GtkWidget *create_incident_form(incident_queue_t *incidents_pending);
+
+static void ui_incident_refresh(ui_incident_t *ui_incident);
+static void ui_incident_update_stats_cards(ui_incident_t *ui_incident);
+static void ui_incident_update_header(ui_incident_t *ui_incident);
+static void ui_incident_refresh_table(ui_incident_t *ui_incident, incident_queue_t *queue, incident_list_t *list);
+static void ui_incident_update_pagination_bar(ui_incident_t *ui_incident);
+
+// Callbacks
+static void on_create_incident_clicked(GtkButton *button, gpointer data);
+static void on_create_incident_confirmed(GtkButton *button, gpointer data);
 
 GtkWidget *create_page_incident(ui_t *ui)
 {
@@ -47,6 +58,7 @@ GtkWidget *create_page_incident(ui_t *ui)
 
   ui_incident->pagination.page = 0;
   ui_incident->pagination.page_size = 6;
+
   int count = ui_incident->application->incidents_pending.count + ui_incident->application->incidents_history.count;
   ui_incident->pagination.total = pagination_total_pages(&ui_incident->pagination, count);
 
@@ -107,13 +119,14 @@ static GtkWidget *create_incident_header(ui_incident_t *ui_incident)
   gtk_widget_set_halign(title, GTK_ALIGN_START);
 
   GtkWidget *create_incident_button = create_secondary_button("Create Incident", "assets/icon-add.svg", "secondary-button");
-  //g_signal_connect(add_equipment_button, "clicked", G_CALLBACK(on_add_equipment_clicked), ui_inventory);
+  g_signal_connect(create_incident_button, "clicked", G_CALLBACK(on_create_incident_clicked), ui_incident);
 
   GtkWidget *process_next_button = create_secondary_button("Process Next", NULL, "process-button");
   //g_object_set_data(G_OBJECT(ui_incident->container), DATA_PROCESS_NEXT_BUTTON, process_next_button);
   //g_signal_connect(process_next_button, "clicked", G_CALLBACK(on_process_next_incident_clicked), ui_incident);
 
   GtkWidget *resolve_incident_button = create_secondary_button("Resolve Incident", NULL, "resolve-button");
+  gtk_widget_set_sensitive(resolve_incident_button, FALSE);
   //g_object_set_data(G_OBJECT(ui_inventory->container), DATA_RESOLVE_INCIDENT_BUTTON, resolve_incident_button);
   //g_signal_connect(resolve_incident_button, "clicked", G_CALLBACK(on_resolve_incident_clicked), ui_incident);
 
@@ -208,7 +221,6 @@ static GtkWidget *create_incident_table(ui_incident_t *ui_incident)
   gtk_box_append(GTK_BOX(box), pagination_bar);
 
   incident_node_t *node = ui_incident->application->incidents_pending.front;
-  if (node == NULL) return box;
 
   int start = pagination_start(&ui_incident->pagination);
   int end = pagination_end(&ui_incident->pagination);
@@ -233,7 +245,6 @@ static GtkWidget *create_incident_table(ui_incident_t *ui_incident)
   }
 
   node = ui_incident->application->incidents_history.head;
-  if (node == NULL) return box;
 
   while (node != NULL && i < start)
   {
@@ -323,6 +334,7 @@ static void create_incident_table_header(GtkWidget *grid)
 static void create_incident_table_row(GtkWidget *grid, incident_node_t *node, int row)
 {
   ui_incident_t *ui_incident = g_object_get_data(G_OBJECT(grid), DATA_UI_INCIDENT);
+  incident_queue_t *queue = &ui_incident->application->incidents_pending;
 
   incident_t incident = node->data;
 
@@ -336,6 +348,9 @@ static void create_incident_table_row(GtkWidget *grid, incident_node_t *node, in
   snprintf(id, ID_MAX, "IN-%03d", incident.number);
 
   char queue_position[11];
+  int position = incident_queue_get_position(queue, node);
+  if (position != 0) snprintf(queue_position, 11, "%d", position);
+  else strcpy(queue_position, "-");
 
   char created[DATETIME_MAX];
   get_datetime(incident.created_at, created);
@@ -440,4 +455,279 @@ static GtkWidget *create_incident_status_cell(incident_status_t status)
   gtk_box_append(GTK_BOX(border), label);
 
   return box;
+}
+
+static void ui_incident_refresh(ui_incident_t *ui_incident)
+{
+  incident_queue_t *queue = &ui_incident->application->incidents_pending;
+  incident_list_t *list = &ui_incident->application->incidents_history;
+
+  ui_incident->selected_count = 0;
+  ui_incident->selected_node = 0;
+
+  ui_incident_update_stats_cards(ui_incident);
+  ui_incident_update_header(ui_incident);
+  ui_incident_refresh_table(ui_incident, queue, list);
+  ui_incident_update_pagination_bar(ui_incident);
+}
+
+static void ui_incident_update_stats_cards(ui_incident_t *ui_incident)
+{
+  GtkWidget *box = g_object_get_data(G_OBJECT(ui_incident->container), DATA_STATS_CARDS);
+
+  remove_all_children_from_widget(box);
+
+  incident_queue_t *queue = &ui_incident->application->incidents_pending;
+  incident_list_t *list = &ui_incident->application->incidents_history;
+
+  int total = incident_get_count(queue, list);
+  int pending = incident_queue_get_count(queue);
+  int in_progress = incident_list_get_number_status(list, INCIDENT_IN_PROGRESS);
+  int concluded = incident_list_get_number_status(list, INCIDENT_CONCLUDED);
+
+  GtkWidget *total_card = create_stats_card("Total Incidents", total, "default-card");
+  GtkWidget *pending_card = create_stats_card("Pending", pending, "pending-card");
+  GtkWidget *in_progress_card = create_stats_card("In Progress", in_progress, "in-progress-card");
+  GtkWidget *concluded_card = create_stats_card("Concluded", concluded, "concluded-card");
+
+  gtk_box_append(GTK_BOX(box), total_card);
+  gtk_box_append(GTK_BOX(box), pending_card);
+  gtk_box_append(GTK_BOX(box), in_progress_card);
+  gtk_box_append(GTK_BOX(box), concluded_card);
+}
+
+static void ui_incident_update_header(ui_incident_t *ui_incident)
+{
+
+}
+
+static void ui_incident_refresh_table(ui_incident_t *ui_incident, incident_queue_t *queue, incident_list_t *list)
+{
+  remove_table_rows(ui_incident->table);
+
+  incident_node_t *node = queue->front;
+
+  int start = pagination_start(&ui_incident->pagination);
+  int end = pagination_end(&ui_incident->pagination);
+
+  int i = 0;
+
+  while (node != NULL && i < start)
+  {
+    node = node->next;
+    i++;
+  }
+
+  int row = 1;
+
+  while (node != NULL && i < end)
+  {
+    create_incident_table_row(ui_incident->table, node, row);
+
+    node = node->next;
+    i++;
+    row++;
+  }
+
+  node = list->head;
+
+  while (node != NULL && i < start)
+  {
+    node = node->next;
+    i++;
+  }
+
+  while (node != NULL && i < end)
+  {
+    create_incident_table_row(ui_incident->table, node, row);
+
+    node = node->next;
+    i++;
+    row++;
+  }
+}
+
+static void ui_incident_update_pagination_bar(ui_incident_t *ui_incident)
+{
+  GtkWidget *box = g_object_get_data(G_OBJECT(ui_incident->container), DATA_PAGINATION_BAR);
+  gtk_widget_set_hexpand(box, TRUE);
+  gtk_widget_set_halign(box, GTK_ALIGN_END);
+
+  remove_all_children_from_widget(box);
+
+  GtkWidget *previous_button = create_secondary_button(NULL, "assets/left-arrow.svg", "arrow-page");
+  gtk_widget_set_margin_top(previous_button, 16);
+  gtk_widget_set_margin_bottom(previous_button, 16);
+  gtk_widget_set_size_request(previous_button, 32, 32);
+  
+  //g_signal_connect(previous_button, "clicked", G_CALLBACK(on_previous_page_clicked), ui_incident);
+  gtk_box_append(GTK_BOX(box), previous_button);
+
+  int start = ui_incident->pagination.page - 1;
+  int end = ui_incident->pagination.page + 1;
+  int total = ui_incident->pagination.total - 1;
+
+  if (start < 0) start = 0;
+  if (end > total) end = total;
+
+  for (int i = start; i <= end; i++) 
+  {
+    char buffer[11];
+    snprintf(buffer, sizeof(buffer), "%d", i + 1);
+
+    GtkWidget *button = create_secondary_button(buffer, NULL, "default-page");
+    gtk_widget_set_margin_top(button, 16);
+    gtk_widget_set_margin_bottom(button, 16);
+    gtk_widget_set_size_request(button, 32, 32);
+    g_object_set_data(G_OBJECT(button), "page-number", GINT_TO_POINTER(i));
+    //g_signal_connect(button, "clicked", G_CALLBACK(on_page_clicked), ui_incident);
+
+    if (i == ui_incident->pagination.page) 
+      gtk_widget_add_css_class(button, "active-page");
+
+    gtk_box_append(GTK_BOX(box), button);
+  }
+
+  GtkWidget *next_button = create_secondary_button(NULL, "assets/right-arrow.svg", "arrow-page");
+  gtk_widget_set_margin_top(next_button, 16);
+  gtk_widget_set_margin_bottom(next_button, 16);
+  gtk_widget_set_margin_end(next_button, 24);
+  //g_signal_connect(next_button, "clicked", G_CALLBACK(on_next_page_clicked), ui_incident);
+  gtk_widget_set_size_request(next_button, 32, 32);
+ 
+  gtk_box_append(GTK_BOX(box), next_button);
+}
+
+static void on_create_incident_clicked(GtkButton *button, gpointer data)
+{
+  (void)button; // unused parameter
+  
+  ui_incident_t *ui_incident = (ui_incident_t *) data;
+
+  incident_form_t *incident_form = malloc(sizeof(incident_form_t));
+  if (incident_form == NULL) return;
+
+  incident_form->application = ui_incident->application;
+  incident_form->form = create_incident_form(&ui_incident->application->incidents_pending);
+
+  dialog_config_t dialog_config = 
+  {
+      .window = ui_incident->window,
+      .form = incident_form->form,
+      .title = "Create Incident",
+      .dialog_action = 
+      {
+        .label = "Create Incident",
+        .icon = "assets/icon-add.svg",
+        .css = "dialog-footer-add-button",
+        .callback = G_CALLBACK(on_create_incident_confirmed),
+        .data = incident_form
+      }
+  };
+
+  incident_form->selected_node = NULL;
+
+  incident_form->table = ui_incident->table;
+  incident_form->dialog = create_dialog_window(dialog_config);
+
+  g_object_set_data_full(G_OBJECT(incident_form->dialog), "incident-form", incident_form, free); // ownership + free
+
+  gtk_window_present(GTK_WINDOW(incident_form->dialog));
+}
+
+static void on_create_incident_confirmed(GtkButton *button, gpointer data)
+{
+  (void)button; // unused parameter
+  
+  incident_form_t *incident_form = (incident_form_t *) data;
+
+  incident_t new;
+
+  form_field_t fields[] = {
+    { "entry-technician", new.technician_name },
+    { "entry-source-id", new.source_id },
+    { "entry-type", new.type },
+    { "entry-description", new.description},
+  };
+
+  for (int i = 0; i < 4; i++)
+  {
+    GtkWidget *entry = g_object_get_data(G_OBJECT(incident_form->form), fields[i].key);
+    const char *text = gtk_editable_get_text(GTK_EDITABLE(entry));
+    if (i == 4) 
+      snprintf(fields[i].dest, DESCRIPTION_MAX, "%s", text);
+    else  
+      snprintf(fields[i].dest, STRING_MAX, "%s", text);
+  }
+
+  GtkWidget *dropdown_source_type = g_object_get_data(G_OBJECT(incident_form->form), "dropdown-type");
+  new.source_type = gtk_drop_down_get_selected(GTK_DROP_DOWN(dropdown_source_type));
+
+  GtkWidget *dropdown_priority = g_object_get_data(G_OBJECT(incident_form->form), "dropdown-priority");
+  new.priority = gtk_drop_down_get_selected(GTK_DROP_DOWN(dropdown_priority));
+
+  incident_queue_enqueue(&incident_form->application->incidents_pending, new);
+
+  ui_incident_t *ui_incident = g_object_get_data(G_OBJECT(incident_form->table), DATA_UI_INCIDENT);
+
+  int total = incident_get_count(&ui_incident->application->incidents_pending, &ui_incident->application->incidents_history);
+
+  ui_incident->pagination.total = pagination_total_pages(&ui_incident->pagination, total);
+
+  if (ui_incident->pagination.page >= ui_incident->pagination.total)
+    ui_incident->pagination.page = ui_incident->pagination.total - 1;
+
+  if (ui_incident->pagination.page < 0)
+    ui_incident->pagination.page = 0;
+
+  ui_incident_refresh(ui_incident);
+
+  gtk_window_destroy(GTK_WINDOW(incident_form->dialog));
+}
+
+static GtkWidget *create_incident_form(incident_queue_t *incidents_pending)
+{
+  GtkWidget *grid = gtk_grid_new();
+  gtk_widget_set_size_request(grid, 672, 500);
+  gtk_widget_set_margin_start(grid, 24);
+  gtk_widget_set_margin_end(grid, 24);
+  gtk_widget_set_margin_top(grid, 24);
+  gtk_widget_set_margin_bottom(grid, 40);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 24);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 24);
+  gtk_widget_add_css_class(grid, "dialog-form");
+
+  GtkWidget *entry_id = create_text_field(grid, "Incident ID", NULL, 0, 0);
+  gtk_widget_add_css_class(entry_id, "form-entry-disabled");
+  gtk_editable_set_editable(GTK_EDITABLE(entry_id), FALSE);
+  g_object_set_data(G_OBJECT(grid), "entry-number", entry_id);
+
+  char id[ID_MAX];
+  snprintf(id, ID_MAX, "IN-%03d", incidents_pending->next_number);
+  gtk_editable_set_text(GTK_EDITABLE(entry_id), id);
+
+  GtkWidget *entry_technician = create_text_field(grid, "Technician Name", NULL, 0, 1);
+  gtk_entry_set_max_length(GTK_ENTRY(entry_technician), STRING_MAX - 1);
+  g_object_set_data(G_OBJECT(grid), "entry-technician", entry_technician);
+
+  GtkWidget *dropdown_source_type = create_dropdown_field(grid, "Type", incident_type, 1, 0);
+  gtk_widget_set_sensitive(dropdown_source_type, FALSE);
+  g_object_set_data(G_OBJECT(grid), "dropdown-type", dropdown_source_type);
+
+  GtkWidget *entry_source_id = create_text_field(grid, "Source ID", "EQ-001", 1, 1);
+  gtk_entry_set_max_length(GTK_ENTRY(entry_source_id), STRING_MAX - 1);
+  g_object_set_data(G_OBJECT(grid), "entry-source-id", entry_source_id);
+
+  GtkWidget *entry_type = create_text_field(grid, "Type", "Offline", 2, 0);
+  gtk_entry_set_max_length(GTK_ENTRY(entry_type), STRING_MAX - 1);
+  g_object_set_data(G_OBJECT(grid), "entry-type", entry_type);
+
+  GtkWidget *dropdown_priority = create_dropdown_field(grid, "Priority", incident_priority, 2, 1);
+  g_object_set_data(G_OBJECT(grid), "dropdown-priority", dropdown_priority);
+
+  GtkWidget *entry_description = create_text_field(grid, "Description", "Device did not respond to ping. Possible network or device failure.", 3, 0);
+  gtk_entry_set_max_length(GTK_ENTRY(entry_description), DESCRIPTION_MAX - 1);
+  g_object_set_data(G_OBJECT(grid), "entry-description", entry_description);
+
+  return grid;
 }
