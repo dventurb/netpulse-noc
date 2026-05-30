@@ -3,6 +3,7 @@
 #include "ui_widgets.h"
 #include "ui_inventory.h"
 #include "ui_incident.h"
+#include "ui_connectivity.h"
 
 static GtkWidget *create_header(void);
 static GtkWidget *create_menu_bar(ui_t *ui);
@@ -38,6 +39,7 @@ void create_main_window(GtkApplication *gui, gpointer data)
 
   gtk_stack_add_named(GTK_STACK(ui->stack), create_page_inventory(ui), "Inventory");
   gtk_stack_add_named(GTK_STACK(ui->stack), create_page_incident(ui), "Incidents");
+  gtk_stack_add_named(GTK_STACK(ui->stack), create_page_connectivity(ui), "Connectivity");
 
   gtk_stack_set_visible_child_name(GTK_STACK(ui->stack), "Inventory");
 

@@ -31,6 +31,7 @@
   font-weight: 600;
 }
 
+.connectivity-title,
 .incident-title,
 .inventory-title {
   font-size: 22px;
@@ -531,4 +532,28 @@
   color: #111827;
   font-size: 14px;
   font-weight: 500;
+}
+
+.connectivity-tools-button {
+  all: unset; /* reset default style */
+
+  background-color: transparent;
+  padding-bottom: 12px;
+  padding-left: 4px;
+  padding-right: 4px;
+
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.menu-button:hover {
+  opacity: 1.0;
+}
+
+.menu-button:checked,
+.menu-button:active {
+  border-bottom: 2px solid #19c37d;
+  color: #171717;
+  font-weight: 600;
 }
