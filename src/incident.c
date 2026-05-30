@@ -59,6 +59,7 @@ void incident_queue_enqueue(incident_queue_t *queue, incident_t data)
   }
 
   new->data = data;
+
   new->data.number = queue->next_number++;
   new->data.status = INCIDENT_PENDING;
   new->data.created_at = time(NULL);
@@ -68,8 +69,6 @@ void incident_queue_enqueue(incident_queue_t *queue, incident_t data)
 
   if (queue->front == NULL)
   {
-    new->data.number = queue->next_number++;
-
     queue->front = new;
     queue->rear = new;
 
@@ -77,8 +76,6 @@ void incident_queue_enqueue(incident_queue_t *queue, incident_t data)
 
     return;
   }
-
-  new->data.number = queue->next_number++;
 
   queue->rear->next = new;
   queue->rear = new;
@@ -361,4 +358,3 @@ const char *incident_status_to_string(incident_status_t status)
     case INCIDENT_CONCLUDED: return "Concluded";
   }
 }
-

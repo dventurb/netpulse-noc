@@ -18,6 +18,7 @@ static const char* DATA_UI_INCIDENT = "ui-incident";
 static const char* DATA_INCIDENT_NODE = "incident-node";
 static const char* DATA_STATS_CARDS = "incident-stats-cards";
 static const char* DATA_PAGINATION_BAR = "incident-pagination-bar";
+static const char* DATA_RESOLVE_BUTTON = "incident-resolve-button";
 
 static const int INCIDENT_HEADER_COLUMN_COUNT = 10;
 static const int INCIDENT_TABLE_COLUMN_COUNT = 11;
@@ -45,6 +46,8 @@ static void ui_incident_update_pagination_bar(ui_incident_t *ui_incident);
 static void on_create_incident_clicked(GtkButton *button, gpointer data);
 static void on_create_incident_confirmed(GtkButton *button, gpointer data);
 static void on_process_next_incident_clicked(GtkButton *button, gpointer data);
+static void on_resolve_incident_clicked(GtkButton *button, gpointer data);
+static void on_incident_check_button_toggled(GtkCheckButton *button, gpointer data);
 static void on_previous_page_clicked(GtkButton *button, gpointer data);
 static void on_next_page_clicked(GtkButton *button, gpointer data);
 static void on_page_clicked(GtkButton *button, gpointer data);
@@ -130,8 +133,8 @@ static GtkWidget *create_incident_header(ui_incident_t *ui_incident)
 
   GtkWidget *resolve_incident_button = create_secondary_button("Resolve Incident", NULL, "resolve-button");
   gtk_widget_set_sensitive(resolve_incident_button, FALSE);
-  //g_object_set_data(G_OBJECT(ui_inventory->container), DATA_RESOLVE_INCIDENT_BUTTON, resolve_incident_button);
-  //g_signal_connect(resolve_incident_button, "clicked", G_CALLBACK(on_resolve_incident_clicked), ui_incident);
+  g_object_set_data(G_OBJECT(ui_incident->container), DATA_RESOLVE_BUTTON, resolve_incident_button);
+  g_signal_connect(resolve_incident_button, "clicked", G_CALLBACK(on_resolve_incident_clicked), ui_incident);
 
   gtk_box_append(GTK_BOX(box), title);
   gtk_box_append(GTK_BOX(box), process_next_button);
@@ -279,8 +282,7 @@ static GtkWidget *create_pagination_bar(ui_incident_t *ui_incident)
   gtk_widget_set_margin_top(previous_button, 16);
   gtk_widget_set_margin_bottom(previous_button, 16);
   gtk_widget_set_size_request(previous_button, 32, 32);
-  
-  //g_signal_connect(previous_button, "clicked", G_CALLBACK(on_previous_page_clicked), ui_incident);
+  g_signal_connect(previous_button, "clicked", G_CALLBACK(on_previous_page_clicked), ui_incident);
   gtk_box_append(GTK_BOX(box), previous_button);
 
   int start = ui_incident->pagination.page - 1;
@@ -300,7 +302,7 @@ static GtkWidget *create_pagination_bar(ui_incident_t *ui_incident)
     gtk_widget_set_margin_bottom(button, 16);
     gtk_widget_set_size_request(button, 32, 32);
     g_object_set_data(G_OBJECT(button), "page-number", GINT_TO_POINTER(i));
-    //g_signal_connect(button, "clicked", G_CALLBACK(on_page_clicked), ui_incident);
+    g_signal_connect(button, "clicked", G_CALLBACK(on_page_clicked), ui_incident);
 
     if (i == ui_incident->pagination.page) 
       gtk_widget_add_css_class(button, "active-page");
@@ -312,7 +314,7 @@ static GtkWidget *create_pagination_bar(ui_incident_t *ui_incident)
   gtk_widget_set_margin_top(next_button, 16);
   gtk_widget_set_margin_bottom(next_button, 16);
   gtk_widget_set_margin_end(next_button, 24);
-  //g_signal_connect(next_button, "clicked", G_CALLBACK(on_next_page_clicked), ui_incident);
+  g_signal_connect(next_button, "clicked", G_CALLBACK(on_next_page_clicked), ui_incident);
   gtk_widget_set_size_request(next_button, 32, 32);
  
   gtk_box_append(GTK_BOX(box), next_button);
@@ -345,7 +347,7 @@ static void create_incident_table_row(GtkWidget *grid, incident_node_t *node, in
 
   GtkWidget *check_button = create_table_checkbox();
   g_object_set_data(G_OBJECT(check_button), DATA_INCIDENT_NODE, (void *)node);
-  // g_signal_connect
+  g_signal_connect(check_button, "toggled", G_CALLBACK(on_incident_check_button_toggled), ui_incident);
 
   char id[ID_MAX];
   snprintf(id, ID_MAX, "IN-%03d", incident.number);
@@ -501,7 +503,12 @@ static void ui_incident_update_stats_cards(ui_incident_t *ui_incident)
 
 static void ui_incident_update_header(ui_incident_t *ui_incident)
 {
+  GtkWidget *resolve_incident_button = g_object_get_data(G_OBJECT(ui_incident->container), DATA_RESOLVE_BUTTON);
 
+  if (ui_incident->selected_node)
+    gtk_widget_set_sensitive(resolve_incident_button, ui_incident->selected_node->data.status == INCIDENT_IN_PROGRESS);
+  else 
+    gtk_widget_set_sensitive(resolve_incident_button, FALSE);
 }
 
 static void ui_incident_refresh_table(ui_incident_t *ui_incident, incident_queue_t *queue, incident_list_t *list)
@@ -750,6 +757,42 @@ static void on_process_next_incident_clicked(GtkButton *button, gpointer data)
   incident_list_insert(list, node);
 
   ui_incident_refresh(ui_incident);
+}
+
+static void on_resolve_incident_clicked(GtkButton *button, gpointer data)
+{
+  (void) button; // unused parameter
+
+  ui_incident_t *ui_incident = (ui_incident_t *)data;
+
+  ui_incident->selected_node->data.status = INCIDENT_CONCLUDED;
+  ui_incident->selected_node->data.concluded_at = time(NULL);
+
+  ui_incident_refresh(ui_incident);
+}
+
+static void on_incident_check_button_toggled(GtkCheckButton *button, gpointer data)
+{
+  ui_incident_t *ui_incident = (ui_incident_t *) data;
+
+  incident_node_t *node = g_object_get_data(G_OBJECT(button), DATA_INCIDENT_NODE);
+
+  bool is_active = gtk_check_button_get_active(button);
+
+  // TODO: selected multiple rows 
+  if (is_active == TRUE)
+  {
+    ui_incident->selected_node = node;
+    ui_incident->selected_count++;
+  }
+
+  else 
+  {
+    ui_incident->selected_node = NULL;
+    ui_incident->selected_count--;
+  }
+
+  ui_incident_update_header(ui_incident);
 }
 
 static void on_previous_page_clicked(GtkButton *button, gpointer data)
