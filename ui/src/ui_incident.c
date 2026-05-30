@@ -44,6 +44,10 @@ static void ui_incident_update_pagination_bar(ui_incident_t *ui_incident);
 // Callbacks
 static void on_create_incident_clicked(GtkButton *button, gpointer data);
 static void on_create_incident_confirmed(GtkButton *button, gpointer data);
+static void on_process_next_incident_clicked(GtkButton *button, gpointer data);
+static void on_previous_page_clicked(GtkButton *button, gpointer data);
+static void on_next_page_clicked(GtkButton *button, gpointer data);
+static void on_page_clicked(GtkButton *button, gpointer data);
 
 GtkWidget *create_page_incident(ui_t *ui)
 {
@@ -122,8 +126,7 @@ static GtkWidget *create_incident_header(ui_incident_t *ui_incident)
   g_signal_connect(create_incident_button, "clicked", G_CALLBACK(on_create_incident_clicked), ui_incident);
 
   GtkWidget *process_next_button = create_secondary_button("Process Next", NULL, "process-button");
-  //g_object_set_data(G_OBJECT(ui_incident->container), DATA_PROCESS_NEXT_BUTTON, process_next_button);
-  //g_signal_connect(process_next_button, "clicked", G_CALLBACK(on_process_next_incident_clicked), ui_incident);
+  g_signal_connect(process_next_button, "clicked", G_CALLBACK(on_process_next_incident_clicked), ui_incident);
 
   GtkWidget *resolve_incident_button = create_secondary_button("Resolve Incident", NULL, "resolve-button");
   gtk_widget_set_sensitive(resolve_incident_button, FALSE);
@@ -559,8 +562,7 @@ static void ui_incident_update_pagination_bar(ui_incident_t *ui_incident)
   gtk_widget_set_margin_top(previous_button, 16);
   gtk_widget_set_margin_bottom(previous_button, 16);
   gtk_widget_set_size_request(previous_button, 32, 32);
-  
-  //g_signal_connect(previous_button, "clicked", G_CALLBACK(on_previous_page_clicked), ui_incident);
+  g_signal_connect(previous_button, "clicked", G_CALLBACK(on_previous_page_clicked), ui_incident);
   gtk_box_append(GTK_BOX(box), previous_button);
 
   int start = ui_incident->pagination.page - 1;
@@ -580,7 +582,7 @@ static void ui_incident_update_pagination_bar(ui_incident_t *ui_incident)
     gtk_widget_set_margin_bottom(button, 16);
     gtk_widget_set_size_request(button, 32, 32);
     g_object_set_data(G_OBJECT(button), "page-number", GINT_TO_POINTER(i));
-    //g_signal_connect(button, "clicked", G_CALLBACK(on_page_clicked), ui_incident);
+    g_signal_connect(button, "clicked", G_CALLBACK(on_page_clicked), ui_incident);
 
     if (i == ui_incident->pagination.page) 
       gtk_widget_add_css_class(button, "active-page");
@@ -592,7 +594,7 @@ static void ui_incident_update_pagination_bar(ui_incident_t *ui_incident)
   gtk_widget_set_margin_top(next_button, 16);
   gtk_widget_set_margin_bottom(next_button, 16);
   gtk_widget_set_margin_end(next_button, 24);
-  //g_signal_connect(next_button, "clicked", G_CALLBACK(on_next_page_clicked), ui_incident);
+  g_signal_connect(next_button, "clicked", G_CALLBACK(on_next_page_clicked), ui_incident);
   gtk_widget_set_size_request(next_button, 32, 32);
  
   gtk_box_append(GTK_BOX(box), next_button);
@@ -730,4 +732,66 @@ static GtkWidget *create_incident_form(incident_queue_t *incidents_pending)
   g_object_set_data(G_OBJECT(grid), "entry-description", entry_description);
 
   return grid;
+}
+
+static void on_process_next_incident_clicked(GtkButton *button, gpointer data)
+{
+  (void)button; // unused parameter
+
+  ui_incident_t *ui_incident = (ui_incident_t *) data;
+
+  incident_queue_t *queue = &ui_incident->application->incidents_pending;
+  incident_list_t *list = &ui_incident->application->incidents_history;
+
+  incident_node_t *node = incident_queue_dequeue(queue);
+
+  if (node == NULL) return;
+
+  incident_list_insert(list, node);
+
+  ui_incident_refresh(ui_incident);
+}
+
+static void on_previous_page_clicked(GtkButton *button, gpointer data)
+{
+  (void)button; // unused parameter
+  
+  ui_incident_t *ui_incident = (ui_incident_t *)data;
+
+  ui_incident->pagination.page--;
+
+  if (ui_incident->pagination.page < 0) 
+    ui_incident->pagination.page = 0; 
+
+  ui_incident_refresh(ui_incident);
+  //ui_incident_apply_filters(ui_incident);
+}
+
+static void on_next_page_clicked(GtkButton *button, gpointer data)
+{
+  (void)button; // unused parameter 
+
+  ui_incident_t *ui_incident = (ui_incident_t *)data;
+
+  ui_incident->pagination.page++;
+
+  if (ui_incident->pagination.page > ui_incident->pagination.total - 1) 
+    ui_incident->pagination.page = ui_incident->pagination.total - 1;
+
+  ui_incident_refresh(ui_incident);
+  //ui_incident_apply_filters(ui_incident);
+}
+
+static void on_page_clicked(GtkButton *button, gpointer data)
+{
+  (void)button; // unused parameter 
+  
+  ui_incident_t *ui_incident = (ui_incident_t *)data;
+
+  int page_number = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "page-number"));
+
+  ui_incident->pagination.page = page_number;
+
+  ui_incident_refresh(ui_incident);
+  //ui_incident_apply_filters(ui_incident);
 }
