@@ -50,7 +50,9 @@ GtkWidget *create_page_connectivity(ui_t *ui)
 static GtkWidget *create_connectivity_side_bar(ui_connectivity_t *ui_connectivity)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-  gtk_widget_set_size_request(box, 280, -1);
+  gtk_widget_set_size_request(box, 256, -1);
+  gtk_widget_set_vexpand(box, TRUE);
+  gtk_widget_add_css_class(box, "connectivity-sidebar");
 
   GtkWidget *label = gtk_label_new("NETWORK TOOLS");
   gtk_label_set_xalign(GTK_LABEL(label), 0.0);
@@ -88,7 +90,8 @@ static GtkWidget *create_connectivity_side_bar(ui_connectivity_t *ui_connectivit
 static GtkWidget *create_connectivity_header(ui_connectivity_t *ui_connectivity)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
-  gtk_widget_set_size_request(box, -1, 117);
+  gtk_widget_set_size_request(box, -1, 112);
+  gtk_widget_add_css_class(box, "connectivity-header");
 
   GtkWidget *title_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
   gtk_widget_set_margin_top(title_box, 24);
@@ -154,12 +157,37 @@ static void on_menu_button_clicked(GtkButton *button, gpointer data)
 
   gtk_stack_set_visible_child_name(GTK_STACK(ui_connectivity->stack), label);
 
+  const char *icons[] = {
+    "assets/icon-ping.svg",
+    "assets/icon-traceroute.svg",
+    "assets/icon-dns-lookup.svg",
+    "assets/icon-arp-table.svg"
+  };
+
+  const char *icons_active[] = {
+    "assets/icon-ping-active.svg",
+    "assets/icon-traceroute-active.svg",
+    "assets/icon-dns-lookup-active.svg",
+    "assets/icon-arp-table-active.svg"
+  };
+
   for (int i = 0; i < 4; i++)
   {
+    GtkWidget *box = gtk_widget_get_first_child(ui_connectivity->sidebar_buttons[i]);
+    GtkWidget *image = gtk_widget_get_first_child(box);
+
     if (ui_connectivity->buttons[i] != GTK_WIDGET(button))
+    {
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->buttons[i]), FALSE);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->sidebar_buttons[i]), FALSE);
+      gtk_image_set_from_file(GTK_IMAGE(image), icons[i]);
+    }
     else
+    {
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->buttons[i]), TRUE);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->sidebar_buttons[i]), TRUE);
+      gtk_image_set_from_file(GTK_IMAGE(image), icons_active[i]);
+    }
   }
 }
 
@@ -187,18 +215,20 @@ static void on_sidebar_button_clicked(GtkButton *button, gpointer data)
 
   for (int i = 0; i < 4; i++)
   {
+    GtkWidget *box = gtk_widget_get_first_child(ui_connectivity->sidebar_buttons[i]);
+    GtkWidget *image = gtk_widget_get_first_child(box);
+
     if (ui_connectivity->sidebar_buttons[i] != GTK_WIDGET(button))
     {
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->sidebar_buttons[i]), FALSE);
-      GtkWidget *box = gtk_widget_get_first_child(ui_connectivity->sidebar_buttons[i]);
-      GtkWidget *image = gtk_widget_get_first_child(box);
+
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->buttons[i]), FALSE);
       gtk_image_set_from_file(GTK_IMAGE(image), icons[i]);
     }
     else
     {
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->sidebar_buttons[i]), TRUE);
-      GtkWidget *box = gtk_widget_get_first_child(ui_connectivity->sidebar_buttons[i]);
-      GtkWidget *image = gtk_widget_get_first_child(box);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->buttons[i]), TRUE);
       gtk_image_set_from_file(GTK_IMAGE(image), icons_active[i]);
     }
   }

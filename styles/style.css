@@ -539,6 +539,16 @@
   font-weight: 500;
 }
 
+.connectivity-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.connectivity-sidebar {
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7e8;
+}
+
 .connectivity-sidebar-label {
   padding-left: 20px;
   padding-right: 20px;
