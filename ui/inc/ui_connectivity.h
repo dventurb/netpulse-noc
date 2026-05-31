@@ -11,8 +11,10 @@ typedef struct {
   
   GtkWidget *window;
   GtkWidget *container;
-  GtkWidget *table;
+  GtkWidget *stack;
 
+  GtkWidget *buttons[6];
+  GtkWidget *sidebar_buttons[6];
 } ui_connectivity_t;
 
 GtkWidget *create_page_connectivity(ui_t *ui);

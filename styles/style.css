@@ -13,21 +13,26 @@
   padding: 0 28px;
   border-radius: 12px 12px 0 0;
   margin-top: 8px;
+}
 
-  color: #ffffff;
-  opacity: 0.6;
+.menu-button label {
+  color: rgba(255, 255, 255, 0.6);
   font-size: 14px;
   font-weight: 500;
 }
 
-.menu-button:hover {
-  opacity: 1.0;
+.menu-button:hover label {
+  color: rgba(255, 255, 255, 1);
 }
 
 .menu-button:checked,
 .menu-button:active {
   background-color: #19c37d;
-  opacity: 1.0;
+}
+
+.menu-button:checked label,
+.menu-button:active label {
+  color: #ffffff;
   font-weight: 600;
 }
 
@@ -534,6 +539,17 @@
   font-weight: 500;
 }
 
+.connectivity-sidebar-label {
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 20px;
+  padding-bottom: 8px;
+
+  font-weight: 600;
+  font-size: 12px;
+  color: #6b7280;
+}
+
 .connectivity-tools-button {
   all: unset; /* reset default style */
 
@@ -541,9 +557,45 @@
   padding-bottom: 12px;
   padding-left: 4px;
   padding-right: 4px;
+}
 
+.connectivity-tools-button label {
   color: #6b7280;
   font-size: 14px;
+  font-weight: 500;
+}
+
+.connectivity-tools-button:checked {
+  border-bottom: 2px solid #19c37d;
+}
+
+.connectivity-tools-button:checked label {
+  color: #171717;
+  font-size: 14px;
+}
+
+.connectivity-sidebar-button {
+  all: unset; /* reset default style */
+  
+  background-color: transparent;
+  padding: 10px 12px;
+  border-radius: 6px;
+}
+
+.connectivity-sidebar-button label {
+  color: #9ca3af;
+  font-weight: 400;
+  font-size: 16px;
+}
+
+.connectivity-sidebar-button:checked {
+  background-color: rgba(25, 195, 125, 0.1);
+  border-left: 4px solid #19c37d;
+  border-radius: 0px 6px 6px 0;
+}
+
+.connectivity-sidebar-button:checked label {
+  color: #19c37d;
   font-weight: 500;
 }
 

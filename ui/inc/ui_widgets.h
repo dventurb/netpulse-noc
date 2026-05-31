@@ -33,7 +33,7 @@ typedef struct {
   int page_size;
 } pagination_t;
 
-GtkWidget *create_primary_button(const char *text, const char *css);
+GtkWidget *create_primary_button(const char *text, const char *icon, const char *css);
 GtkWidget *create_secondary_button(const char *text, const char *icon, const char *css);
 GtkWidget *create_stats_card(const char *title, int value, const char *css);
 GtkWidget *create_text_field(GtkWidget *grid, const char *text, const char *placeholder, int row, int column);

@@ -104,7 +104,7 @@ static GtkWidget *create_menu_bar(ui_t *ui)
 
 static GtkWidget *create_menu_button(ui_t *ui, const char *label) 
 {
-  GtkWidget *button = create_primary_button(label, "menu-button");
+  GtkWidget *button = create_primary_button(label, NULL, "menu-button");
   g_signal_connect(button, "clicked", G_CALLBACK(on_menu_button_clicked), ui);
 
   g_object_set_data(G_OBJECT(button), "target-page", (void *)label);
@@ -128,3 +128,4 @@ static void on_menu_button_clicked(GtkButton *button, gpointer data)
        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui->buttons[i]), TRUE);
   }
 }
+
