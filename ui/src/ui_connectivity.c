@@ -10,6 +10,7 @@ static GtkWidget *create_content(ui_connectivity_t *ui_connectivity);
 static GtkWidget *create_connectivity_header(ui_connectivity_t *ui_connectivity);
 static GtkWidget *create_menu_bar(ui_connectivity_t *ui_connectivity);
 static GtkWidget *create_page_ping(ui_connectivity_t *ui_connectivity);
+static GtkWidget *create_connectivity_terminal(ui_connectivity_t *ui_connectivity);
 
 static void synchronize_navigation(ui_connectivity_t *ui_connectivity, GtkWidget *button);
 
@@ -146,9 +147,109 @@ static GtkWidget *create_menu_bar(ui_connectivity_t *ui_connectivity)
 
 static GtkWidget *create_page_ping(ui_connectivity_t *ui_connectivity)
 {
-  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
+
+  GtkWidget *config_panel = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_widget_set_margin_top(config_panel, 32);
+  gtk_widget_set_margin_start(config_panel, 32);
+  gtk_widget_set_margin_end(config_panel, 32);
+  gtk_widget_set_size_request(config_panel, -1, 512);
+  gtk_widget_add_css_class(config_panel, "connectivity-config-panel");
+
+  GtkWidget *header_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  gtk_widget_add_css_class(header_box, "config_panel-header");
+  gtk_widget_set_valign(header_box, GTK_ALIGN_START);
+  
+  GtkWidget *image = gtk_image_new_from_file("assets/icon-ping-configuration.svg");
+  gtk_image_set_pixel_size(GTK_IMAGE(image), 14);
+
+  GtkWidget *title = gtk_label_new("Ping Configuration");
+  gtk_widget_add_css_class(title, "config-panel-title");
+
+  gtk_box_append(GTK_BOX(header_box), image);
+  gtk_box_append(GTK_BOX(header_box), title);
+
+  GtkWidget *grid = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 16);
+  gtk_widget_set_margin_top(grid, 20);
+
+  GtkWidget *label_target = gtk_label_new("TARGET SOURCE SELECTION");
+  gtk_widget_add_css_class(label_target, "config-panel-form-label");
+
+  GtkWidget *check_button_equipment = gtk_check_button_new_with_label("Registered equipment");
+  gtk_widget_add_css_class(check_button_equipment, "config-panel-form-checkbutton");
+
+  GtkWidget *check_button_manual = gtk_check_button_new_with_label("Manual IP / Hostname");
+  gtk_widget_add_css_class(check_button_manual, "config-panel-form-checkbutton");
+
+  gtk_check_button_set_group(GTK_CHECK_BUTTON(check_button_equipment), GTK_CHECK_BUTTON(check_button_manual));
+
+  //GtkWidget *entry_ip = create_text_field(grid, "TARGET (IP / )", const char *placeholder, int row, int column)
+
+  gtk_grid_attach(GTK_GRID(grid), label_target, 0, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), check_button_equipment, 0, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), check_button_manual, 1, 1, 1, 1);
+
+  gtk_box_append(GTK_BOX(config_panel), header_box);
+  gtk_box_append(GTK_BOX(config_panel), grid);
+
+  GtkWidget *terminal_panel = create_connectivity_terminal(ui_connectivity);
+  gtk_box_append(GTK_BOX(container), config_panel);
+  gtk_box_append(GTK_BOX(container), terminal_panel);
 
   return container;
+}
+
+static GtkWidget *create_connectivity_terminal(ui_connectivity_t *ui_connectivity)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_widget_set_margin_start(box, 32);
+  gtk_widget_set_margin_end(box, 32);
+
+  GtkWidget *terminal_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+  gtk_widget_set_size_request(terminal_header, -1, 44);
+  gtk_widget_add_css_class(terminal_header, "terminal-header");
+
+  GtkWidget *image = gtk_image_new_from_file("assets/terminal-control-close.svg");
+  gtk_image_set_pixel_size(GTK_IMAGE(image), 12);
+  gtk_box_append(GTK_BOX(terminal_header), image);
+ 
+  image = gtk_image_new_from_file("assets/terminal-control-minimize.svg");
+  gtk_image_set_pixel_size(GTK_IMAGE(image), 12);
+  gtk_box_append(GTK_BOX(terminal_header), image);
+  
+  image = gtk_image_new_from_file("assets/terminal-control-maximize.svg");
+  gtk_image_set_pixel_size(GTK_IMAGE(image), 12);
+  gtk_box_append(GTK_BOX(terminal_header), image);
+
+  GtkWidget *copy_button = create_secondary_button("Copy", "assets/icon-copy.svg", "terminal-header-button");
+  gtk_widget_set_halign(copy_button, GTK_ALIGN_END);
+  gtk_widget_set_hexpand(copy_button, TRUE);
+
+  GtkWidget *save_button = create_secondary_button("Save", "assets/icon-save.svg", "terminal-header-button");
+  gtk_widget_set_halign(save_button, GTK_ALIGN_END);
+
+  GtkWidget *label = gtk_label_new("noc-technician@netpulse: ~/tools");
+  gtk_widget_add_css_class(label, "terminal-header-title");
+
+  gtk_box_append(GTK_BOX(terminal_header), label);
+  gtk_box_append(GTK_BOX(terminal_header), copy_button);
+  gtk_box_append(GTK_BOX(terminal_header), save_button);
+
+  GtkWidget *terminal_panel = gtk_text_view_new();
+  gtk_widget_set_size_request(terminal_panel, -1, 400);
+  gtk_widget_set_sensitive(terminal_panel, FALSE);
+  gtk_widget_add_css_class(terminal_panel, "terminal-panel");
+
+  GtkTextBuffer *terminal_buffer = gtk_text_buffer_new(NULL);
+  gtk_text_buffer_set_text(GTK_TEXT_BUFFER(terminal_buffer), "$ ping -c 4 - W 2 8.8.8.8", -1);
+  gtk_text_view_set_buffer(GTK_TEXT_VIEW(terminal_panel), terminal_buffer);
+
+  gtk_box_append(GTK_BOX(box), terminal_header);
+  gtk_box_append(GTK_BOX(box), terminal_panel);
+
+  return box;
 }
 
 static void synchronize_navigation(ui_connectivity_t *ui_connectivity, GtkWidget *button)
