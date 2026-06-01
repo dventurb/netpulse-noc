@@ -11,6 +11,8 @@ static GtkWidget *create_connectivity_header(ui_connectivity_t *ui_connectivity)
 static GtkWidget *create_menu_bar(ui_connectivity_t *ui_connectivity);
 static GtkWidget *create_page_ping(ui_connectivity_t *ui_connectivity);
 
+static void synchronize_navigation(ui_connectivity_t *ui_connectivity, GtkWidget *button);
+
 // Callbacks
 static void on_menu_button_clicked(GtkButton *button, gpointer data);
 static void on_sidebar_button_clicked(GtkButton *button, gpointer data);
@@ -68,9 +70,9 @@ static GtkWidget *create_connectivity_side_bar(ui_connectivity_t *ui_connectivit
 
   const char *icons[] = {
     "assets/icon-ping-active.svg",
-    "assets/icon-traceroute.svg",
-    "assets/icon-dns-lookup.svg",
-    "assets/icon-arp-table.svg"
+    "assets/icon-traceroute-default.svg",
+    "assets/icon-dns-lookup-default.svg",
+    "assets/icon-arp-table-default.svg"
   };
 
   for (int i = 0; i < 4; i++)
@@ -149,19 +151,16 @@ static GtkWidget *create_page_ping(ui_connectivity_t *ui_connectivity)
   return container;
 }
 
-static void on_menu_button_clicked(GtkButton *button, gpointer data)
+static void synchronize_navigation(ui_connectivity_t *ui_connectivity, GtkWidget *button)
 {
-  ui_connectivity_t *ui_connectivity = (ui_connectivity_t *)data;
-  
   const char *label = g_object_get_data(G_OBJECT(button), "target-page");
-
   gtk_stack_set_visible_child_name(GTK_STACK(ui_connectivity->stack), label);
 
-  const char *icons[] = {
-    "assets/icon-ping.svg",
-    "assets/icon-traceroute.svg",
-    "assets/icon-dns-lookup.svg",
-    "assets/icon-arp-table.svg"
+  const char *icons_default[] = {
+    "assets/icon-ping-default.svg",
+    "assets/icon-traceroute-default.svg",
+    "assets/icon-dns-lookup-default.svg",
+    "assets/icon-arp-table-default.svg"
   };
 
   const char *icons_active[] = {
@@ -176,60 +175,22 @@ static void on_menu_button_clicked(GtkButton *button, gpointer data)
     GtkWidget *box = gtk_widget_get_first_child(ui_connectivity->sidebar_buttons[i]);
     GtkWidget *image = gtk_widget_get_first_child(box);
 
-    if (ui_connectivity->buttons[i] != GTK_WIDGET(button))
-    {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->buttons[i]), FALSE);
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->sidebar_buttons[i]), FALSE);
-      gtk_image_set_from_file(GTK_IMAGE(image), icons[i]);
-    }
-    else
-    {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->buttons[i]), TRUE);
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->sidebar_buttons[i]), TRUE);
-      gtk_image_set_from_file(GTK_IMAGE(image), icons_active[i]);
-    }
+    bool is_active = (ui_connectivity->buttons[i] == button || ui_connectivity->sidebar_buttons[i] == button);
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->buttons[i]), is_active);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->sidebar_buttons[i]), is_active);
+    gtk_image_set_from_file(GTK_IMAGE(image), is_active ? icons_active[i] : icons_default[i]);
   }
+}
+
+static void on_menu_button_clicked(GtkButton *button, gpointer data)
+{
+  ui_connectivity_t *ui_connectivity = (ui_connectivity_t *)data;
+  synchronize_navigation(ui_connectivity, GTK_WIDGET(button));
 }
 
 static void on_sidebar_button_clicked(GtkButton *button, gpointer data)
 {
   ui_connectivity_t *ui_connectivity = (ui_connectivity_t *)data;
-  
-  const char *label = g_object_get_data(G_OBJECT(button), "target-page");
-
-  gtk_stack_set_visible_child_name(GTK_STACK(ui_connectivity->stack), label);
-
-  const char *icons[] = {
-    "assets/icon-ping.svg",
-    "assets/icon-traceroute.svg",
-    "assets/icon-dns-lookup.svg",
-    "assets/icon-arp-table.svg"
-  };
-
-  const char *icons_active[] = {
-    "assets/icon-ping-active.svg",
-    "assets/icon-traceroute-active.svg",
-    "assets/icon-dns-lookup-active.svg",
-    "assets/icon-arp-table-active.svg"
-  };
-
-  for (int i = 0; i < 4; i++)
-  {
-    GtkWidget *box = gtk_widget_get_first_child(ui_connectivity->sidebar_buttons[i]);
-    GtkWidget *image = gtk_widget_get_first_child(box);
-
-    if (ui_connectivity->sidebar_buttons[i] != GTK_WIDGET(button))
-    {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->sidebar_buttons[i]), FALSE);
-
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->buttons[i]), FALSE);
-      gtk_image_set_from_file(GTK_IMAGE(image), icons[i]);
-    }
-    else
-    {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->sidebar_buttons[i]), TRUE);
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_connectivity->buttons[i]), TRUE);
-      gtk_image_set_from_file(GTK_IMAGE(image), icons_active[i]);
-    }
-  }
+  synchronize_navigation(ui_connectivity, GTK_WIDGET(button));
 }
