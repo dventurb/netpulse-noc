@@ -153,7 +153,7 @@ static GtkWidget *create_page_ping(ui_connectivity_t *ui_connectivity)
   gtk_widget_set_margin_top(config_panel, 32);
   gtk_widget_set_margin_start(config_panel, 32);
   gtk_widget_set_margin_end(config_panel, 32);
-  gtk_widget_set_size_request(config_panel, -1, 512);
+  gtk_widget_set_size_request(config_panel, -1, 400);
   gtk_widget_add_css_class(config_panel, "connectivity-config-panel");
 
   GtkWidget *header_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
@@ -170,11 +170,12 @@ static GtkWidget *create_page_ping(ui_connectivity_t *ui_connectivity)
   gtk_box_append(GTK_BOX(header_box), title);
 
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 16);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 16);
   gtk_widget_set_margin_top(grid, 20);
 
   GtkWidget *label_target = gtk_label_new("TARGET SOURCE SELECTION");
+  gtk_widget_set_halign(label_target, GTK_ALIGN_START);
   gtk_widget_add_css_class(label_target, "config-panel-form-label");
 
   GtkWidget *check_button_equipment = gtk_check_button_new_with_label("Registered equipment");
@@ -185,11 +186,34 @@ static GtkWidget *create_page_ping(ui_connectivity_t *ui_connectivity)
 
   gtk_check_button_set_group(GTK_CHECK_BUTTON(check_button_equipment), GTK_CHECK_BUTTON(check_button_manual));
 
-  //GtkWidget *entry_ip = create_text_field(grid, "TARGET (IP / )", const char *placeholder, int row, int column)
-
   gtk_grid_attach(GTK_GRID(grid), label_target, 0, 0, 1, 1);
   gtk_grid_attach(GTK_GRID(grid), check_button_equipment, 0, 1, 1, 1);
   gtk_grid_attach(GTK_GRID(grid), check_button_manual, 1, 1, 1, 1);
+
+  GtkWidget *search = gtk_search_entry_new();
+  gtk_widget_add_css_class(search, "search-target");
+  GtkWidget *list = gtk_list_box_new();
+  gtk_widget_set_visible(list, FALSE);
+
+  gtk_grid_attach(GTK_GRID(grid), search, 0, 2, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), list, 0, 3, 1, 1);
+
+  GtkWidget *count = create_unit_field("COUNT", "5", "pkts");
+  GtkWidget *timeout = create_unit_field("TIMEOUT", "2", "sec");
+  GtkWidget *packet_size = create_unit_field("PACKET SIZE", "56 bytes (Standard)", NULL);
+
+  gtk_grid_attach(GTK_GRID(grid), count, 0, 4, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), timeout, 1, 4, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), packet_size, 0, 5, 1, 1);
+
+  GtkWidget *run_button = create_secondary_button("Run Ping", "assets/icon-start.svg", "secondary-button");
+  gtk_widget_set_margin_top(run_button, 16);
+
+  GtkWidget *clear_button = create_secondary_button("Clear", NULL, "clear-button");
+  gtk_widget_set_margin_top(clear_button, 16);
+
+  gtk_grid_attach(GTK_GRID(grid), run_button, 0, 6, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), clear_button, 1, 6, 1, 1);
 
   gtk_box_append(GTK_BOX(config_panel), header_box);
   gtk_box_append(GTK_BOX(config_panel), grid);
@@ -243,7 +267,7 @@ static GtkWidget *create_connectivity_terminal(ui_connectivity_t *ui_connectivit
   gtk_widget_add_css_class(terminal_panel, "terminal-panel");
 
   GtkTextBuffer *terminal_buffer = gtk_text_buffer_new(NULL);
-  gtk_text_buffer_set_text(GTK_TEXT_BUFFER(terminal_buffer), "$ ping -c 4 - W 2 8.8.8.8", -1);
+  gtk_text_buffer_set_text(GTK_TEXT_BUFFER(terminal_buffer), "$ ping -c 5 -W 2 -s 56 192.168.1.1", -1);
   gtk_text_view_set_buffer(GTK_TEXT_VIEW(terminal_panel), terminal_buffer);
 
   gtk_box_append(GTK_BOX(box), terminal_header);

@@ -37,6 +37,7 @@ GtkWidget *create_primary_button(const char *text, const char *icon, const char 
 GtkWidget *create_secondary_button(const char *text, const char *icon, const char *css);
 GtkWidget *create_stats_card(const char *title, int value, const char *css);
 GtkWidget *create_text_field(GtkWidget *grid, const char *text, const char *placeholder, int row, int column);
+GtkWidget *create_unit_field(const char *text, const char *placeholder, const char *unit);
 GtkWidget *create_dropdown_field(GtkWidget *grid, const char *text, const char* const *strings, int row, int column);
 GtkWidget *create_dialog_window(dialog_config_t dialog_config);
 GtkWidget *create_dialog_header(GtkWidget *dialog, const char *title);

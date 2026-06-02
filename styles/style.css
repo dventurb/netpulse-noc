@@ -195,6 +195,13 @@
   font-weight: 400;
 }
 
+.incident-search:focus-within,
+.inventory-search:focus-within {
+  outline: none;
+  box-shadow: none;
+  border-color: #19c37d;
+}
+
 .incident-filter button,
 .inventory-filter button {
   all: unset; /* reset default style */
@@ -425,6 +432,13 @@
   background-color: #ffffff;
   border-radius: 8px;
   padding: 9px 12px 10px;
+}
+
+.form-entry:focus,
+.form-entry:focus-within {
+  outline: none;
+  box-shadow: none;
+  border: 1px solid #19c37d;
 }
 
 .form-entry-error {
@@ -701,6 +715,7 @@
 .terminal-panel,
 .terminal-panel textview,
 .terminal-panel text {
+  font-family: "JetBrains Mono", "Fira Code", "Fira Mono", "Noto Sans Mono", monospace;
   background-color: #151515;
   color: #19c37d;
   font-size: 13px;
@@ -711,4 +726,82 @@
   color: #9ca3af;
   font-weight: 400;
   font-size: 12px;
+}
+
+.clear-button {
+  all: unset; /* reset default style */
+  
+  background-color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.clear-button:hover {
+  background-color: #f0fdf4;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.clear-button:disabled {
+  opacity: 0.4;
+}
+
+.field-unit-container {
+  background-color: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  padding: 4px 6px;
+}
+
+.field-unit-container:focus-within {
+  background-color: #ffffff;
+  border-color: #19c37d;
+}
+
+.field-unit-entry {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  color: #171717;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.field-unit-entry:focus,
+.field-unit-entry:checked,
+.field-unit-entry:focus-within {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+.field-unit {
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 400;
+  padding-left: 8px;
+}
+
+.field-unit-label {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.search-target {
+  background-color: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  padding: 4px 6px;
+  color: #171717;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.search-target:focus-within {
+  outline: none;
+  box-shadow: none;
+  background-color: #ffffff;
+  border-color: #19c37d;
 }
