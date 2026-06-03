@@ -13,10 +13,13 @@ static GtkWidget *create_page_ping(ui_connectivity_t *ui_connectivity);
 static GtkWidget *create_connectivity_terminal(ui_connectivity_t *ui_connectivity);
 
 static void synchronize_navigation(ui_connectivity_t *ui_connectivity, GtkWidget *button);
+static GtkWidget *create_equipment_container(equipment_node_t *node);
 
 // Callbacks
 static void on_menu_button_clicked(GtkButton *button, gpointer data);
 static void on_sidebar_button_clicked(GtkButton *button, gpointer data);
+static void on_search_equipment_activated(GtkSearchEntry *search, gpointer data);
+static void on_target_source_selection_clicked(GtkButton *button, gpointer data);
 
 GtkWidget *create_page_connectivity(ui_t *ui)
 {
@@ -163,60 +166,88 @@ static GtkWidget *create_page_ping(ui_connectivity_t *ui_connectivity)
   GtkWidget *image = gtk_image_new_from_file("assets/icon-ping-configuration.svg");
   gtk_image_set_pixel_size(GTK_IMAGE(image), 14);
 
-  GtkWidget *title = gtk_label_new("Ping Configuration");
-  gtk_widget_add_css_class(title, "config-panel-title");
+  GtkWidget *config_title_lbl = gtk_label_new("Ping Configuration");
+  gtk_widget_add_css_class(config_title_lbl, "config-panel-title");
 
   gtk_box_append(GTK_BOX(header_box), image);
-  gtk_box_append(GTK_BOX(header_box), title);
+  gtk_box_append(GTK_BOX(header_box), config_title_lbl);
 
-  GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_row_spacing(GTK_GRID(grid), 16);
-  gtk_grid_set_column_spacing(GTK_GRID(grid), 16);
-  gtk_widget_set_margin_top(grid, 20);
+  GtkWidget *container_form = gtk_box_new(GTK_ORIENTATION_VERTICAL, 16);
+  gtk_widget_set_margin_top(container_form, 20);
 
+  GtkWidget *target_source_stack = gtk_stack_new();
+  
   GtkWidget *label_target = gtk_label_new("TARGET SOURCE SELECTION");
   gtk_widget_set_halign(label_target, GTK_ALIGN_START);
   gtk_widget_add_css_class(label_target, "config-panel-form-label");
 
+  GtkWidget *container_buttons = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
+
   GtkWidget *check_button_equipment = gtk_check_button_new_with_label("Registered equipment");
   gtk_widget_add_css_class(check_button_equipment, "config-panel-form-checkbutton");
+  g_object_set_data(G_OBJECT(check_button_equipment), "target-source", "target-registered-equipment");
+  gtk_check_button_set_active(GTK_CHECK_BUTTON(check_button_equipment), TRUE);
+  g_signal_connect(check_button_equipment, "toggled", G_CALLBACK(on_target_source_selection_clicked), target_source_stack);
 
   GtkWidget *check_button_manual = gtk_check_button_new_with_label("Manual IP / Hostname");
   gtk_widget_add_css_class(check_button_manual, "config-panel-form-checkbutton");
+  g_object_set_data(G_OBJECT(check_button_manual), "target-source", "target-manual-ip");
+  g_signal_connect(check_button_manual, "toggled", G_CALLBACK(on_target_source_selection_clicked), target_source_stack);
 
   gtk_check_button_set_group(GTK_CHECK_BUTTON(check_button_equipment), GTK_CHECK_BUTTON(check_button_manual));
 
-  gtk_grid_attach(GTK_GRID(grid), label_target, 0, 0, 1, 1);
-  gtk_grid_attach(GTK_GRID(grid), check_button_equipment, 0, 1, 1, 1);
-  gtk_grid_attach(GTK_GRID(grid), check_button_manual, 1, 1, 1, 1);
+  gtk_box_append(GTK_BOX(container_buttons), check_button_equipment);
+  gtk_box_append(GTK_BOX(container_buttons), check_button_manual);
 
-  GtkWidget *search = gtk_search_entry_new();
-  gtk_widget_add_css_class(search, "search-target");
+  GtkWidget *form_fields_grid = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(form_fields_grid), 16);
+  gtk_grid_set_column_spacing(GTK_GRID(form_fields_grid), 16);
+
+  GtkWidget *container_search = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+
+  GtkWidget *label_equipment = gtk_label_new("TARGET (NAME / ID / IP / MAC)");
+  gtk_widget_set_halign(label_equipment, GTK_ALIGN_START);
+  gtk_widget_add_css_class(label_equipment, "field-unit-label");
+
+  GtkWidget *equipment_search = gtk_search_entry_new();
+  gtk_widget_add_css_class(equipment_search, "search-target");
+  g_signal_connect(equipment_search, "search-changed", G_CALLBACK(on_search_equipment_activated), ui_connectivity);
+
   GtkWidget *list = gtk_list_box_new();
   gtk_widget_set_visible(list, FALSE);
+  g_object_set_data(G_OBJECT(equipment_search), "list-equipments", list);
 
-  gtk_grid_attach(GTK_GRID(grid), search, 0, 2, 1, 1);
-  gtk_grid_attach(GTK_GRID(grid), list, 0, 3, 1, 1);
+  gtk_box_append(GTK_BOX(container_search), label_equipment);
+  gtk_box_append(GTK_BOX(container_search), equipment_search);
+  gtk_box_append(GTK_BOX(container_search), list);
+  
+  gtk_stack_add_named(GTK_STACK(target_source_stack), container_search, "target-registered-equipment");
+  gtk_stack_set_visible_child_name(GTK_STACK(target_source_stack), "target-registered-equipment");
+
+  GtkWidget *manual_ip = create_unit_field("TARGET (IP / HOSTNAME)", "192.168.1.1", NULL);
+  gtk_stack_add_named(GTK_STACK(target_source_stack), manual_ip, "target-manual-ip");
 
   GtkWidget *count = create_unit_field("COUNT", "5", "pkts");
   GtkWidget *timeout = create_unit_field("TIMEOUT", "2", "sec");
   GtkWidget *packet_size = create_unit_field("PACKET SIZE", "56 bytes (Standard)", NULL);
 
-  gtk_grid_attach(GTK_GRID(grid), count, 0, 4, 1, 1);
-  gtk_grid_attach(GTK_GRID(grid), timeout, 1, 4, 1, 1);
-  gtk_grid_attach(GTK_GRID(grid), packet_size, 0, 5, 1, 1);
-
   GtkWidget *run_button = create_secondary_button("Run Ping", "assets/icon-start.svg", "secondary-button");
-  gtk_widget_set_margin_top(run_button, 16);
 
   GtkWidget *clear_button = create_secondary_button("Clear", NULL, "clear-button");
-  gtk_widget_set_margin_top(clear_button, 16);
 
-  gtk_grid_attach(GTK_GRID(grid), run_button, 0, 6, 1, 1);
-  gtk_grid_attach(GTK_GRID(grid), clear_button, 1, 6, 1, 1);
+  gtk_grid_attach(GTK_GRID(form_fields_grid), target_source_stack, 0, 1, 2, 1);
+  gtk_grid_attach(GTK_GRID(form_fields_grid), count, 0, 2, 1, 1);
+  gtk_grid_attach(GTK_GRID(form_fields_grid), timeout, 1, 2, 1, 1);
+  gtk_grid_attach(GTK_GRID(form_fields_grid), packet_size, 0, 3, 2, 1);
+  gtk_grid_attach(GTK_GRID(form_fields_grid), run_button, 0, 4, 1, 1);
+  gtk_grid_attach(GTK_GRID(form_fields_grid), clear_button, 1, 4, 1, 1);
+
+  gtk_box_append(GTK_BOX(container_form), label_target);
+  gtk_box_append(GTK_BOX(container_form), container_buttons);
+  gtk_box_append(GTK_BOX(container_form), form_fields_grid);
 
   gtk_box_append(GTK_BOX(config_panel), header_box);
-  gtk_box_append(GTK_BOX(config_panel), grid);
+  gtk_box_append(GTK_BOX(config_panel), container_form);
 
   GtkWidget *terminal_panel = create_connectivity_terminal(ui_connectivity);
   gtk_box_append(GTK_BOX(container), config_panel);
@@ -308,6 +339,52 @@ static void synchronize_navigation(ui_connectivity_t *ui_connectivity, GtkWidget
   }
 }
 
+static GtkWidget *create_equipment_container(equipment_node_t *node) 
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
+  gtk_widget_set_margin_top(box, 12);
+  gtk_widget_set_margin_bottom(box, 12);
+  gtk_widget_set_margin_start(box, 16);
+
+  GtkWidget *image;
+
+  switch (node->data.status) 
+  {
+    case STATUS_FAILED:
+      image = gtk_image_new_from_file("assets/status-failed.svg");
+      break;
+    case STATUS_MAINTENANCE:
+      image = gtk_image_new_from_file("assets/status-maintenance.svg");
+      break;
+    case STATUS_OPERATIONAL:
+      image = gtk_image_new_from_file("assets/status-operational.svg");
+      break;
+    case STATUS_DISABLED:
+      image = gtk_image_new_from_file("assets/status-disabled.svg");
+      break;
+  }
+
+  gtk_image_set_pixel_size(GTK_IMAGE(image), 6);
+
+  GtkWidget *text_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+
+  GtkWidget *name = gtk_label_new(node->data.name);
+  gtk_widget_set_halign(name, GTK_ALIGN_START);
+  gtk_widget_add_css_class(name, "search-item-name");
+
+  GtkWidget *ip_address = gtk_label_new(node->data.ip_address);
+  gtk_widget_set_halign(ip_address, GTK_ALIGN_START);
+  gtk_widget_add_css_class(ip_address, "search-item-ip");
+
+  gtk_box_append(GTK_BOX(text_box), name);
+  gtk_box_append(GTK_BOX(text_box), ip_address);
+
+  gtk_box_append(GTK_BOX(box), image);
+  gtk_box_append(GTK_BOX(box), text_box);
+
+  return box;
+}
+
 static void on_menu_button_clicked(GtkButton *button, gpointer data)
 {
   ui_connectivity_t *ui_connectivity = (ui_connectivity_t *)data;
@@ -318,4 +395,71 @@ static void on_sidebar_button_clicked(GtkButton *button, gpointer data)
 {
   ui_connectivity_t *ui_connectivity = (ui_connectivity_t *)data;
   synchronize_navigation(ui_connectivity, GTK_WIDGET(button));
+}
+
+static void on_target_source_selection_clicked(GtkButton *button, gpointer data)
+{
+  GtkWidget *stack = (GtkWidget *)data;
+
+  const char *label = g_object_get_data(G_OBJECT(button), "target-source");
+  gtk_stack_set_visible_child_name(GTK_STACK(stack), label);
+}
+
+static void on_search_equipment_activated(GtkSearchEntry *search, gpointer data)
+{
+  ui_connectivity_t *ui_connectivity = (ui_connectivity_t *)data;
+
+  GtkWidget *list = g_object_get_data(G_OBJECT(search), "list-equipments");
+
+  GtkWidget *child = gtk_widget_get_first_child(list);
+  while (child != NULL)
+  {
+    gtk_list_box_remove(GTK_LIST_BOX(list), child);
+    child = gtk_widget_get_first_child(list);
+  }
+
+  gtk_widget_set_visible(list, TRUE);
+
+  const char *text = gtk_editable_get_text(GTK_EDITABLE(search));
+
+  equipment_node_t *node = NULL;
+
+  switch (detect_search_type(text)) 
+  {
+    case SEARCH_ID:
+      node = (equipment_node_t *) hashmap_get(&ui_connectivity->application->id_index, text);
+      break;
+    case SEARCH_IP:
+      node = (equipment_node_t *) hashmap_get(&ui_connectivity->application->ip_index, text);
+      break;
+    case SEARCH_MAC:
+      node = (equipment_node_t *) hashmap_get(&ui_connectivity->application->mac_index, text);
+      break;
+    case SEARCH_INVALID:
+      break;
+  }
+
+  if (node == NULL) 
+  {
+    gtk_widget_set_visible(list, FALSE);
+  }
+
+  else 
+  {
+    equipment_list_t filtered;
+    equipment_list_init(&filtered);
+
+    equipment_node_t *new = equipment_list_insert(&filtered, node->data);
+    new->data = node->data;
+
+    GtkWidget *item = create_equipment_container(node);
+
+    GtkWidget *row = gtk_list_box_row_new();
+    gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), item);
+    gtk_widget_add_css_class(row, "search-row-item");
+
+    gtk_list_box_append(GTK_LIST_BOX(list), row);
+
+    equipment_list_destroy(&filtered);
+  }
 }

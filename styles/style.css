@@ -805,3 +805,35 @@
   background-color: #ffffff;
   border-color: #19c37d;
 }
+
+.search-row-item {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.search-row-item:hover {
+  background-color: #f9fafb;
+}
+
+.search-row-item:selected {
+  background-color: #f5f6f8;
+  border-color: #19c37d;
+}
+
+.search-row-item:focus-within {
+  outline: none;
+  box-shadow: none;
+  border-color: #19c37d;
+}
+
+.search-item-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #171717;
+}
+
+.search-item-ip {
+  font-size: 12px;
+  font-weight: 400;
+  color: #6b7280;
+}
