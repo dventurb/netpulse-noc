@@ -1,5 +1,7 @@
 #include "ui_widgets.h"
 
+#include "macros.h"
+
 GtkWidget *create_primary_button(const char *text, const char *icon, const char *css)
 {
   GtkWidget *button = gtk_toggle_button_new();
@@ -129,12 +131,15 @@ GtkWidget *create_unit_field(const char *text, const char *placeholder, const ch
   entry = gtk_entry_new();
   gtk_widget_set_hexpand(entry, TRUE);
   gtk_widget_add_css_class(entry, "field-unit-entry");
+  gtk_entry_set_max_length(GTK_ENTRY(entry), STRING_MAX - 1);
+  g_object_set_data(G_OBJECT(box), "entry", entry);
   gtk_box_append(GTK_BOX(container), entry);
 
   if (placeholder != NULL) gtk_entry_set_placeholder_text(GTK_ENTRY(entry), placeholder);
+
   if (unit != NULL)
   {
-    GtkWidget *unit_label = gtk_label_new(unit);
+    unit_label = gtk_label_new(unit);
     gtk_widget_add_css_class(unit_label, "field-unit");
     gtk_box_append(GTK_BOX(container), unit_label);
   }

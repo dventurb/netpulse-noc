@@ -14,6 +14,9 @@ typedef enum {
 void get_datetime(time_t time, char *string);
 bool validate_ip_address(const char *ip_address);
 bool validate_mac_address(const char *mac_address);
+bool validate_ping_count(int count);
+bool validate_ping_timeout(int timeout);
+bool validate_ping_packet_size(int packet_size);
 search_type_t detect_search_type(const char *text);
 
 #endif

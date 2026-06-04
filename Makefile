@@ -1,8 +1,8 @@
 CC := gcc 
 
 CPPFLAGS := $(shell pkg-config --cflags gtk4) -Iinc/ -Iui/inc 
-CFLAGS := -Wall -Wextra -g
-LDLIBS := $(shell pkg-config --libs gtk4)
+CFLAGS := -Wall -Wextra -g -pthread
+LDLIBS := $(shell pkg-config --libs gtk4) -pthread
 # LDFLAGS := 
 
 # OS detecting

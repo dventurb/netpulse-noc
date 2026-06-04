@@ -249,3 +249,6 @@ https://stackoverflow.com/questions/714100/os-detecting-makefile
 https://linuxvox.com/blog/makefile-that-distinguishes-between-windows-and-unix-like-systems/
 https://stackoverflow.com/questions/791982/determine-if-a-string-is-a-valid-ipv4-address-in-c
 https://www.tutorialspoint.com/c_standard_library/c_function_sscanf.htm
+https://dev.to/quantumsheep/basics-of-multithreading-in-c-4pam
+https://www.geeksforgeeks.org/c/multithreading-in-c/
+https://stackoverflow.com/questions/60992843/how-to-perform-a-ping-test-programmatically-on-windows#61010544
