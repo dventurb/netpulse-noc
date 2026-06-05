@@ -58,10 +58,13 @@ void incident_list_init(incident_list_t *list);
 void incident_list_destroy(incident_list_t *list);
 void incident_queue_enqueue(incident_queue_t *queue, incident_t data);
 incident_node_t *incident_queue_dequeue(incident_queue_t *queue); // Flow: dequeue() -> return incident_node_t * -> node->data.status = INCIDENT_IN_PROGRESS -> incident_list_insert()
-void incident_list_insert(incident_list_t *list, incident_node_t *node);
+
+void incident_queue_requeue(incident_queue_t *queue, incident_t data);
 incident_node_t *incident_queue_peek(incident_queue_t *queue);
 int incident_queue_get_position(incident_queue_t *queue, incident_node_t *target);
+void incident_list_insert(incident_list_t *list, incident_node_t *node);
 void incident_list_conclude(incident_node_t *node);
+void incident_list_reinsert(incident_list_t *list, incident_t data);
 
 int incident_queue_filter_by_priority(const incident_queue_t *queue, incident_priority_t priority, incident_t *incidents);
 int incident_queue_filter_by_status(const incident_queue_t *queue, incident_status_t status, incident_t *incidents);

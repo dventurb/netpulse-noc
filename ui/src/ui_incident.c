@@ -4,6 +4,7 @@
 #include "ui_widgets.h"
 #include "macros.h"
 #include "ui_macros.h"
+#include "controller.h"
 
 // TODO: look for better way
 static const char* const incident_status[] = { "Pending", "In Progress", "Concluded", NULL };
@@ -36,7 +37,6 @@ static GtkWidget *create_incident_priority_cell(incident_priority_t priority);
 static GtkWidget *create_incident_status_cell(incident_status_t status);
 static GtkWidget *create_incident_form(incident_queue_t *incidents_pending);
 
-static void ui_incident_refresh(ui_incident_t *ui_incident);
 static void ui_incident_update_stats_cards(ui_incident_t *ui_incident);
 static void ui_incident_update_header(ui_incident_t *ui_incident);
 static void ui_incident_refresh_table(ui_incident_t *ui_incident, incident_queue_t *queue, incident_list_t *list);
@@ -462,7 +462,7 @@ static GtkWidget *create_incident_status_cell(incident_status_t status)
   return box;
 }
 
-static void ui_incident_refresh(ui_incident_t *ui_incident)
+void ui_incident_refresh(ui_incident_t *ui_incident)
 {
   incident_queue_t *queue = &ui_incident->application->incidents_pending;
   incident_list_t *list = &ui_incident->application->incidents_history;
@@ -675,21 +675,9 @@ static void on_create_incident_confirmed(GtkButton *button, gpointer data)
   GtkWidget *dropdown_priority = g_object_get_data(G_OBJECT(incident_form->form), "dropdown-priority");
   new.priority = gtk_drop_down_get_selected(GTK_DROP_DOWN(dropdown_priority));
 
-  incident_queue_enqueue(&incident_form->application->incidents_pending, new);
-
   ui_incident_t *ui_incident = g_object_get_data(G_OBJECT(incident_form->table), DATA_UI_INCIDENT);
 
-  int total = incident_get_count(&ui_incident->application->incidents_pending, &ui_incident->application->incidents_history);
-
-  ui_incident->pagination.total = pagination_total_pages(&ui_incident->pagination, total);
-
-  if (ui_incident->pagination.page >= ui_incident->pagination.total)
-    ui_incident->pagination.page = ui_incident->pagination.total - 1;
-
-  if (ui_incident->pagination.page < 0)
-    ui_incident->pagination.page = 0;
-
-  ui_incident_refresh(ui_incident);
+  incident_controller_add(ui_incident, new);
 
   gtk_window_destroy(GTK_WINDOW(incident_form->dialog));
 }
@@ -746,17 +734,7 @@ static void on_process_next_incident_clicked(GtkButton *button, gpointer data)
   (void)button; // unused parameter
 
   ui_incident_t *ui_incident = (ui_incident_t *) data;
-
-  incident_queue_t *queue = &ui_incident->application->incidents_pending;
-  incident_list_t *list = &ui_incident->application->incidents_history;
-
-  incident_node_t *node = incident_queue_dequeue(queue);
-
-  if (node == NULL) return;
-
-  incident_list_insert(list, node);
-
-  ui_incident_refresh(ui_incident);
+  incident_controller_process(ui_incident);
 }
 
 static void on_resolve_incident_clicked(GtkButton *button, gpointer data)
@@ -764,11 +742,7 @@ static void on_resolve_incident_clicked(GtkButton *button, gpointer data)
   (void) button; // unused parameter
 
   ui_incident_t *ui_incident = (ui_incident_t *)data;
-
-  ui_incident->selected_node->data.status = INCIDENT_CONCLUDED;
-  ui_incident->selected_node->data.concluded_at = time(NULL);
-
-  ui_incident_refresh(ui_incident);
+  incident_controller_resolve(ui_incident);
 }
 
 static void on_incident_check_button_toggled(GtkCheckButton *button, gpointer data)

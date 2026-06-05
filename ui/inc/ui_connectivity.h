@@ -23,7 +23,7 @@ typedef struct {
   GtkWidget *sidebar_buttons[6];
 } ui_connectivity_t;
 
-typedef struct {
+typedef struct ui_ping_configuration_t {
   application_t *application;
 
   GtkWidget *list;

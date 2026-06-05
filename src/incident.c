@@ -110,6 +110,36 @@ void incident_list_insert(incident_list_t *list, incident_node_t *node)
   list->count++;
 }
 
+void incident_queue_requeue(incident_queue_t *queue, incident_t data)
+{
+  incident_node_t *new = malloc(sizeof(incident_node_t));
+  if (new == NULL) 
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_requeue : malloc failed)
+    return;
+  }
+
+  new->data = data;
+  new->next = NULL;
+
+  if (data.number >= queue->next_number) queue->next_number = data.number + 1;
+
+  if (queue->front == NULL)
+  {
+    queue->front = new;
+    queue->rear = new;
+
+    queue->count++;
+
+    return;
+  }
+
+  queue->rear->next = new;
+  queue->rear = new;
+
+  queue->count++;
+}
+
 incident_node_t *incident_queue_peek(incident_queue_t *queue)
 {
   if (queue == NULL || queue->front == NULL)
@@ -154,6 +184,32 @@ void incident_list_conclude(incident_node_t *node)
 
   node->data.status = INCIDENT_CONCLUDED;
   node->data.concluded_at = time(NULL);
+}
+
+void incident_list_reinsert(incident_list_t *list, incident_t data)
+{
+  incident_node_t *new = malloc(sizeof(incident_node_t));
+  if (new == NULL) 
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_list_reinsert : malloc failed)
+    return;
+  }
+
+  new->data = data;
+  new->next = list->head;
+
+  if (list->head == NULL)
+  {
+    list->head = new;
+
+    list->count++;
+
+    return;
+  }
+
+  list->head = new;
+
+  list->count++;
 }
 
 int incident_queue_filter_by_priority(const incident_queue_t *queue, incident_priority_t priority, incident_t *incidents)

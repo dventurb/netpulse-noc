@@ -22,7 +22,6 @@ typedef struct {
   technician_t *current_user;
 } application_t;
 
-
 void application_init(application_t *application);
 void application_destroy(application_t *application);
 

@@ -7,7 +7,7 @@
 #include "ui_widgets.h"
 #include <gtk/gtk.h>
 
-typedef struct {
+typedef struct ui_incident_t {
   application_t *application;
   
   GtkWidget *window;
@@ -31,6 +31,7 @@ typedef struct {
 } incident_form_t;
 
 GtkWidget *create_page_incident(ui_t *ui);
+void ui_incident_refresh(ui_incident_t *ui_incident);
 
 #endif
 

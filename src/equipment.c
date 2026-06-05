@@ -98,6 +98,93 @@ void equipment_list_remove(equipment_list_t *list, equipment_node_t *node)
   list->count--;
 }
 
+equipment_node_t *equipment_list_reinsert(equipment_list_t *list, equipment_t data)
+{
+  equipment_node_t *new = malloc(sizeof(equipment_node_t));
+  if (new == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_list_reinsert : malloc failed)
+    return NULL;
+  }
+
+  new->data = data;
+  new->next = NULL;
+
+  if (data.id >= list->next_id) list->next_id = data.id + 1;
+
+  if (list->head == NULL)
+  {
+    new->previous = NULL;
+
+    list->head = new;
+    list->tail = new;
+
+    list->count++;
+
+    return new;
+  }
+
+  new->previous = list->tail;
+  list->tail->next = new;
+  list->tail = new;
+
+  list->count++;
+
+  return new;
+}
+
+void equipment_list_clone(equipment_list_t *source, equipment_list_t *destination)
+{
+  equipment_node_t *node = source->head;
+  
+  while (node != NULL) 
+  {
+    equipment_list_reinsert(destination, node->data);
+    node = node->next;
+  }
+}
+
+equipment_t *equipment_list_in_range(equipment_list_t *list, int start, int end, int *count)
+{
+  if (list == NULL) 
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_list_in_range : NULL argument)
+    return NULL;
+  }
+
+  int size = end - start;
+  if (size <= 0) return NULL;
+
+  equipment_t *equipments = malloc(sizeof(equipment_t) * size);
+  if (equipments == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] equipment_list_in_range : malloc failed)
+    return NULL;
+  }
+
+  equipment_node_t *node = list->head;
+  int i = 0;
+
+  while (node != NULL && i < start)
+  {
+    node = node->next;
+    i++;
+  }
+
+  while (node != NULL && i < end)
+  {
+    int index = i - start;
+    equipments[index] = node->data;
+
+    node = node->next;
+    i++;
+  }
+
+  printf("%d - %d - %d\n", end, start, i);
+  *count = i - start;
+  return equipments;
+}
+
 void equipment_update(equipment_t *equipment, equipment_t data)
 {
   if (equipment == NULL) 
@@ -289,6 +376,11 @@ int equipment_get_number_status(equipment_list_t *list, equipment_status_t statu
   }
 
   return i;
+}
+
+void equipment_format_id(int id, char *buffer)
+{
+  snprintf(buffer, ID_MAX, "EQ-%03d", id);
 }
 
 // Fast and Slow Pointer

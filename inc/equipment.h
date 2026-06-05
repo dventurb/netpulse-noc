@@ -57,6 +57,9 @@ void equipment_list_init(equipment_list_t *list);
 void equipment_list_destroy(equipment_list_t *list);
 equipment_node_t *equipment_list_insert(equipment_list_t *list, equipment_t data);
 void equipment_list_remove(equipment_list_t *list, equipment_node_t *node); // Flow: hashmap_get() -> return void * -> casting to equipment_node_t -> equipment_list_remove() 
+equipment_node_t *equipment_list_reinsert(equipment_list_t *list, equipment_t data);
+equipment_t *equipment_list_in_range(equipment_list_t *list, int start, int end, int *count);
+void equipment_list_clone(equipment_list_t *source, equipment_list_t *destination);
 
 void equipment_list_sort_by_status(equipment_list_t *list);
 void equipment_list_sort_by_location(equipment_list_t *list);
@@ -75,5 +78,6 @@ const char *equipment_type_to_string(equipment_type_t type);
 
 int equipment_get_count(equipment_list_t *list);
 int equipment_get_number_status(equipment_list_t *list, equipment_status_t status);
+void equipment_format_id(int id, char *buffer);
 
 #endif
