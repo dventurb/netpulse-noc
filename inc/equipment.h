@@ -73,11 +73,12 @@ void equipment_filter(const equipment_list_t *list, equipment_status_t status, e
 void equipment_filter_by_status(const equipment_list_t *list, equipment_status_t status, equipment_list_t *filtered);
 void equipment_filter_by_type(const equipment_list_t *list, equipment_type_t type, equipment_list_t *filtered);
 
-const char *equipment_status_to_string(equipment_status_t status);
-const char *equipment_type_to_string(equipment_type_t type);
-
 int equipment_get_count(equipment_list_t *list);
 int equipment_get_number_status(equipment_list_t *list, equipment_status_t status);
+
 void equipment_format_id(int id, char *buffer);
+
+const char *equipment_status_to_string(equipment_status_t status);
+const char *equipment_type_to_string(equipment_type_t type);
 
 #endif

@@ -26,12 +26,30 @@ gboolean on_equipment_finished(gpointer data)
 {
   equipment_task_t *task = (equipment_task_t *)data;
 
-  task->ui_inventory->controller.pagination.total = pagination_total_pages(&task->ui_inventory->controller.pagination, task->count);
+  task->ui_inventory->controller.pagination.total = pagination_total_pages(task->ui_inventory->controller.pagination, task->count);
 
   if (task->ui_inventory->controller.pagination.page >= task->ui_inventory->controller.pagination.total)
     task->ui_inventory->controller.pagination.page = task->ui_inventory->controller.pagination.total - 1;
 
   ui_inventory_update_table(task->ui_inventory, task->result, task->count);
+
+  free(task->params);
+  free(task->result);
+  free(task);
+
+  return false;
+}
+
+gboolean on_incident_finished(gpointer data)
+{
+  incident_task_t *task = (incident_task_t *)data;
+
+  task->ui_incident->controller.pagination.total = pagination_total_pages(task->ui_incident->controller.pagination, task->count);
+
+  if (task->ui_incident->controller.pagination.page >= task->ui_incident->controller.pagination.total)
+    task->ui_incident->controller.pagination.page = task->ui_incident->controller.pagination.total - 1;
+
+  ui_incident_update_table(task->ui_incident, task->result, task->count);
 
   free(task->params);
   free(task->result);
@@ -54,12 +72,12 @@ void connectivity_controller_ping(ui_ping_configuration_t *ui_ping, const char *
   ping_task_worker(params, on_ping_finished, ui_ping);
 }
 
-void pagination_controller_get_range(pagination_t *pagination, int *start, int *end)
+void pagination_controller_get_range(pagination_t pagination, int *start, int *end)
 {
-  *start = pagination->page - 1;
-  *end = pagination->page + 1;
+  *start = pagination.page - 1;
+  *end = pagination.page + 1;
 
-  int total = pagination->total - 1;
+  int total = pagination.total - 1;
 
   if (*start < 0) *start = 0;
   if (*end > total) *end = total;
@@ -91,8 +109,8 @@ static void equipment_controller_dispatch(ui_inventory_t *ui_inventory)
   equipment_params_t *params = malloc(sizeof(equipment_params_t));
   if (params == NULL) return;
 
-  params->start = pagination_start(&ui_inventory->controller.pagination);
-  params->end = pagination_end(&ui_inventory->controller.pagination);
+  params->start = pagination_start(ui_inventory->controller.pagination);
+  params->end = pagination_end(ui_inventory->controller.pagination);
 
   params->status_filter = ui_inventory->controller.status_filter;
   params->type_filter = ui_inventory->controller.type_filter;
@@ -100,12 +118,26 @@ static void equipment_controller_dispatch(ui_inventory_t *ui_inventory)
   equipment_task_worker(params, on_equipment_finished, ui_inventory);
 }
 
+static void incident_controller_dispatch(ui_incident_t *ui_incident)
+{
+  incident_params_t *params = malloc(sizeof(incident_params_t));
+  if (params == NULL) return;
+
+  params->start = pagination_start(ui_incident->controller.pagination);
+  params->end = pagination_end(ui_incident->controller.pagination);
+
+  params->status_filter = ui_incident->controller.status_filter;
+  params->priority_filter = ui_incident->controller.priority_filter;
+
+  incident_task_worker(params, on_incident_finished, ui_incident);
+}
+
 void equipment_controller_refresh_page(ui_inventory_t *ui_inventory)
 {
   ui_inventory->controller.selected_count = 0;
   ui_inventory->controller.selected_node = NULL;
   ui_inventory->controller.pagination.page = 0;
-  ui_inventory->controller.pagination.total = pagination_total_pages(&ui_inventory->controller.pagination, ui_inventory->application->equipments.count);
+  ui_inventory->controller.pagination.total = pagination_total_pages(ui_inventory->controller.pagination, ui_inventory->application->equipments.count);
 
   ui_inventory->controller.status_filter = 0;
   ui_inventory->controller.type_filter = 0;
@@ -116,9 +148,30 @@ void equipment_controller_refresh_page(ui_inventory_t *ui_inventory)
   ui_inventory_update_header(ui_inventory);
 }
 
+void incident_controller_refresh_page(ui_incident_t *ui_incident)
+{
+  ui_incident->controller.selected_count = 0;
+  ui_incident->controller.selected_node = NULL;
+  ui_incident->controller.pagination.page = 0;
+  ui_incident->controller.pagination.total = pagination_total_pages(ui_incident->controller.pagination, ui_incident->application->equipments.count);
+
+  ui_incident->controller.status_filter = 0;
+  ui_incident->controller.priority_filter = 0;
+
+  incident_controller_dispatch(ui_incident);
+
+  ui_incident_update_stats_cards(ui_incident);
+  ui_incident_update_header(ui_incident);
+}
+
 void equipment_controller_update_table(ui_inventory_t *ui_inventory)
 {
   equipment_controller_dispatch(ui_inventory);
+}
+
+void incident_controller_update_table(ui_incident_t *ui_incident)
+{
+  incident_controller_dispatch(ui_incident);
 }
 
 void equipment_controller_apply_filters(ui_inventory_t *ui_inventory, int status, int type)
@@ -143,7 +196,7 @@ void equipment_controller_add(ui_inventory_t *ui_inventory, equipment_t data)
   hashmap_insert(&ui_inventory->application->ip_index, node->data.ip_address, node);
   hashmap_insert(&ui_inventory->application->mac_index, node->data.mac_address, node);
 
-  ui_inventory->controller.pagination.total = pagination_total_pages(&ui_inventory->controller.pagination, ui_inventory->application->equipments.count);
+  ui_inventory->controller.pagination.total = pagination_total_pages(ui_inventory->controller.pagination, ui_inventory->application->equipments.count);
 
   if (ui_inventory->controller.pagination.page >= ui_inventory->controller.pagination.total)
     ui_inventory->controller.pagination.page = ui_inventory->controller.pagination.total - 1;
@@ -192,7 +245,7 @@ void equipment_controller_remove(ui_inventory_t *ui_inventory, equipment_node_t 
 
   equipment_list_remove(list, node);
 
-  ui_inventory->controller.pagination.total = pagination_total_pages(&ui_inventory->controller.pagination, ui_inventory->application->equipments.count);
+  ui_inventory->controller.pagination.total = pagination_total_pages(ui_inventory->controller.pagination, ui_inventory->application->equipments.count);
 
   if (ui_inventory->controller.pagination.page >= ui_inventory->controller.pagination.total)
     ui_inventory->controller.pagination.page = ui_inventory->controller.pagination.total - 1;
@@ -216,16 +269,19 @@ void equipment_controller_search(ui_inventory_t *ui_inventory, const char *text)
 
   equipment_node_t *node = NULL;
 
-  switch (detect_search_type(text)) 
+  char buffer[strlen(text) + 1];
+  convert_to_uppercase(text, buffer);
+
+  switch (detect_search_type(buffer)) 
   {
     case SEARCH_ID:
-      node = (equipment_node_t *) hashmap_get(&ui_inventory->application->id_index, text);
+      node = (equipment_node_t *) hashmap_get(&ui_inventory->application->id_index, buffer);
       break;
     case SEARCH_IP:
-      node = (equipment_node_t *) hashmap_get(&ui_inventory->application->ip_index, text);
+      node = (equipment_node_t *) hashmap_get(&ui_inventory->application->ip_index, buffer);
       break;
     case SEARCH_MAC:
-      node = (equipment_node_t *) hashmap_get(&ui_inventory->application->mac_index, text);
+      node = (equipment_node_t *) hashmap_get(&ui_inventory->application->mac_index, buffer);
       break;
     case SEARCH_INVALID:
       break;
@@ -283,13 +339,13 @@ void incident_controller_add(ui_incident_t *ui_incident, incident_t data)
 
   int total = incident_get_count(&ui_incident->application->incidents_pending, &ui_incident->application->incidents_history);
 
-  ui_incident->pagination.total = pagination_total_pages(&ui_incident->pagination, total);
+  ui_incident->controller.pagination.total = pagination_total_pages(ui_incident->controller.pagination, total);
 
-  if (ui_incident->pagination.page >= ui_incident->pagination.total)
-    ui_incident->pagination.page = ui_incident->pagination.total - 1;
+  if (ui_incident->controller.pagination.page >= ui_incident->controller.pagination.total)
+    ui_incident->controller.pagination.page = ui_incident->controller.pagination.total - 1;
 
-  if (ui_incident->pagination.page < 0)
-    ui_incident->pagination.page = 0;
+  if (ui_incident->controller.pagination.page < 0)
+    ui_incident->controller.pagination.page = 0;
 
   ui_incident_refresh(ui_incident);
 
@@ -311,8 +367,27 @@ void incident_controller_process(ui_incident_t *ui_incident)
 
 void incident_controller_resolve(ui_incident_t *ui_incident)
 {
-  ui_incident->selected_node->data.status = INCIDENT_CONCLUDED;
-  ui_incident->selected_node->data.concluded_at = time(NULL);
+  ui_incident->controller.selected_node->data.status = INCIDENT_CONCLUDED;
+  ui_incident->controller.selected_node->data.concluded_at = time(NULL);
 
   ui_incident_refresh(ui_incident);
+}
+
+void incident_controller_apply_filters(ui_incident_t *ui_incident, int status, int priority)
+{
+  ui_incident->controller.status_filter = status;
+  ui_incident->controller.priority_filter = priority;
+
+  ui_incident->controller.pagination.page = 0;
+
+  incident_controller_dispatch(ui_incident);
+}
+
+void incident_controller_search(ui_incident_t *ui_incident, const char *text)
+{
+
+}
+void incident_controller_handle_toggled(ui_incident_t *ui_incident, int id, bool is_active)
+{
+
 }

@@ -66,28 +66,3 @@ config_node_t *config_stack_peek(config_stack_t *stack)
 
   return stack->top;
 }
-
-int config_filter_by_equipment(const config_stack_t *stack, int equipment_id, config_t *configs)
-{
-  if (stack == NULL || configs == NULL)
-  {
-    // TODO: Implement a log system (ex.: (datatime) [ERROR] config_filter_by_equipment : NULL arguments)
-    return 0;
-  }
-
-  config_node_t *node = stack->top;
-  int i = 0;
-
-  while (node != NULL && i < stack->count)
-  {
-    if (node->data.equipment_id == equipment_id)
-    {
-      configs[i] = node->data;
-      i++;
-    }
-
-    node = node->next;
-  }
-
-  return i;
-}

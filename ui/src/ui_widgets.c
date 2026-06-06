@@ -60,6 +60,20 @@ GtkWidget *create_secondary_button(const char *text, const char *icon, const cha
   return button;
 }
 
+GtkWidget *create_pagination_button(pagination_t pagination, char *text, int page_number)
+{
+  GtkWidget *button = create_secondary_button(text, NULL, "default-page");
+  gtk_widget_set_margin_top(button, 16);
+  gtk_widget_set_margin_bottom(button, 16);
+  gtk_widget_set_size_request(button, 32, 32);
+  g_object_set_data(G_OBJECT(button), "page-number", GINT_TO_POINTER(page_number));
+
+  if (page_number == pagination.page) 
+    gtk_widget_add_css_class(button, "active-page");
+
+  return button;
+}
+
 GtkWidget *create_stats_card(const char *title, int value, const char *css)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
@@ -360,17 +374,17 @@ void remove_all_children_from_widget(GtkWidget *parent)
   }
 }
 
-int pagination_total_pages(const pagination_t *pagination, int count)
+int pagination_total_pages(pagination_t pagination, int count)
 {
-  return (count + pagination->page_size - 1) / pagination->page_size;
+  return (count + pagination.page_size - 1) / pagination.page_size;
 }
 
-int pagination_start(const pagination_t *pagination)
+int pagination_start(pagination_t pagination)
 {
-  return pagination->page * pagination->page_size;
+  return pagination.page * pagination.page_size;
 }
 
-int pagination_end(const pagination_t *pagination)
+int pagination_end(pagination_t pagination)
 {
-  return pagination->page * pagination->page_size + pagination->page_size;
+  return pagination.page * pagination.page_size + pagination.page_size;
 }

@@ -1,5 +1,6 @@
 #include "incident.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -140,6 +141,23 @@ void incident_queue_requeue(incident_queue_t *queue, incident_t data)
   queue->count++;
 }
 
+void incident_queue_clone(incident_queue_t *source, incident_queue_t *destination)
+{
+  if (source == NULL || destination == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_clone : NULL arguments)
+    return;
+  }
+
+  incident_node_t *node = source->front;
+
+  while (node != NULL)
+  {
+    incident_queue_requeue(destination, node->data);
+    node = node->next;
+  }
+}
+
 incident_node_t *incident_queue_peek(incident_queue_t *queue)
 {
   if (queue == NULL || queue->front == NULL)
@@ -212,155 +230,198 @@ void incident_list_reinsert(incident_list_t *list, incident_t data)
   list->count++;
 }
 
-int incident_queue_filter_by_priority(const incident_queue_t *queue, incident_priority_t priority, incident_t *incidents)
+void incident_list_clone(incident_list_t *source, incident_list_t *destination)
 {
-  if (queue == NULL || incidents == NULL)
+  if (source == NULL || destination == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_list_clone : NULL arguments)
+    return;
+  }
+
+  incident_node_t *node = source->head;
+
+  while (node != NULL)
+  {
+    incident_list_reinsert(destination, node->data);
+    node = node->next;
+  }
+}
+
+void incident_queue_filter_by_priority(const incident_queue_t *queue, incident_priority_t priority, incident_queue_t *filtered)
+{
+  if (queue == NULL || filtered == NULL)
   {
     // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_filter_by_priority : NULL arguments)
-    return 0;
+    return;
   }
 
   incident_node_t *node = queue->front;
-  int i = 0;
 
-  while (node != NULL && i < queue->count)
+  while (node != NULL)
   {
     if (node->data.priority == priority)
     {
-      incidents[i] = node->data;
-      i++;
+      incident_queue_requeue(filtered, node->data);
     }
 
     node = node->next;
   }
-
-  return i;
 }
 
-int incident_queue_filter_by_status(const incident_queue_t *queue, incident_status_t status, incident_t *incidents)
+void incident_queue_filter_by_status(const incident_queue_t *queue, incident_status_t status, incident_queue_t *filtered)
 {
-  if (queue == NULL || incidents == NULL)
+  if (queue == NULL || filtered == NULL)
   {
     // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_filter_by_status : NULL arguments)
-    return 0;
+    return;
   }
 
   incident_node_t *node = queue->front;
-  int i = 0;
 
-  while (node != NULL && i < queue->count)
+  while (node != NULL)
   {
     if (node->data.status == status)
     {
-      incidents[i] = node->data;
-      i++;
+      incident_queue_requeue(filtered, node->data);
     }
 
     node = node->next;
   }
-
-  return i;
 }
 
-
-int incident_queue_filter_by_source_id(const incident_queue_t *queue, const char *source_id, incident_t *incidents)
+void incident_queue_filter_by_source_id(const incident_queue_t *queue, const char *source_id, incident_queue_t *filtered)
 {
-  if (queue == NULL || source_id == NULL || incidents)
+  if (queue == NULL || source_id == NULL || filtered == NULL)
   {
     // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_filter_by_source_id : NULL arguments)
-    return 0;
+    return;
   }
 
   incident_node_t *node = queue->front;
-  int i = 0;
 
-  while (node != NULL && i < queue->count)
+  while (node != NULL)
   {
-    if (strcmp(node->data.source_id, source_id) == 0)
+    if (strncmp(node->data.source_id, source_id, strlen(source_id)) == 0)
     {
-      incidents[i] = node->data;
-      i++;
+      incident_queue_requeue(filtered, node->data);
     }
 
     node = node->next;
   }
-
-  return i;
 }
 
-int incident_list_filter_by_priority(const incident_list_t *list, incident_priority_t priority, incident_t *incidents)
+void incident_list_filter_by_priority(const incident_list_t *list, incident_priority_t priority, incident_list_t *filtered)
 {
-  if (list == NULL || incidents == NULL)
+  if (list == NULL || filtered == NULL)
   {
     // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_list_filter_by_priority : NULL arguments)
-    return 0;
+    return;
   }
 
   incident_node_t *node = list->head;
-  int i = 0;
 
-  while (node != NULL && i < list->count)
+  while (node != NULL)
   {
     if (node->data.priority == priority)
     {
-      incidents[i] = node->data;
-      i++;
+      incident_list_reinsert(filtered, node->data);
     }
 
     node = node->next;
   }
-
-  return 1;
 }
 
-int incident_list_filter_by_status(const incident_list_t *list, incident_status_t status, incident_t *incidents)
+void incident_list_filter_by_status(const incident_list_t *list, incident_status_t status, incident_list_t *filtered)
 {
-  if (list == NULL || incidents == NULL)
+  if (list == NULL || filtered == NULL)
   {
     // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_list_filter_by_status : NULL arguments)
-    return 0;
+    return;
   }
 
   incident_node_t *node = list->head;
-  int i = 0;
 
-  while (node != NULL && i < list->count)
+  while (node != NULL)
   {
     if (node->data.status == status)
     {
-      incidents[i] = node->data;
-      i++;
+      incident_list_reinsert(filtered, node->data);
     }
 
     node = node->next;
   }
-
-  return i;
 }
 
-int incident_list_filter_by_source_id(const incident_list_t *list, const char *source_id, incident_t *incidents)
+void incident_list_filter_by_source_id(const incident_list_t *list, const char *source_id, incident_list_t *filtered)
 {
-  if (list == NULL || source_id == NULL || incidents == NULL)
+  if (list == NULL || source_id == NULL || filtered == NULL)
   {
     // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_list_filter_by_source_id : NULL arguments)
-    return 0;
+    return;
   }
 
   incident_node_t *node = list->head;
-  int i = 0;
 
-  while (node != NULL && list->count)
+  while (node != NULL)
   { 
-    if (strcmp(node->data.source_id, source_id) == 0)
+    if (strncmp(node->data.source_id, source_id, strlen(source_id)) == 0)
     {
-      incidents[i] = node->data;
-      i++;
+      incident_list_reinsert(filtered, node->data);
     }
 
     node = node->next;
   }
+}
 
-  return i;
+incident_t *incident_in_range(incident_queue_t *queue, incident_list_t *list, int start, int end, int *count)
+{
+  if (queue == NULL || list == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] incident_in_range : NULL arguments)
+    return NULL;
+  }
+
+  int size = end - start;
+  if (size <= 0 || size > 6) return NULL;
+
+  incident_t *incidents = malloc(sizeof(incident_t) * size);
+  if (incidents == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] incident_in_range : malloc failed)
+    return NULL;
+  }
+
+  incident_node_t *node = queue->front;
+  int i = 0;
+
+  while (node != NULL && i < start)
+  {
+    node = node->next;
+    i++;
+  }
+
+  while (node != NULL && i < end)
+  {
+    int index = i - start;
+    incidents[index] = node->data;
+
+    node = node->next;
+    i++;
+  }
+
+  node = list->head;
+
+  while (node != NULL && i < end)
+  {
+    int index = i - start;
+    incidents[index] = node->data;
+
+    node = node->next;
+    i++;
+  }
+
+  *count = i - start;
+  return incidents;
 }
 
 int incident_get_count(incident_queue_t *queue, incident_list_t *list)
@@ -392,6 +453,18 @@ int incident_list_get_number_status(incident_list_t *list, incident_status_t sta
   }
 
   return i;
+}
+
+void incident_format_id(int id, char *buffer)
+{
+  snprintf(buffer, ID_MAX, "IN-%03d", id);
+}
+
+void incident_format_position(int position, char *buffer)
+{
+
+  if (position != 0) snprintf(buffer, 12, "%d", position);
+  else strcpy(buffer, "-");
 }
 
 const char *incident_priority_to_string(incident_priority_t priority)

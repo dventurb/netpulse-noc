@@ -100,3 +100,17 @@ search_type_t detect_search_type(const char *text)
 
   return SEARCH_INVALID;
 }
+
+void convert_to_uppercase(const char *text, char *buffer)
+{
+  int i;
+  for (i = 0; text[i] != '\0'; i ++) 
+  {
+    if (text[i] >= 'a' && text[i] <= 'z')
+      buffer[i] = text[i] - ('a' - 'A');
+    else
+       buffer[i] = text[i];
+  }
+
+  buffer[i] = '\0';
+}

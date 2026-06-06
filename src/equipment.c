@@ -135,6 +135,12 @@ equipment_node_t *equipment_list_reinsert(equipment_list_t *list, equipment_t da
 
 void equipment_list_clone(equipment_list_t *source, equipment_list_t *destination)
 {
+  if (source == NULL || destination == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] equipment_list_clone : NULL arguments)
+    return;
+  }
+
   equipment_node_t *node = source->head;
   
   while (node != NULL) 
@@ -153,7 +159,7 @@ equipment_t *equipment_list_in_range(equipment_list_t *list, int start, int end,
   }
 
   int size = end - start;
-  if (size <= 0) return NULL;
+  if (size <= 0 || size > 6) return NULL;
 
   equipment_t *equipments = malloc(sizeof(equipment_t) * size);
   if (equipments == NULL)
@@ -239,8 +245,7 @@ void equipment_filter(const equipment_list_t *list, equipment_status_t status, e
   {
     if (node->data.status == status && node->data.type == type)
     {
-      equipment_node_t *new = equipment_list_insert(filtered, node->data);
-      new->data = node->data;
+      equipment_list_reinsert(filtered, node->data);
     }
 
     node = node->next;
@@ -261,8 +266,7 @@ void equipment_filter_by_status(const equipment_list_t *list, equipment_status_t
   {
     if (node->data.status == status)
     {
-      equipment_node_t *new = equipment_list_insert(filtered, node->data);
-      new->data = node->data;
+      equipment_list_reinsert(filtered, node->data);
     }
 
     node = node->next;
@@ -283,8 +287,7 @@ void equipment_filter_by_type(const equipment_list_t *list, equipment_type_t typ
   {
     if (node->data.type == type)
     {
-      equipment_node_t *new = equipment_list_insert(filtered, node->data);
-      new->data = node->data;
+      equipment_list_reinsert(filtered, node->data);
     }
     
     node = node->next;
@@ -327,6 +330,32 @@ void equipment_list_sort_by_type(equipment_list_t *list)
   list->tail = get_tail(list);
 }
 
+int equipment_get_count(equipment_list_t *list)
+{
+  return list->count;
+}
+
+int equipment_get_number_status(equipment_list_t *list, equipment_status_t status)
+{
+  int i = 0;
+
+  equipment_node_t *node = list->head;
+
+  while (node != NULL)
+  {
+    if (node->data.status == status) i++;
+
+    node = node->next;
+  }
+
+  return i;
+}
+
+void equipment_format_id(int id, char *buffer)
+{
+  snprintf(buffer, ID_MAX, "EQ-%03d", id);
+}
+
 const char *equipment_status_to_string(equipment_status_t status)
 {
   switch (status) 
@@ -355,32 +384,6 @@ const char *equipment_type_to_string(equipment_type_t type)
     case TYPE_OTHER: return "Other";
     default: return "Other";
   }
-}
-
-int equipment_get_count(equipment_list_t *list)
-{
-  return list->count;
-}
-
-int equipment_get_number_status(equipment_list_t *list, equipment_status_t status)
-{
-  int i = 0;
-
-  equipment_node_t *node = list->head;
-
-  while (node != NULL)
-  {
-    if (node->data.status == status) i++;
-
-    node = node->next;
-  }
-
-  return i;
-}
-
-void equipment_format_id(int id, char *buffer)
-{
-  snprintf(buffer, ID_MAX, "EQ-%03d", id);
 }
 
 // Fast and Slow Pointer

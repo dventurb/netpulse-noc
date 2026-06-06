@@ -30,6 +30,14 @@ typedef struct {
 } equipment_params_t;
 
 typedef struct {
+  int start;
+  int end;
+
+  int status_filter;
+  int priority_filter;
+} incident_params_t;
+
+typedef struct {
   int selected_count;
   equipment_node_t *selected_node;
 
@@ -39,29 +47,47 @@ typedef struct {
   pagination_t pagination;
 } equipment_controller_t;
 
+typedef struct {
+  int selected_count;
+  incident_node_t *selected_node;
+
+  int status_filter;
+  int priority_filter;
+
+  pagination_t pagination;
+} incident_controller_t;
+
 gboolean on_ping_finished(gpointer data);
 gboolean on_equipment_finished(gpointer data);
+gboolean on_incident_finished(gpointer data);
 
-
-void pagination_controller_get_range(pagination_t *pagination, int *start, int *end);
+void pagination_controller_get_range(pagination_t pagination, int *start, int *end);
 void pagination_controller_page_number(pagination_t *pagination, int number);
 void pagination_controller_previous(pagination_t *pagination);
 void pagination_controller_next(pagination_t *pagination);
 
 void connectivity_controller_ping(ui_ping_configuration_t *ui_ping, const char *ip, int count, int timeout, int packet_size);
 
-
 void equipment_controller_refresh_page(ui_inventory_t *ui_inventory);
 void equipment_controller_update_table(ui_inventory_t *ui_inventory);
 void equipment_controller_apply_filters(ui_inventory_t *ui_inventory, int status, int type);
+
 void equipment_controller_add(ui_inventory_t *ui_inventory, equipment_t data);
 void equipment_controller_edit(ui_inventory_t *ui_inventory, equipment_node_t *node, equipment_t data);
+
 void equipment_controller_remove(ui_inventory_t *ui_inventory, equipment_node_t *node);
 void equipment_controller_search(ui_inventory_t *ui_inventory, const char *text);
 void equipment_controller_handle_toggled(ui_inventory_t *ui_inventory, int id, bool is_active);
 
+void incident_controller_refresh_page(ui_incident_t *ui_incident);
+void incident_controller_update_table(ui_incident_t *ui_incident);
+void incident_controller_apply_filters(ui_incident_t *ui_incident, int status, int priority);
+
 void incident_controller_add(ui_incident_t *ui_incident, incident_t data);
 void incident_controller_process(ui_incident_t *ui_incident);
 void incident_controller_resolve(ui_incident_t *ui_incident);
+
+void incident_controller_search(ui_incident_t *ui_incident, const char *text);
+void incident_controller_handle_toggled(ui_incident_t *ui_incident, int id, bool is_active);
 
 #endif
