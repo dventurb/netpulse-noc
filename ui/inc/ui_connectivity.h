@@ -36,10 +36,12 @@ typedef struct ui_ping_configuration_t {
 
   GtkWidget *terminal;
 
+  char target_ip[IP_MAX];
   target_source_selection_t source;
 } ui_ping_configuration_t;
 
 GtkWidget *create_page_connectivity(ui_t *ui);
 void ui_ping_set_result(ui_ping_configuration_t *ui_ping, ping_result_t *result);
+void ui_ping_update_list(ui_ping_configuration_t *ui_ping, equipment_t *equipments, int count);
 
 #endif

@@ -58,20 +58,6 @@ gboolean on_incident_finished(gpointer data)
   return false;
 }
 
-void connectivity_controller_ping(ui_ping_configuration_t *ui_ping, const char *ip, int count, int timeout, int packet_size)
-{
-  ping_params_t *params = malloc(sizeof(ping_params_t));
-  if (params == NULL) return;
-
-  strncpy(params->ip, ip, STRING_MAX - 1);
-  params->ip[STRING_MAX - 1] = '\0';
-  params->count = count;
-  params->timeout = timeout;
-  params->packet_size = packet_size;
-
-  ping_task_worker(params, on_ping_finished, ui_ping);
-}
-
 void pagination_controller_get_range(pagination_t pagination, int *start, int *end)
 {
   *start = pagination.page - 1;
@@ -103,6 +89,71 @@ void pagination_controller_next(pagination_t *pagination)
   if (pagination->page > pagination->total - 1) 
     pagination->page = pagination->total - 1; 
 }
+
+void connectivity_controller_ping(ui_ping_configuration_t *ui_ping, const char *ip, const char *count, const char *timeout, const char *packet_size)
+{
+  ping_params_t *params = malloc(sizeof(ping_params_t));
+  if (params == NULL) return;
+
+  snprintf(params->ip, IP_MAX, "%s", ip);
+  params->count = atoi(count);
+  params->timeout = atoi(timeout);
+  params->packet_size = atoi(packet_size);
+
+  ping_task_worker(params, on_ping_finished, ui_ping);
+}
+
+void connectivity_controller_search_equipment(ui_ping_configuration_t *ui_ping, const char *text)
+{
+  if (text == NULL || strlen(text) == 0)
+  {
+    return;
+  }
+
+  equipment_node_t *node = NULL;
+
+  char buffer[strlen(text) + 1];
+  convert_to_uppercase(text, buffer);
+
+  switch (detect_search_type(buffer)) 
+  {
+    case SEARCH_ID:
+      node = (equipment_node_t *) hashmap_get(&ui_ping->application->id_index, buffer);
+      break;
+    case SEARCH_IP:
+      node = (equipment_node_t *) hashmap_get(&ui_ping->application->ip_index, buffer);
+      break;
+    case SEARCH_MAC:
+      node = (equipment_node_t *) hashmap_get(&ui_ping->application->mac_index, buffer);
+      break;
+    case SEARCH_INVALID:
+      break;
+  }
+
+  if (node != NULL) 
+    ui_ping_update_list(ui_ping, &node->data, 1);
+
+  else 
+    ui_ping_update_list(ui_ping, NULL, 0);
+}
+
+ping_validation_t connectivity_controller_validate_ping(const char *ip, const char *count, const char *timeout, const char *packet_size)
+{
+  if (validate_ip_address(ip) == FALSE) 
+    return PING_INVALID_IP_ADDRESS;
+
+  if (validate_ping_count(atoi(count)) == FALSE)
+    return PING_INVALID_COUNT;
+
+  if (validate_ping_timeout(atoi(timeout)) == FALSE)
+    return PING_INVALID_TIMEOUT;
+
+  if (validate_ping_packet_size(atoi(packet_size)) == FALSE)
+    return PING_INVALID_PACKET_SIZE;
+
+  return PING_OK;
+}
+
 
 static void equipment_controller_dispatch(ui_inventory_t *ui_inventory)
 {
@@ -385,9 +436,8 @@ void incident_controller_apply_filters(ui_incident_t *ui_incident, int status, i
 
 void incident_controller_search(ui_incident_t *ui_incident, const char *text)
 {
-
 }
 void incident_controller_handle_toggled(ui_incident_t *ui_incident, int id, bool is_active)
 {
-
 }
+

@@ -12,8 +12,16 @@ typedef struct ui_inventory_t ui_inventory_t;
 typedef struct ui_incident_t ui_incident_t;
 typedef struct ui_ping_configuration_t ui_ping_configuration_t;
 
+typedef enum {
+  PING_INVALID_IP_ADDRESS,
+  PING_INVALID_COUNT,
+  PING_INVALID_TIMEOUT,
+  PING_INVALID_PACKET_SIZE,
+  PING_OK
+} ping_validation_t;
+
 typedef struct {
-  char ip[STRING_MAX];
+  char ip[IP_MAX];
   int count;
   int timeout;
   int packet_size;
@@ -66,7 +74,9 @@ void pagination_controller_page_number(pagination_t *pagination, int number);
 void pagination_controller_previous(pagination_t *pagination);
 void pagination_controller_next(pagination_t *pagination);
 
-void connectivity_controller_ping(ui_ping_configuration_t *ui_ping, const char *ip, int count, int timeout, int packet_size);
+void connectivity_controller_ping(ui_ping_configuration_t *ui_ping, const char *ip, const char *count, const char *timeout, const char *packet_size);
+void connectivity_controller_search_equipment(ui_ping_configuration_t *ui_ping, const char *text);
+ping_validation_t connectivity_controller_validate_ping(const char *ip, const char *count, const char *timeout, const char *packet_size);
 
 void equipment_controller_refresh_page(ui_inventory_t *ui_inventory);
 void equipment_controller_update_table(ui_inventory_t *ui_inventory);

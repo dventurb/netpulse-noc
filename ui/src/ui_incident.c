@@ -247,6 +247,7 @@ static GtkWidget *create_incident_filters(ui_incident_t *ui_incident)
   gtk_widget_set_hexpand(box, TRUE);
 
   GtkWidget *search = gtk_search_entry_new();
+  gtk_entry_set_max_length(GTK_ENTRY(search), STRING_MAX - 1);
   gtk_search_entry_set_placeholder_text(GTK_SEARCH_ENTRY(search), "Search by ID, device or technician...");
   gtk_widget_add_css_class(search, "incident-search");
   gtk_widget_set_hexpand(search, TRUE);

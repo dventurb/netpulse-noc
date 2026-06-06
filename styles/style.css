@@ -443,8 +443,6 @@
 
 .form-entry-error {
   border: 1px solid #ef4444;
-  border-radius: 8px;
-  padding: 9px 12px 10px;
   background-color: #ffffff;
 }
 
@@ -787,6 +785,10 @@
   color: #6b7280;
   font-size: 12px;
   font-weight: 500;
+}
+
+.field-error box {
+  border-color: #ef4444;
 }
 
 .search-target {

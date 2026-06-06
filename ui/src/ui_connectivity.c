@@ -6,6 +6,8 @@
 #include "ui_macros.h"
 #include "controller.h"
 
+static const char* DATA_IP_ADDRESS = "equipment-ip";
+
 static GtkWidget *create_connectivity_side_bar(ui_connectivity_t *ui_connectivity);
 static GtkWidget *create_connectivity_header(ui_connectivity_t *ui_connectivity);
 static GtkWidget *create_menu_bar(ui_connectivity_t *ui_connectivity);
@@ -17,10 +19,10 @@ static GtkWidget *create_equipment_search(ui_ping_configuration_t *ui_ping);
 static void create_ping_parameters_section(GtkWidget *grid, ui_ping_configuration_t *ui_ping);
 static void create_ping_actions(GtkWidget *grid, ui_ping_configuration_t *ui_ping);
 static GtkWidget *create_connectivity_terminal(ui_ping_configuration_t *ui_ping);
-static GtkWidget *create_equipment_container(equipment_node_t *node);
+static GtkWidget *create_equipment_container(equipment_t equipment);
+static void create_connectivity_list_row(GtkWidget *list, equipment_t equipment);
 
 static void synchronize_navigation(ui_connectivity_t *ui_connectivity, GtkWidget *button);
-
 
 // Callbacks
 static void on_menu_button_clicked(GtkButton *button, gpointer data);
@@ -28,6 +30,8 @@ static void on_sidebar_button_clicked(GtkButton *button, gpointer data);
 static void on_search_equipment_activated(GtkSearchEntry *search, gpointer data);
 static void on_target_source_selection_clicked(GtkButton *button, gpointer data);
 static void on_run_ping_clicked(GtkButton *button, gpointer data);
+static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpointer data);
+
 
 GtkWidget *create_page_connectivity(ui_t *ui)
 {
@@ -59,6 +63,35 @@ GtkWidget *create_page_connectivity(ui_t *ui)
   g_object_set_data_full(G_OBJECT(ui_connectivity->container), "ui_connectivity", ui_connectivity, free); // ownership + free
 
   return ui_connectivity->container;
+}
+
+void ui_ping_update_list(ui_ping_configuration_t *ui_ping, equipment_t *equipments, int count)
+{
+  GtkWidget *child = gtk_widget_get_first_child(ui_ping->list);
+  while (child != NULL)
+  {
+    gtk_list_box_remove(GTK_LIST_BOX(ui_ping->list), child);
+    child = gtk_widget_get_first_child(ui_ping->list);
+  }
+
+  gtk_widget_set_visible(ui_ping->list, TRUE);
+
+  if (equipments == NULL || count == 0) return;
+
+  for (int i = 0; i < count; i++)
+  {
+    create_connectivity_list_row(ui_ping->list, equipments[i]);
+  }
+}
+
+void ui_ping_set_result(ui_ping_configuration_t *ui_ping, ping_result_t *result)
+{
+  GtkTextBuffer *terminal_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(ui_ping->terminal));
+  
+  if (result == NULL)
+    gtk_text_buffer_set_text(GTK_TEXT_BUFFER(terminal_buffer), "$ ping -c 5 -W 2 -s 56 192.168.1.1", -1);
+  else 
+    gtk_text_buffer_set_text(GTK_TEXT_BUFFER(terminal_buffer), result->output, -1);
 }
 
 static GtkWidget *create_connectivity_side_bar(ui_connectivity_t *ui_connectivity)
@@ -190,7 +223,7 @@ static GtkWidget *create_page_ping(ui_connectivity_t *ui_connectivity)
   gtk_stack_add_named(GTK_STACK(target_stack), container_search, "target-registered-equipment");
   gtk_stack_set_visible_child_name(GTK_STACK(target_stack), "target-registered-equipment");
  
-  ui_ping->manual_ip = create_unit_field("TARGET (IP / HOSTNAME)", "192.168.1.1", NULL);
+  ui_ping->manual_ip = create_unit_field("TARGET (IP ADDRESS)", "192.168.1.1", NULL);
   gtk_stack_add_named(GTK_STACK(target_stack), ui_ping->manual_ip, "target-manual-ip");
 
   gtk_grid_attach(GTK_GRID(form_fields_grid), target_stack, 0, 1, 2, 1);
@@ -234,13 +267,13 @@ static GtkWidget *create_target_source_selector(GtkWidget *stack)
 {
   GtkWidget *target_source_selector = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
 
-  GtkWidget *radio_equipment = gtk_check_button_new_with_label("Registered equipment");
+  GtkWidget *radio_equipment = gtk_check_button_new_with_label("Registered Equipment");
   gtk_widget_add_css_class(radio_equipment, "config-panel-form-checkbutton");
   g_object_set_data(G_OBJECT(radio_equipment), "target-source", "target-registered-equipment");
   gtk_check_button_set_active(GTK_CHECK_BUTTON(radio_equipment), TRUE);
   g_signal_connect(radio_equipment, "toggled", G_CALLBACK(on_target_source_selection_clicked), stack);
 
-  GtkWidget *radio_manual_input = gtk_check_button_new_with_label("Manual IP / Hostname");
+  GtkWidget *radio_manual_input = gtk_check_button_new_with_label("Manual IP Address");
   gtk_widget_add_css_class(radio_manual_input, "config-panel-form-checkbutton");
   g_object_set_data(G_OBJECT(radio_manual_input), "target-source", "target-manual-ip");
   g_signal_connect(radio_manual_input, "toggled", G_CALLBACK(on_target_source_selection_clicked), stack);
@@ -257,17 +290,18 @@ static GtkWidget *create_equipment_search(ui_ping_configuration_t *ui_ping)
 {
   GtkWidget *container_search = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
 
-  GtkWidget *label_equipment = gtk_label_new("TARGET (NAME / ID / IP / MAC)");
+  GtkWidget *label_equipment = gtk_label_new("TARGET (ID / IP / MAC)");
   gtk_widget_set_halign(label_equipment, GTK_ALIGN_START);
   gtk_widget_add_css_class(label_equipment, "field-unit-label");
 
   GtkWidget *equipment_search = gtk_search_entry_new();
+  gtk_entry_set_max_length(GTK_ENTRY(equipment_search), STRING_MAX - 1);
   gtk_widget_add_css_class(equipment_search, "search-target");
   g_signal_connect(equipment_search, "search-changed", G_CALLBACK(on_search_equipment_activated), ui_ping);
 
   ui_ping->list = gtk_list_box_new();
   gtk_widget_set_visible(ui_ping->list, FALSE);
-  g_object_set_data(G_OBJECT(equipment_search), "list-equipments", ui_ping->list);
+  g_signal_connect(ui_ping->list, "row-selected", G_CALLBACK(on_equipment_row_selected), ui_ping);
 
   gtk_box_append(GTK_BOX(container_search), label_equipment);
   gtk_box_append(GTK_BOX(container_search), equipment_search);
@@ -379,7 +413,7 @@ static void synchronize_navigation(ui_connectivity_t *ui_connectivity, GtkWidget
   }
 }
 
-static GtkWidget *create_equipment_container(equipment_node_t *node) 
+static GtkWidget *create_equipment_container(equipment_t equipment) 
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
   gtk_widget_set_margin_top(box, 12);
@@ -388,7 +422,7 @@ static GtkWidget *create_equipment_container(equipment_node_t *node)
 
   GtkWidget *image;
 
-  switch (node->data.status) 
+  switch (equipment.status) 
   {
     case STATUS_FAILED:
       image = gtk_image_new_from_file("assets/status-failed.svg");
@@ -408,11 +442,11 @@ static GtkWidget *create_equipment_container(equipment_node_t *node)
 
   GtkWidget *text_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
 
-  GtkWidget *name = gtk_label_new(node->data.name);
+  GtkWidget *name = gtk_label_new(equipment.name);
   gtk_widget_set_halign(name, GTK_ALIGN_START);
   gtk_widget_add_css_class(name, "search-item-name");
 
-  GtkWidget *ip_address = gtk_label_new(node->data.ip_address);
+  GtkWidget *ip_address = gtk_label_new(equipment.ip_address);
   gtk_widget_set_halign(ip_address, GTK_ALIGN_START);
   gtk_widget_add_css_class(ip_address, "search-item-ip");
 
@@ -425,14 +459,21 @@ static GtkWidget *create_equipment_container(equipment_node_t *node)
   return box;
 }
 
-void ui_ping_set_result(ui_ping_configuration_t *ui_ping, ping_result_t *result)
+
+
+static void create_connectivity_list_row(GtkWidget *list, equipment_t equipment)
 {
-  GtkTextBuffer *terminal_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(ui_ping->terminal));
-  
-  if (result == NULL)
-    gtk_text_buffer_set_text(GTK_TEXT_BUFFER(terminal_buffer), "$ ping -c 5 -W 2 -s 56 192.168.1.1", -1);
-  else 
-    gtk_text_buffer_set_text(GTK_TEXT_BUFFER(terminal_buffer), result->output, -1);
+  GtkWidget *item = create_equipment_container(equipment);
+
+  GtkWidget *row = gtk_list_box_row_new();
+
+  char *ip_address = strdup(equipment.ip_address);
+  g_object_set_data_full(G_OBJECT(row), DATA_IP_ADDRESS, ip_address, free); // ownership + free automatic
+
+  gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), item);
+  gtk_widget_add_css_class(row, "search-row-item");
+
+  gtk_list_box_append(GTK_LIST_BOX(list), row);
 }
 
 static void on_menu_button_clicked(GtkButton *button, gpointer data)
@@ -462,60 +503,21 @@ static void on_search_equipment_activated(GtkSearchEntry *search, gpointer data)
 {
   ui_ping_configuration_t *ui_ping = (ui_ping_configuration_t *)data;
 
-  GtkWidget *list = g_object_get_data(G_OBJECT(search), "list-equipments");
-
-  GtkWidget *child = gtk_widget_get_first_child(list);
-  while (child != NULL)
-  {
-    gtk_list_box_remove(GTK_LIST_BOX(list), child);
-    child = gtk_widget_get_first_child(list);
-  }
-
-  gtk_widget_set_visible(list, TRUE);
-
   const char *text = gtk_editable_get_text(GTK_EDITABLE(search));
 
-  equipment_node_t *node = NULL;
+  connectivity_controller_search_equipment(ui_ping, text);
+}
 
-  switch (detect_search_type(text)) 
-  {
-    case SEARCH_ID:
-      node = (equipment_node_t *) hashmap_get(&ui_ping->application->id_index, text);
-      break;
-    case SEARCH_IP:
-      node = (equipment_node_t *) hashmap_get(&ui_ping->application->ip_index, text);
-      break;
-    case SEARCH_MAC:
-      node = (equipment_node_t *) hashmap_get(&ui_ping->application->mac_index, text);
-      break;
-    case SEARCH_INVALID:
-      break;
-  }
+static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpointer data)
+{
+  (void)list; // unused variable
+  
+  ui_ping_configuration_t *ui_ping = (ui_ping_configuration_t *)data;
 
-  if (node == NULL) 
-  {
-    gtk_widget_set_visible(list, FALSE);
-  }
+  if (row == NULL) return;
 
-  else 
-  {
-    equipment_list_t filtered;
-    equipment_list_init(&filtered);
-
-    equipment_node_t *new = equipment_list_insert(&filtered, node->data);
-    new->data = node->data;
-
-    GtkWidget *item = create_equipment_container(node);
-
-    GtkWidget *row = gtk_list_box_row_new();
-    g_object_set_data(G_OBJECT(row), "equipment-node", node);
-    gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), item);
-    gtk_widget_add_css_class(row, "search-row-item");
-
-    gtk_list_box_append(GTK_LIST_BOX(list), row);
-
-    equipment_list_destroy(&filtered);
-  }
+  const char *ip_address = g_object_get_data(G_OBJECT(row), DATA_IP_ADDRESS);
+  snprintf(ui_ping->target_ip, IP_MAX, "%s", ip_address);
 }
 
 static void on_run_ping_clicked(GtkButton *button, gpointer data)
@@ -524,64 +526,39 @@ static void on_run_ping_clicked(GtkButton *button, gpointer data)
 
   ui_ping_configuration_t *ui_ping = (ui_ping_configuration_t *)data; 
 
-  char ip[IP_MAX];
-
-  if (ui_ping->source == SOURCE_SELECTION_SEARCH)
-  {
-    GtkListBoxRow *row = gtk_list_box_get_selected_row(GTK_LIST_BOX(ui_ping->list));
-    if (row == NULL) return;
-
-    equipment_node_t *node = g_object_get_data(G_OBJECT(row), "equipment-node");
-    snprintf(ip, IP_MAX, "%s", node->data.ip_address);
-  }
-
-  else 
-  {
-    GtkWidget *entry = g_object_get_data(G_OBJECT(ui_ping->manual_ip), "entry");
-    const char *text = gtk_editable_get_text(GTK_EDITABLE(entry));
-    
-    if (validate_ip_address(text) == FALSE) 
-    {
-      gtk_widget_add_css_class(entry, "form-entry-error");
-      return;
-    }
-
-    snprintf(ip, IP_MAX, "%s", text);
-  }
-
+  GtkWidget *ip_entry = g_object_get_data(G_OBJECT(ui_ping->manual_ip), "entry");
   GtkWidget *count_entry = g_object_get_data(G_OBJECT(ui_ping->count), "entry");
-  const char *count_text = gtk_editable_get_text(GTK_EDITABLE(count_entry));
-  
-  int count = atoi(count_text);
-
-  if (validate_ping_count(count) == FALSE)
-  {
-    gtk_widget_add_css_class(count_entry, "form-entry-error");
-    return;
-  }
-
-
   GtkWidget *timeout_entry = g_object_get_data(G_OBJECT(ui_ping->timeout), "entry");
-  const char *timeout_text = gtk_editable_get_text(GTK_EDITABLE(timeout_entry));
-
-  int timeout = atoi(timeout_text);
-  
-  if (validate_ping_timeout(timeout) == FALSE)
-  {
-    gtk_widget_add_css_class(timeout_entry, "form-entry-error");
-    return;
-  }
-  
   GtkWidget *packet_size_entry = g_object_get_data(G_OBJECT(ui_ping->packet_size), "entry");
-  const char *packet_size_text = gtk_editable_get_text(GTK_EDITABLE(packet_size_entry));
 
-  int packet_size = atoi(packet_size_text);
-
-  if (validate_ping_packet_size(packet_size) == FALSE)
+  if (ui_ping->source == SOURCE_SELECTION_MANUAL)
   {
-    gtk_widget_add_css_class(packet_size_entry, "form-entry-error");
-    return;
+    const char *ip_text = gtk_editable_get_text(GTK_EDITABLE(ip_entry));
+    snprintf(ui_ping->target_ip, IP_MAX, "%s", ip_text);
   }
 
-  connectivity_controller_ping(ui_ping, ip, count, timeout, packet_size);
+  const char *count = gtk_editable_get_text(GTK_EDITABLE(count_entry));
+  const char *timeout = gtk_editable_get_text(GTK_EDITABLE(timeout_entry));
+  const char *packet_size = gtk_editable_get_text(GTK_EDITABLE(packet_size_entry));
+ 
+  ping_validation_t error = connectivity_controller_validate_ping(ui_ping->target_ip, count, timeout, packet_size);
+
+  switch (error) 
+  {
+    case PING_INVALID_IP_ADDRESS:
+      gtk_widget_add_css_class(ui_ping->manual_ip, "field-error");
+      break;
+    case PING_INVALID_COUNT:
+      gtk_widget_add_css_class(ui_ping->count, "field-error");
+      break;
+    case PING_INVALID_TIMEOUT:
+      gtk_widget_add_css_class(ui_ping->timeout, "field-error");
+      break;
+    case PING_INVALID_PACKET_SIZE:
+      gtk_widget_add_css_class(ui_ping->packet_size, "field-error");
+      break;
+    case PING_OK:
+      connectivity_controller_ping(ui_ping, ui_ping->target_ip, count, timeout, packet_size);
+      break;
+  }
 }
