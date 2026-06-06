@@ -106,9 +106,7 @@ void connectivity_controller_ping(ui_ping_configuration_t *ui_ping, const char *
 void connectivity_controller_search_equipment(ui_ping_configuration_t *ui_ping, const char *text)
 {
   if (text == NULL || strlen(text) == 0)
-  {
     return;
-  }
 
   equipment_node_t *node = NULL;
 
@@ -117,7 +115,7 @@ void connectivity_controller_search_equipment(ui_ping_configuration_t *ui_ping, 
 
   switch (detect_search_type(buffer)) 
   {
-    case SEARCH_ID:
+    case SEARCH_EQUIPMENT_ID:
       node = (equipment_node_t *) hashmap_get(&ui_ping->application->id_index, buffer);
       break;
     case SEARCH_IP:
@@ -126,7 +124,7 @@ void connectivity_controller_search_equipment(ui_ping_configuration_t *ui_ping, 
     case SEARCH_MAC:
       node = (equipment_node_t *) hashmap_get(&ui_ping->application->mac_index, buffer);
       break;
-    case SEARCH_INVALID:
+    default:
       break;
   }
 
@@ -154,7 +152,6 @@ ping_validation_t connectivity_controller_validate_ping(const char *ip, const ch
   return PING_OK;
 }
 
-
 static void equipment_controller_dispatch(ui_inventory_t *ui_inventory)
 {
   equipment_params_t *params = malloc(sizeof(equipment_params_t));
@@ -179,6 +176,8 @@ static void incident_controller_dispatch(ui_incident_t *ui_incident)
 
   params->status_filter = ui_incident->controller.status_filter;
   params->priority_filter = ui_incident->controller.priority_filter;
+
+  snprintf(params->search_text, STRING_MAX, "%s", ui_incident->controller.search_text);
 
   incident_task_worker(params, on_incident_finished, ui_incident);
 }
@@ -325,7 +324,7 @@ void equipment_controller_search(ui_inventory_t *ui_inventory, const char *text)
 
   switch (detect_search_type(buffer)) 
   {
-    case SEARCH_ID:
+    case SEARCH_EQUIPMENT_ID:
       node = (equipment_node_t *) hashmap_get(&ui_inventory->application->id_index, buffer);
       break;
     case SEARCH_IP:
@@ -334,7 +333,7 @@ void equipment_controller_search(ui_inventory_t *ui_inventory, const char *text)
     case SEARCH_MAC:
       node = (equipment_node_t *) hashmap_get(&ui_inventory->application->mac_index, buffer);
       break;
-    case SEARCH_INVALID:
+    default:
       break;
   }
 
@@ -400,7 +399,7 @@ void incident_controller_add(ui_incident_t *ui_incident, incident_t data)
 
   ui_incident_refresh(ui_incident);
 
-  save_incidents(queue, list, "data/incident.bin");
+  save_incidents(queue, list, "data/incidents.bin");
 }
 
 void incident_controller_process(ui_incident_t *ui_incident)
@@ -414,14 +413,21 @@ void incident_controller_process(ui_incident_t *ui_incident)
   incident_list_insert(list, node);
 
   ui_incident_refresh(ui_incident);
+
+  save_incidents(queue, list, "data/incidents.bin");
 }
 
 void incident_controller_resolve(ui_incident_t *ui_incident)
 {
+  incident_queue_t *queue = &ui_incident->application->incidents_pending;
+  incident_list_t *list = &ui_incident->application->incidents_history;
+
   ui_incident->controller.selected_node->data.status = INCIDENT_CONCLUDED;
   ui_incident->controller.selected_node->data.concluded_at = time(NULL);
 
   ui_incident_refresh(ui_incident);
+
+  save_incidents(queue, list, "data/incidents.bin");
 }
 
 void incident_controller_apply_filters(ui_incident_t *ui_incident, int status, int priority)
@@ -436,8 +442,60 @@ void incident_controller_apply_filters(ui_incident_t *ui_incident, int status, i
 
 void incident_controller_search(ui_incident_t *ui_incident, const char *text)
 {
+  if (text == NULL || strlen(text) == 0)
+    return;
+
+  char buffer[strlen(text) + 1];
+  convert_to_uppercase(text, buffer);
+
+  // TODO: Search by Technician Name and Equipment/Sensor ID
+  switch (detect_search_type(buffer)) 
+  {
+    case SEARCH_INCIDENT_ID:
+      snprintf(ui_incident->controller.search_text, ID_MAX, "%s", buffer);
+      break;
+    default:
+      ui_incident->controller.search_text[0] = '\0';
+      break;
+  }
+
+  ui_incident->controller.pagination.page = 0;
+
+  incident_controller_dispatch(ui_incident);
 }
+
 void incident_controller_handle_toggled(ui_incident_t *ui_incident, int id, bool is_active)
 {
+  incident_queue_t *queue = &ui_incident->application->incidents_pending;
+  incident_list_t *list = &ui_incident->application->incidents_history;
+
+  incident_node_t *node = incident_queue_get_by_id(queue, id);
+  if (node == NULL)
+    node = incident_list_get_by_id(list, id);
+
+  if (node == NULL) return;
+
+  // TODO: selected multiple rows 
+  if (is_active == TRUE)
+  {
+    ui_incident->controller.selected_node = node;
+    ui_incident->controller.selected_count++;
+  }
+
+  else 
+  {
+    ui_incident->controller.selected_node = NULL;
+    ui_incident->controller.selected_count--;
+  }
+
+  ui_incident_update_header(ui_incident);
+}
+
+int incident_controller_get_position(incident_controller_t controller, incident_t incident, int row)
+{
+  int position = 0; 
+  if (incident.status == INCIDENT_PENDING)
+    position = controller.pagination.page * 6 + row;
+  return position;
 }
 

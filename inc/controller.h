@@ -43,6 +43,8 @@ typedef struct {
 
   int status_filter;
   int priority_filter;
+
+  char search_text[STRING_MAX];
 } incident_params_t;
 
 typedef struct {
@@ -61,6 +63,9 @@ typedef struct {
 
   int status_filter;
   int priority_filter;
+
+  char search_text[STRING_MAX];
+  bool is_search;
 
   pagination_t pagination;
 } incident_controller_t;
@@ -99,5 +104,6 @@ void incident_controller_resolve(ui_incident_t *ui_incident);
 
 void incident_controller_search(ui_incident_t *ui_incident, const char *text);
 void incident_controller_handle_toggled(ui_incident_t *ui_incident, int id, bool is_active);
+int incident_controller_get_position(incident_controller_t controller, incident_t incident, int row);
 
 #endif

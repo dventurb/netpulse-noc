@@ -62,20 +62,25 @@ incident_node_t *incident_queue_dequeue(incident_queue_t *queue); // Flow: deque
 void incident_queue_requeue(incident_queue_t *queue, incident_t data);
 void incident_queue_clone(incident_queue_t *source, incident_queue_t *destination);
 incident_node_t *incident_queue_peek(incident_queue_t *queue);
-int incident_queue_get_position(incident_queue_t *queue, incident_node_t *target);
+incident_node_t *incident_queue_get_by_id(incident_queue_t *queue, int id);
 
 void incident_list_insert(incident_list_t *list, incident_node_t *node);
 void incident_list_conclude(incident_node_t *node);
 void incident_list_reinsert(incident_list_t *list, incident_t data);
 void incident_list_clone(incident_list_t *source, incident_list_t *destination);
+incident_node_t *incident_list_get_by_id(incident_list_t *list, int id);
 
+void incident_queue_filter_by_id(incident_queue_t *queue, const char *number, incident_queue_t *filtered);
 void incident_queue_filter_by_priority(const incident_queue_t *queue, incident_priority_t priority, incident_queue_t *filtered);
 void incident_queue_filter_by_status(const incident_queue_t *queue, incident_status_t status, incident_queue_t *filtered);
 void incident_queue_filter_by_source_id(const incident_queue_t *queue, const char *source_id, incident_queue_t *filtered);
+void incident_queue_filter(incident_queue_t *queue, incident_status_t status, incident_priority_t priority, incident_queue_t *filtered);
 
+void incident_list_filter_by_id(incident_list_t *list, const char *number, incident_list_t *filtered);
 void incident_list_filter_by_priority(const incident_list_t *list, incident_priority_t priority, incident_list_t *filtered);
 void incident_list_filter_by_status(const incident_list_t *list, incident_status_t status, incident_list_t *filtered);
 void incident_list_filter_by_source_id(const incident_list_t *list, const char *source_id, incident_list_t *filtered);
+void incident_list_filter(incident_list_t *list, incident_status_t status, incident_priority_t priority, incident_list_t *filtered);
 
 int incident_get_count(incident_queue_t *queue, incident_list_t *list);
 incident_t *incident_in_range(incident_queue_t *queue, incident_list_t *list, int start, int end, int *count);

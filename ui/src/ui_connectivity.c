@@ -295,7 +295,6 @@ static GtkWidget *create_equipment_search(ui_ping_configuration_t *ui_ping)
   gtk_widget_add_css_class(label_equipment, "field-unit-label");
 
   GtkWidget *equipment_search = gtk_search_entry_new();
-  gtk_entry_set_max_length(GTK_ENTRY(equipment_search), STRING_MAX - 1);
   gtk_widget_add_css_class(equipment_search, "search-target");
   g_signal_connect(equipment_search, "search-changed", G_CALLBACK(on_search_equipment_activated), ui_ping);
 

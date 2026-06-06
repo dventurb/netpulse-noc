@@ -67,6 +67,9 @@ GtkWidget *create_page_incident(ui_t *ui)
   ui_incident->controller.selected_node = NULL;
   ui_incident->controller.pagination.page = 0;
   ui_incident->controller.pagination.page_size = 6;
+  ui_incident->controller.status_filter = 0;
+  ui_incident->controller.priority_filter = 0;
+  ui_incident->controller.search_text[0] = '\0';
 
   int count = incident_get_count(&ui_incident->application->incidents_pending, &ui_incident->application->incidents_history);
   
@@ -247,7 +250,6 @@ static GtkWidget *create_incident_filters(ui_incident_t *ui_incident)
   gtk_widget_set_hexpand(box, TRUE);
 
   GtkWidget *search = gtk_search_entry_new();
-  gtk_entry_set_max_length(GTK_ENTRY(search), STRING_MAX - 1);
   gtk_search_entry_set_placeholder_text(GTK_SEARCH_ENTRY(search), "Search by ID, device or technician...");
   gtk_widget_add_css_class(search, "incident-search");
   gtk_widget_set_hexpand(search, TRUE);
@@ -371,8 +373,7 @@ static void create_incident_table_row(GtkWidget *grid, incident_t incident, int 
   incident_format_id(incident.number, number);
 
   char position_buffer[12];
-  //int position = incident_queue_get_position(queue, node);
-  int position = -1;
+  int position = incident_controller_get_position(ui_incident->controller, incident, row);
   incident_format_position(position, position_buffer);
 
   char created[DATETIME_MAX];
@@ -632,6 +633,7 @@ static void on_incident_search_changed(GtkSearchEntry *search, gpointer data)
   ui_incident_t *ui_incident = (ui_incident_t *)data;
 
   const char *text = gtk_editable_get_text(GTK_EDITABLE(search));
+  printf("Search Entry Callback: %s\n", text);
 
   incident_controller_search(ui_incident, text);
 }

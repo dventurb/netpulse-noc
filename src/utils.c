@@ -84,19 +84,36 @@ bool validate_ping_packet_size(int packet_size)
   return false;
 }
 
+bool validate_equipment_id(const char *text)
+{
+  int id;
+  char garbage;
+
+  if (sscanf(text, "EQ-%d%c", &id, &garbage) == 1) return true;
+  else return false;
+}
+
+bool validate_incident_number(const char *text)
+{
+  int number;
+  char garbage;
+
+  if (sscanf(text, "IN-%d%c", &number, &garbage) == 1) return true;
+  else return false;
+}
+
 // TODO: Add SEARCH_EQUIPMENT_ID, SEARCH_INCIDENT_ID, SEARCH_TECHNICIAN_ID
 search_type_t detect_search_type(const char *text)
 {
   if (text == NULL) return SEARCH_INVALID;
-
+  
   if (validate_ip_address(text)) return SEARCH_IP;
 
   if (validate_mac_address(text)) return SEARCH_MAC;
 
-  int id;
-  char garbage;
+  if (validate_equipment_id(text)) return SEARCH_EQUIPMENT_ID;
 
-  if (sscanf(text, "EQ-%d%c", &id, &garbage) == 1) return SEARCH_ID;
+  if (validate_incident_number(text)) return SEARCH_INCIDENT_ID;
 
   return SEARCH_INVALID;
 }

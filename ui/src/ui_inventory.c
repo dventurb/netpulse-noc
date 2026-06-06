@@ -248,7 +248,6 @@ static GtkWidget *create_inventory_filters(ui_inventory_t *ui_inventory)
   gtk_widget_set_hexpand(box, TRUE);
 
   GtkWidget *search = gtk_search_entry_new();
-  gtk_entry_set_max_length(GTK_ENTRY(search), STRING_MAX - 1);
   gtk_search_entry_set_placeholder_text(GTK_SEARCH_ENTRY(search), "Search by ID, IP or MAC...");
   gtk_widget_add_css_class(search, "inventory-search");
   gtk_widget_set_hexpand(search, TRUE);

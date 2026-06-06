@@ -68,28 +68,47 @@ static void *incident_task_thread(void *data)
   incident_queue_t *queue = &task->ui_incident->application->incidents_pending;
   incident_list_t *list = &task->ui_incident->application->incidents_history;
 
-  if (task->params->status_filter == 0 && task->params->priority_filter == 0)
+  if (strlen(task->params->search_text) >= 1)
+  {
+    incident_queue_filter_by_id(queue, task->params->search_text, &queue_filtered);
+    incident_list_filter_by_id(list, task->params->search_text, &list_filtered);
+  }
+  else 
   {
     incident_queue_clone(queue, &queue_filtered);
     incident_list_clone(list, &list_filtered);
   }
 
-  else if (task->params->status_filter != 0 && task->params->priority_filter == 0)
+  if (task->params->status_filter != 0 || task->params->priority_filter != 0)
   {
-    incident_queue_filter_by_status(queue, task->params->status_filter - 1, &queue_filtered);
-    incident_list_filter_by_status(list, task->params->status_filter - 1, &list_filtered);
-  }
+    incident_queue_t queue_tmp;
+    incident_list_t list_tmp;
+    incident_queue_init(&queue_tmp);
+    incident_list_init(&list_tmp);
 
-  else if (task->params->status_filter == 0 && task->params->priority_filter != 0)
-  {
-    incident_queue_filter_by_priority(queue, task->params->priority_filter - 1, &queue_filtered);
-    incident_list_filter_by_priority(list, task->params->priority_filter - 1, &list_filtered);
-  }
+    if (task->params->status_filter != 0 && task->params->priority_filter == 0)
+    {
+      incident_queue_filter_by_status(&queue_filtered, task->params->status_filter - 1, &queue_tmp);
+      incident_list_filter_by_status(&list_filtered, task->params->status_filter - 1, &list_tmp);
+    }
 
-  else 
-  {
-    incident_queue_filter_by_priority(queue, task->params->priority_filter - 1, &queue_filtered);
-    incident_list_filter_by_priority(list, task->params->priority_filter - 1, &list_filtered);
+    else if (task->params->status_filter == 0 && task->params->priority_filter != 0)
+    {
+      incident_queue_filter_by_priority(&queue_filtered, task->params->priority_filter - 1, &queue_tmp);
+      incident_list_filter_by_priority(&list_filtered, task->params->priority_filter - 1, &list_tmp);
+    }
+
+    else 
+    {
+      incident_queue_filter(&queue_filtered, task->params->status_filter - 1, task->params->priority_filter - 1, &queue_tmp);
+      incident_list_filter(&list_filtered, task->params->status_filter - 1, task->params->priority_filter - 1, &list_tmp);
+    }
+
+    incident_queue_destroy(&queue_filtered);
+    incident_list_destroy(&list_filtered);
+    
+    queue_filtered = queue_tmp;
+    list_filtered = list_tmp;
   }
 
   task->result = incident_in_range(&queue_filtered, &list_filtered, task->params->start, task->params->end, &task->count);

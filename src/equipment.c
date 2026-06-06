@@ -186,7 +186,6 @@ equipment_t *equipment_list_in_range(equipment_list_t *list, int start, int end,
     i++;
   }
 
-  printf("%d - %d - %d\n", end, start, i);
   *count = i - start;
   return equipments;
 }

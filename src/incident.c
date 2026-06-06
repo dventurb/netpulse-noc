@@ -169,28 +169,26 @@ incident_node_t *incident_queue_peek(incident_queue_t *queue)
   return queue->front;
 }
 
-int incident_queue_get_position(incident_queue_t *queue, incident_node_t *target)
-{  
-  if (queue == NULL || target == NULL)
+incident_node_t *incident_queue_get_by_id(incident_queue_t *queue, int id)
+{
+  if (queue == NULL)
   {
-    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_get_position : NULL arguments)
-    return 0;
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_get_by_id : NULL argument)
+    return NULL;
   }
-
-  int i = 1;
 
   incident_node_t *node = queue->front;
 
   while (node != NULL)
   {
-    if (node == target) return i;
+    if (node->data.number == id)
+      return node;
 
     node = node->next;
   }
-  
-  return 0;
-}
 
+  return NULL;
+}
 
 void incident_list_conclude(incident_node_t *node)
 {
@@ -243,6 +241,72 @@ void incident_list_clone(incident_list_t *source, incident_list_t *destination)
   while (node != NULL)
   {
     incident_list_reinsert(destination, node->data);
+    node = node->next;
+  }
+}
+
+incident_node_t *incident_list_get_by_id(incident_list_t *list, int id)
+{
+  if (list == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_list_get_by_id : NULL arguments)
+    return NULL;
+  }
+
+  incident_node_t *node = list->head;
+
+  while (node != NULL)
+  {
+    if (node->data.number == id)
+      return node;
+
+    node = node->next;
+  }
+
+  return NULL;
+}
+
+void incident_queue_filter(incident_queue_t *queue, incident_status_t status, incident_priority_t priority, incident_queue_t *filtered)
+{
+  if (queue == NULL || filtered == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_filter : NULL arguments)
+    return;
+  }
+
+  incident_node_t *node = queue->front;
+
+  while (node != NULL)
+  {
+    if (node->data.status == status && node->data.priority == priority)
+    {
+      incident_queue_requeue(filtered, node->data);
+    }
+
+    node = node->next;
+  }
+}
+
+void incident_queue_filter_by_id(incident_queue_t *queue, const char *number, incident_queue_t *filtered)
+{
+  if (queue == NULL || filtered == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_filter_by_id : NULL arguments)
+    return;
+  }
+
+  incident_node_t *node = queue->front;
+
+  while (node != NULL)
+  {
+    char buffer[ID_MAX];
+    incident_format_id(node->data.number, buffer);
+
+    if (strncmp(buffer, number, strlen(number)) == 0)
+    {
+      incident_queue_requeue(filtered, node->data);
+    }
+
     node = node->next;
   }
 }
@@ -304,6 +368,30 @@ void incident_queue_filter_by_source_id(const incident_queue_t *queue, const cha
     if (strncmp(node->data.source_id, source_id, strlen(source_id)) == 0)
     {
       incident_queue_requeue(filtered, node->data);
+    }
+
+    node = node->next;
+  }
+}
+
+void incident_list_filter_by_id(incident_list_t *list, const char *number, incident_list_t *filtered)
+{
+  if (list == NULL || filtered == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_list_filter_by_id : NULL arguments)
+    return;
+  }
+
+  incident_node_t *node = list->head;
+
+  while (node != NULL)
+  {
+    char buffer[ID_MAX];
+    incident_format_id(node->data.number, buffer);
+
+    if (strncmp(buffer, number, strlen(number)) == 0)
+    {
+      incident_list_reinsert(filtered, node->data);
     }
 
     node = node->next;
@@ -373,6 +461,27 @@ void incident_list_filter_by_source_id(const incident_list_t *list, const char *
   }
 }
 
+void incident_list_filter(incident_list_t *list, incident_status_t status, incident_priority_t priority, incident_list_t *filtered)
+{
+  if (list == NULL || filtered == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_list_filter : NULL arguments)
+    return;
+  }
+
+  incident_node_t *node = list->head;
+
+  while (node != NULL)
+  {
+    if (node->data.status == status && node->data.priority == priority)
+    {
+      incident_list_reinsert(filtered, node->data);
+    }
+
+    node = node->next;
+  }
+}
+
 incident_t *incident_in_range(incident_queue_t *queue, incident_list_t *list, int start, int end, int *count)
 {
   if (queue == NULL || list == NULL)
@@ -392,19 +501,17 @@ incident_t *incident_in_range(incident_queue_t *queue, incident_list_t *list, in
   }
 
   incident_node_t *node = queue->front;
-  int i = 0;
 
-  while (node != NULL && i < start)
-  {
-    node = node->next;
-    i++;
-  }
+  int i = 0;
+  int j = 0;
 
   while (node != NULL && i < end)
   {
-    int index = i - start;
-    incidents[index] = node->data;
-
+    if (i >= start)
+    {
+      incidents[j] = node->data;
+      j++;
+    }
     node = node->next;
     i++;
   }
@@ -413,14 +520,16 @@ incident_t *incident_in_range(incident_queue_t *queue, incident_list_t *list, in
 
   while (node != NULL && i < end)
   {
-    int index = i - start;
-    incidents[index] = node->data;
-
+    if (i >= start)
+    {
+      incidents[j] = node->data;
+      j++;
+    }
     node = node->next;
     i++;
   }
 
-  *count = i - start;
+  *count = j;
   return incidents;
 }
 
@@ -462,7 +571,6 @@ void incident_format_id(int id, char *buffer)
 
 void incident_format_position(int position, char *buffer)
 {
-
   if (position != 0) snprintf(buffer, 12, "%d", position);
   else strcpy(buffer, "-");
 }
@@ -475,6 +583,7 @@ const char *incident_priority_to_string(incident_priority_t priority)
     case PRIORITY_MEDIUM: return "MEDIUM";
     case PRIORITY_HIGH: return "HIGH";
     case PRIORITY_CRITICAL: return "CRITICAL";
+    default: return "Unknown";
   }
 }
 
@@ -485,5 +594,6 @@ const char *incident_status_to_string(incident_status_t status)
     case INCIDENT_PENDING: return "Pending";
     case INCIDENT_IN_PROGRESS: return "In Progress";
     case INCIDENT_CONCLUDED: return "Concluded";
+    default: return "Unknown";
   }
 }

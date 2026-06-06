@@ -5,7 +5,8 @@
 #include <stdbool.h>
 
 typedef enum {
-  SEARCH_ID,
+  SEARCH_EQUIPMENT_ID,
+  SEARCH_INCIDENT_ID,
   SEARCH_IP,
   SEARCH_MAC,
   SEARCH_INVALID
@@ -17,6 +18,8 @@ bool validate_mac_address(const char *mac_address);
 bool validate_ping_count(int count);
 bool validate_ping_timeout(int timeout);
 bool validate_ping_packet_size(int packet_size);
+bool validate_equipment_id(const char *text);
+bool validate_incident_number(const char *text);
 search_type_t detect_search_type(const char *text);
 void convert_to_uppercase(const char *text, char *buffer);
 
