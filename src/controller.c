@@ -574,7 +574,7 @@ void incident_controller_create_from_ping(incident_queue_t *queue, const equipme
   equipment_format_id(equipment->id, new.source_id);
 
   snprintf(new.type, STRING_MAX, "%s", "Offline");
-  snprintf(new.description, DESCRIPTION_MAX, "%s", "Device [%s] did not respond to ping. (Automatic)", equipment->name);
+  snprintf(new.description, DESCRIPTION_MAX, "Device [%s] did not respond to ping. (Automatic)", equipment->name);
 
   snprintf(new.technician_name, STRING_MAX, "%s", "TODO: current_user");
 
