@@ -13,6 +13,18 @@ gboolean on_ping_finished(gpointer data)
 {
   ping_task_t *task = (ping_task_t *)data;
 
+  if (task->result->responded == false)
+  {
+    equipment_update_status(task->params->equipment, STATUS_FAILED);
+    equipment_update_last_check(task->params->equipment);
+    incident_controller_create_from_ping(task->params->incidents_pending, task->params->equipment);
+  }
+  else 
+  {
+    equipment_update_status(task->params->equipment, STATUS_OPERATIONAL);
+    equipment_update_last_check(task->params->equipment);
+  }
+
   ui_ping_set_result(task->ui_ping, task->result);
 
   free(task->params); // Controller
@@ -100,6 +112,9 @@ void connectivity_controller_ping(ui_ping_configuration_t *ui_ping, const char *
   params->timeout = atoi(timeout);
   params->packet_size = atoi(packet_size);
 
+  params->equipment = ui_ping->controller.equipment;
+  params->incidents_pending = &ui_ping->application->incidents_pending;
+
   ping_task_worker(params, on_ping_finished, ui_ping);
 }
 
@@ -129,7 +144,10 @@ void connectivity_controller_search_equipment(ui_ping_configuration_t *ui_ping, 
   }
 
   if (node != NULL) 
+  {
+    connectivity_controller_set_equipment(&ui_ping->controller, &node->data);
     ui_ping_update_list(ui_ping, &node->data, 1);
+  }
 
   else 
     ui_ping_update_list(ui_ping, NULL, 0);
@@ -150,6 +168,31 @@ ping_validation_t connectivity_controller_validate_ping(const char *ip, const ch
     return PING_INVALID_PACKET_SIZE;
 
   return PING_OK;
+}
+
+void connectivity_controller_set_equipment(connectivity_controller_t *controller, equipment_t *equipment)
+{
+  if (equipment == NULL) return;
+
+  controller->equipment = equipment;
+}
+
+void connectivity_controller_set_source_selection(connectivity_controller_t *controller, target_source_selection_t source)
+{
+  controller->source = source;
+}
+
+void connectivity_controller_set_ip_address(connectivity_controller_t *controller, const char *ip_address)
+{
+  snprintf(controller->ip, IP_MAX, "%s", ip_address);
+}
+
+void connectivity_controller_set_ip_from_source(connectivity_controller_t *controller, const char *ip_address)
+{
+  if (controller->source == SOURCE_SELECTION_MANUAL)
+  {
+    connectivity_controller_set_ip_address(controller, ip_address);
+  }
 }
 
 static void equipment_controller_dispatch(ui_inventory_t *ui_inventory)
@@ -499,3 +542,43 @@ int incident_controller_get_position(incident_controller_t controller, incident_
   return position;
 }
 
+static incident_priority_t incident_controller_get_priority(equipment_type_t type)
+{
+  switch (type)
+  {
+    case TYPE_ROUTER: 
+    case TYPE_FIREWALL:
+    case TYPE_SERVER:
+      return PRIORITY_CRITICAL;
+
+    case TYPE_SWITCH:
+    case TYPE_NAS:
+    case TYPE_UPS:
+      return PRIORITY_HIGH;
+
+    case TYPE_ACCESS_POINT:
+    case TYPE_IP_CAMERA:
+    case TYPE_PRINTER:
+    case TYPE_OTHER:
+      return PRIORITY_MEDIUM;
+    default:
+      return PRIORITY_LOW;
+  }
+}
+
+void incident_controller_create_from_ping(incident_queue_t *queue, const equipment_t *equipment)
+{
+  incident_t new;
+
+  new.source_type = SOURCE_EQUIPMENT;
+  equipment_format_id(equipment->id, new.source_id);
+
+  snprintf(new.type, STRING_MAX, "%s", "Offline");
+  snprintf(new.description, DESCRIPTION_MAX, "%s", "Device [%s] did not respond to ping. (Automatic)", equipment->name);
+
+  snprintf(new.technician_name, STRING_MAX, "%s", "TODO: current_user");
+
+  new.priority = incident_controller_get_priority(equipment->type);
+
+  incident_queue_enqueue(queue, new);
+}

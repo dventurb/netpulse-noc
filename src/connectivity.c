@@ -32,12 +32,10 @@ ping_result_t *connectivity_run_ping(const char *ip_address, int count, int time
 
   pclose(file);
 
-  connectivity_check_ping(result);
-
   return result;
 }
 
-void connectivity_check_ping(ping_result_t *result)
+bool connectivity_check_ping(const char *string)
 {
   char check[50];
 
@@ -47,11 +45,10 @@ void connectivity_check_ping(ping_result_t *result)
     snprintf(check, sizeof(check), "100%% packet loss");
   #endif
 
-  if (strstr(result->output, check) != NULL)
+  if (strstr(string, check) != NULL)
   {
-    result->responded = false;
-    return;
+    return false;
   }
 
-  result->responded = true;
+  return true;
 }

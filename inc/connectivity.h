@@ -13,6 +13,6 @@ typedef struct {
 } ping_result_t;
 
 ping_result_t *connectivity_run_ping(const char *ip_address, int count, int timeout, int packet_size);
-void connectivity_check_ping(ping_result_t *result);
+bool connectivity_check_ping(const char *string);
 
 #endif

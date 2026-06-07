@@ -13,6 +13,11 @@ typedef struct ui_incident_t ui_incident_t;
 typedef struct ui_ping_configuration_t ui_ping_configuration_t;
 
 typedef enum {
+  SOURCE_SELECTION_SEARCH,
+  SOURCE_SELECTION_MANUAL
+} target_source_selection_t;
+
+typedef enum {
   PING_INVALID_IP_ADDRESS,
   PING_INVALID_COUNT,
   PING_INVALID_TIMEOUT,
@@ -25,7 +30,18 @@ typedef struct {
   int count;
   int timeout;
   int packet_size;
+
+  equipment_t *equipment;
+  incident_queue_t *incidents_pending;
 } ping_params_t;
+
+typedef struct {
+  equipment_t *equipment;
+
+  char ip[IP_MAX];
+
+  target_source_selection_t source;
+} connectivity_controller_t;
 
 typedef struct {
   int start;
@@ -82,6 +98,10 @@ void pagination_controller_next(pagination_t *pagination);
 void connectivity_controller_ping(ui_ping_configuration_t *ui_ping, const char *ip, const char *count, const char *timeout, const char *packet_size);
 void connectivity_controller_search_equipment(ui_ping_configuration_t *ui_ping, const char *text);
 ping_validation_t connectivity_controller_validate_ping(const char *ip, const char *count, const char *timeout, const char *packet_size);
+void connectivity_controller_set_source_selection(connectivity_controller_t *controller, target_source_selection_t source);
+void connectivity_controller_set_equipment(connectivity_controller_t *controller, equipment_t *equipment);
+void connectivity_controller_set_ip_address(connectivity_controller_t *controller, const char *ip_address);
+void connectivity_controller_set_ip_from_source(connectivity_controller_t *controller, const char *ip_address);
 
 void equipment_controller_refresh_page(ui_inventory_t *ui_inventory);
 void equipment_controller_update_table(ui_inventory_t *ui_inventory);
@@ -105,5 +125,6 @@ void incident_controller_resolve(ui_incident_t *ui_incident);
 void incident_controller_search(ui_incident_t *ui_incident, const char *text);
 void incident_controller_handle_toggled(ui_incident_t *ui_incident, int id, bool is_active);
 int incident_controller_get_position(incident_controller_t controller, incident_t incident, int row);
+void incident_controller_create_from_ping(incident_queue_t *queue, const equipment_t *equipment);
 
 #endif

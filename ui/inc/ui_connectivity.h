@@ -6,11 +6,7 @@
 #include "ui_widgets.h"
 #include "connectivity.h"
 #include <gtk/gtk.h>
-
-typedef enum {
-  SOURCE_SELECTION_SEARCH,
-  SOURCE_SELECTION_MANUAL
-} target_source_selection_t;
+#include "controller.h"
 
 typedef struct {
   application_t *application;
@@ -36,8 +32,7 @@ typedef struct ui_ping_configuration_t {
 
   GtkWidget *terminal;
 
-  char target_ip[IP_MAX];
-  target_source_selection_t source;
+  connectivity_controller_t controller;
 } ui_ping_configuration_t;
 
 GtkWidget *create_page_connectivity(ui_t *ui);

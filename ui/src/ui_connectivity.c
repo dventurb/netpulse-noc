@@ -4,7 +4,6 @@
 #include "ui_widgets.h"
 #include "macros.h"
 #include "ui_macros.h"
-#include "controller.h"
 
 static const char* DATA_IP_ADDRESS = "equipment-ip";
 
@@ -193,7 +192,9 @@ static GtkWidget *create_page_ping(ui_connectivity_t *ui_connectivity)
 {
   ui_ping_configuration_t *ui_ping = malloc(sizeof(ui_ping_configuration_t));
   ui_ping->application = ui_connectivity->application;
-  ui_ping->source = SOURCE_SELECTION_SEARCH;
+
+  ui_ping->controller.source = SOURCE_SELECTION_SEARCH;
+  ui_ping->controller.equipment = NULL;
 
   GtkWidget *container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
   gtk_widget_set_margin_top(container, 32);
@@ -269,13 +270,13 @@ static GtkWidget *create_target_source_selector(GtkWidget *stack)
 
   GtkWidget *radio_equipment = gtk_check_button_new_with_label("Registered Equipment");
   gtk_widget_add_css_class(radio_equipment, "config-panel-form-checkbutton");
-  g_object_set_data(G_OBJECT(radio_equipment), "target-source", "target-registered-equipment");
+  g_object_set_data(G_OBJECT(radio_equipment), "target-source", GINT_TO_POINTER(0));
   gtk_check_button_set_active(GTK_CHECK_BUTTON(radio_equipment), TRUE);
   g_signal_connect(radio_equipment, "toggled", G_CALLBACK(on_target_source_selection_clicked), stack);
 
   GtkWidget *radio_manual_input = gtk_check_button_new_with_label("Manual IP Address");
   gtk_widget_add_css_class(radio_manual_input, "config-panel-form-checkbutton");
-  g_object_set_data(G_OBJECT(radio_manual_input), "target-source", "target-manual-ip");
+  g_object_set_data(G_OBJECT(radio_manual_input), "target-source", GINT_TO_POINTER(1));
   g_signal_connect(radio_manual_input, "toggled", G_CALLBACK(on_target_source_selection_clicked), stack);
 
   gtk_check_button_set_group(GTK_CHECK_BUTTON(radio_equipment), GTK_CHECK_BUTTON(radio_manual_input)); // mutually exclusive selection
@@ -492,10 +493,14 @@ static void on_target_source_selection_clicked(GtkButton *button, gpointer data)
   GtkWidget *stack = (GtkWidget *)data;
   ui_ping_configuration_t *ui_ping = g_object_get_data(G_OBJECT(stack), "ui-ping-context");
 
-  const char *label = g_object_get_data(G_OBJECT(button), "target-source");
-  gtk_stack_set_visible_child_name(GTK_STACK(stack), label);
+  int source = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "target-source"));
 
-  ui_ping->source = (strcmp(label, "target-registered-equipment") == 0) ? SOURCE_SELECTION_SEARCH : SOURCE_SELECTION_MANUAL;
+  if (source == SOURCE_SELECTION_SEARCH) 
+    gtk_stack_set_visible_child_name(GTK_STACK(stack), "target-registered-equipment");
+  else 
+    gtk_stack_set_visible_child_name(GTK_STACK(stack), "target-manual-ip");
+
+  connectivity_controller_set_source_selection(&ui_ping->controller, source);
 }
 
 static void on_search_equipment_activated(GtkSearchEntry *search, gpointer data)
@@ -516,7 +521,8 @@ static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpoi
   if (row == NULL) return;
 
   const char *ip_address = g_object_get_data(G_OBJECT(row), DATA_IP_ADDRESS);
-  snprintf(ui_ping->target_ip, IP_MAX, "%s", ip_address);
+
+  connectivity_controller_set_ip_address(&ui_ping->controller, ip_address);
 }
 
 static void on_run_ping_clicked(GtkButton *button, gpointer data)
@@ -530,17 +536,14 @@ static void on_run_ping_clicked(GtkButton *button, gpointer data)
   GtkWidget *timeout_entry = g_object_get_data(G_OBJECT(ui_ping->timeout), "entry");
   GtkWidget *packet_size_entry = g_object_get_data(G_OBJECT(ui_ping->packet_size), "entry");
 
-  if (ui_ping->source == SOURCE_SELECTION_MANUAL)
-  {
-    const char *ip_text = gtk_editable_get_text(GTK_EDITABLE(ip_entry));
-    snprintf(ui_ping->target_ip, IP_MAX, "%s", ip_text);
-  }
-
+  const char *ip_text = gtk_editable_get_text(GTK_EDITABLE(ip_entry));
   const char *count = gtk_editable_get_text(GTK_EDITABLE(count_entry));
   const char *timeout = gtk_editable_get_text(GTK_EDITABLE(timeout_entry));
   const char *packet_size = gtk_editable_get_text(GTK_EDITABLE(packet_size_entry));
+
+  connectivity_controller_set_ip_from_source(&ui_ping->controller, ip_text);
  
-  ping_validation_t error = connectivity_controller_validate_ping(ui_ping->target_ip, count, timeout, packet_size);
+  ping_validation_t error = connectivity_controller_validate_ping(ui_ping->controller.ip, count, timeout, packet_size);
 
   switch (error) 
   {
@@ -557,7 +560,7 @@ static void on_run_ping_clicked(GtkButton *button, gpointer data)
       gtk_widget_add_css_class(ui_ping->packet_size, "field-error");
       break;
     case PING_OK:
-      connectivity_controller_ping(ui_ping, ui_ping->target_ip, count, timeout, packet_size);
+      connectivity_controller_ping(ui_ping, ui_ping->controller.ip, count, timeout, packet_size);
       break;
   }
 }
