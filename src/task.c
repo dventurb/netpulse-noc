@@ -11,7 +11,7 @@ static void *ping_task_thread(void *data)
 {
   ping_task_t *task = (ping_task_t *)data;
 
-  task->result = connectivity_ping(task->params->ip, task->params->count, task->params->timeout, task->params->packet_size);
+  task->result = connectivity_run_ping(task->params->ip, task->params->count, task->params->timeout, task->params->packet_size);
 
   g_idle_add(task->callback, task); //  on_ping_finished()
 

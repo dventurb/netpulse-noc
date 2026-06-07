@@ -2,8 +2,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-ping_result_t *connectivity_ping(const char *ip_address, int count, int timeout, int packet_size)
+ping_result_t *connectivity_run_ping(const char *ip_address, int count, int timeout, int packet_size)
 {
   ping_result_t *result = malloc(sizeof(ping_result_t));
   if (result == NULL) return NULL;
@@ -31,5 +32,26 @@ ping_result_t *connectivity_ping(const char *ip_address, int count, int timeout,
 
   pclose(file);
 
+  connectivity_check_ping(result);
+
   return result;
+}
+
+void connectivity_check_ping(ping_result_t *result)
+{
+  char check[50];
+
+  #ifdef WIN32 
+    snprintf(check, sizeof(check), "100%% loss");
+  #else
+    snprintf(check, sizeof(check), "100%% packet loss");
+  #endif
+
+  if (strstr(result->output, check) != NULL)
+  {
+    result->responded = false;
+    return;
+  }
+
+  result->responded = true;
 }
