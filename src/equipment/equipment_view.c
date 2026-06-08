@@ -281,7 +281,7 @@ static GtkWidget *build_pagination_bar(equipment_view_t *view)
   int start, end;
 
   pagination_get_range(view->controller->pagination, &start, &end);
-  
+
   for (int i = start; i <= end; i++) 
   {
     char buffer[12];

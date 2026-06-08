@@ -32,7 +32,20 @@ void connectivity_controller_ping(connectivity_controller_t *controller, const c
   params->timeout = atoi(timeout);
   params->packet_size = atoi(packet_size);
 
-  ping_task_worker(params, on_ping_finished, controller);
+  ping_single_task_worker(params, on_ping_finished, controller);
+}
+
+void connectivity_controller_ping_all(connectivity_controller_t *controller)
+{
+  ping_params_t *params = malloc(sizeof(ping_params_t));
+  if (params == NULL) return;
+
+  params->ip[0] = '\0';
+  params->count = 1;
+  params->timeout = 1;
+  params->packet_size = 56;
+
+  ping_all_task_worker(params, on_ping_finished, controller);
 }
 
 void connectivity_controller_search_equipment(connectivity_controller_t *controller, const char *text)
@@ -108,6 +121,7 @@ void connectivity_controller_set_ip_from_source(connectivity_controller_t *contr
   if (controller->source == SOURCE_MANUAL)
   {
     connectivity_controller_set_ip_address(controller, ip_address);
+    controller->selected_equipment = NULL;
   }
 }
 
@@ -161,29 +175,20 @@ gboolean on_ping_finished(gpointer data)
 {
   ping_task_t *task = (ping_task_t *)data;
 
-  if (task->result->responded == false && task->controller->source == SOURCE_SEARCH)
-  {
-    equipment_update_status(task->controller->selected_equipment, STATUS_FAILED);
-    equipment_update_last_check(task->controller->selected_equipment);
-   
-    connectivity_controller_create_incident(task->controller, task->controller->selected_equipment);
-
-    save_equipments(&task->controller->app->equipments, "data/equipments.bin");
-  }
-
-  else if (task->result->responded == true && task->controller->source == SOURCE_SEARCH)
-  {
-    equipment_update_status(task->controller->selected_equipment, STATUS_OPERATIONAL);
-    equipment_update_last_check(task->controller->selected_equipment);
-
-    save_equipments(&task->controller->app->equipments, "data/equipments.bin");
-  }
-
-  ping_view_set_result(&task->controller->view->ping_view, task->result);
+  ping_view_set_result(&task->controller->view->ping_view, task->result->output);
 
   free(task->params); // Controller
   free(task->result); // Model 
   free(task); // Worker
+
+  return false;
+}
+
+gboolean on_ping_all_finished(gpointer data)
+{
+  connectivity_controller_t *controller = (connectivity_controller_t *)data;
+
+  ping_view_set_result(&controller->view->ping_view, controller->result->output);
 
   return false;
 }

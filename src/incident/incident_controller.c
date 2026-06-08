@@ -83,7 +83,7 @@ void incident_controller_add(incident_controller_t *controller, incident_t data)
   controller->pagination.total = pagination_total_pages(controller->pagination, total);
 
   if (controller->pagination.page >= controller->pagination.total)
-    controller->pagination.page = controller->pagination.total - 1;
+    controller->pagination.page = controller->pagination.total;
 
   if (controller->pagination.page < 0)
     controller->pagination.page = 0;
@@ -206,7 +206,7 @@ gboolean on_incident_finished(gpointer data)
   task->controller->pagination.total = pagination_total_pages(task->controller->pagination, task->count);
 
   if (task->controller->pagination.page >= task->controller->pagination.total)
-    task->controller->pagination.page = task->controller->pagination.total - 1;
+    task->controller->pagination.page = task->controller->pagination.total;
 
   incident_view_update_table(task->controller->view, task->result, task->count);
 

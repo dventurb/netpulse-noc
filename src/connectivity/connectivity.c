@@ -23,12 +23,10 @@ ping_result_t *connectivity_run_ping(const char *ip_address, int count, int time
   #endif
 
   file = popen(input, "r");
+  if (file == NULL) return NULL;
 
-  if (file != NULL)
-  {
-    size_t bytes_read = fread(result->output, 1, sizeof(result->output) - 1, file);
-    result->output[bytes_read] = '\0';
-  }
+  size_t bytes_read = fread(result->output, 1, sizeof(result->output) - 1, file);
+  result->output[bytes_read] = '\0';
 
   pclose(file);
 

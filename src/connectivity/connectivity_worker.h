@@ -15,6 +15,7 @@ typedef struct {
   ping_result_t *result;
 } ping_task_t;
 
-void ping_task_worker(ping_params_t *params, callback_task callback, connectivity_controller_t *controller);
+void ping_single_task_worker(ping_params_t *params, callback_task callback, connectivity_controller_t *controller);
+void ping_all_task_worker(ping_params_t *params, callback_task callback, connectivity_controller_t *controller);
 
 #endif

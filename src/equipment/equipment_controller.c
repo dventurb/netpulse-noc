@@ -87,7 +87,7 @@ void equipment_controller_add(equipment_controller_t *controller, equipment_t da
   controller->pagination.total = pagination_total_pages(controller->pagination, controller->app->equipments.count);
 
   if (controller->pagination.page >= controller->pagination.total)
-    controller->pagination.page = controller->pagination.total - 1;
+    controller->pagination.page = controller->pagination.total;
 
   if (controller->pagination.page < 0)
     controller->pagination.page = 0;
@@ -137,7 +137,7 @@ void equipment_controller_remove(equipment_controller_t *controller)
   controller->pagination.total = pagination_total_pages(controller->pagination, controller->app->equipments.count);
 
   if (controller->pagination.page >= controller->pagination.total)
-    controller->pagination.page = controller->pagination.total - 1;
+    controller->pagination.page = controller->pagination.total;
 
   if (controller->pagination.page < 0)
     controller->pagination.page = 0;
@@ -233,7 +233,7 @@ gboolean on_equipment_finished(gpointer data)
   task->controller->pagination.total = pagination_total_pages(task->controller->pagination, task->count);
 
   if (task->controller->pagination.page >= task->controller->pagination.total)
-    task->controller->pagination.page = task->controller->pagination.total - 1;
+    task->controller->pagination.page = task->controller->pagination.total;
 
   equipment_view_update_table(task->controller->view, task->result, task->count);
 

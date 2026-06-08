@@ -5,7 +5,7 @@ void pagination_get_range(pagination_t pagination, int *start, int *end)
   *start = pagination.page - 1;
   *end = pagination.page + 1;
 
-  int total = pagination.total - 1;
+  int total = pagination.total;
 
   if (*start < 0) *start = 0;
   if (*end > total) *end = total;
@@ -28,8 +28,8 @@ void pagination_next(pagination_t *pagination)
 {
   pagination->page++;
 
-  if (pagination->page > pagination->total - 1) 
-    pagination->page = pagination->total - 1; 
+  if (pagination->page > pagination->total) 
+    pagination->page = pagination->total; 
 }
 
 int pagination_total_pages(pagination_t pagination, int count)
