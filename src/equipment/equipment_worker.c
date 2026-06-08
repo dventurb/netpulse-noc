@@ -2,6 +2,7 @@
 
 #include <pthread.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "equipment.h"
 
@@ -13,6 +14,25 @@ static void *equipment_task_thread(void *data)
   equipment_list_init(&filtered);
 
   equipment_list_t *list = &task->controller->app->equipments;
+
+  if (task->params->sort != task->params->prev_sort)
+  {
+    switch (task->params->sort) 
+    {
+      case 1:
+        printf("status\n\n");
+        equipment_list_sort_by_status(list);
+        break;
+      case 2:
+        equipment_list_sort_by_location(list);
+        break;
+      case 3:
+        equipment_list_sort_by_type(list);
+        break;
+    }
+
+    task->controller->prev_sort = task->params->sort;
+  }
 
   if (task->params->type_filter == 0 && task->params->status_filter == 0)
   {

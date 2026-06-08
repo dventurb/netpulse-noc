@@ -389,7 +389,7 @@ const char *equipment_type_to_string(equipment_type_t type)
 static equipment_node_t *get_middle(equipment_node_t *node)
 {
   equipment_node_t *slow = node;
-  equipment_node_t *fast = node;
+  equipment_node_t *fast = node->next;
 
   while (fast != NULL && fast->next != NULL)
   {
@@ -397,7 +397,7 @@ static equipment_node_t *get_middle(equipment_node_t *node)
     fast = fast->next->next;
   }
 
-  return slow; // First element from the right side (left: head to slow->previous; right: slow to tail)
+  return slow; // First element from the left side
 }
 
 static equipment_node_t *merge_sort(equipment_node_t *node, callback_fn compare)
@@ -408,11 +408,13 @@ static equipment_node_t *merge_sort(equipment_node_t *node, callback_fn compare)
     return node;
   }
 
-  equipment_node_t *left = node;
-  equipment_node_t *right = get_middle(node);
+  equipment_node_t *middle = get_middle(node);
 
-  right->previous->next = NULL;
-  right->previous = NULL;
+  equipment_node_t *left = node;
+  equipment_node_t *right = middle->next;
+
+  middle->next = NULL;
+  if (right != NULL) right->previous = NULL;
 
   left = merge_sort(left, compare);
   right = merge_sort(right, compare);
@@ -427,7 +429,7 @@ static equipment_node_t *merge(equipment_node_t *left, equipment_node_t *right, 
 
   equipment_node_t *node;
 
-  if (compare(left, right) >= 0)
+  if (compare(left, right) <= 0)
   {
     node = left;
     node->next = merge(node->next, right, compare);
@@ -443,6 +445,8 @@ static equipment_node_t *merge(equipment_node_t *left, equipment_node_t *right, 
   {
     node->next->previous = node;
   }
+
+  node->previous = NULL;
 
   return node;
 }

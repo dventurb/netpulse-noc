@@ -33,6 +33,7 @@ typedef struct equipment_view_t {
   GtkButton   *edit_button;
   GtkButton   *remove_button;
 
+  GtkDropDown *sort_filter;
   GtkDropDown *type_filter;
   GtkDropDown *status_filter;
 

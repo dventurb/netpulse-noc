@@ -10,6 +10,7 @@
 static const char* const equipment_status[] = { "Failed", "Maintenance", "Operational", "Disabled", NULL };
 static const char* const equipment_types[] = { "Router", "Firewall", "Switch", "Access Point", "Server", "NAS", "UPS", "IP Camera", "Printer", "Other", NULL };
 static const char* const filter_status[] = { "All", "Failed", "Maintenance", "Operational", "Disabled", NULL };
+static const char* const filter_sort[] = { "Sort", "Status", "Type", "Location", NULL};
 static const char* const filter_types[] = { "All", "Router", "Firewall", "Switch", "Access Point", "Server", "NAS", "UPS", "IP Camera", "Printer", "Other", NULL };
 static const char* const headers[] = { "ID", "NAME", "TYPE", "VENDOR", "MODEL", "IP ADDRESS", "MAC ADDRESS", "LOCATION", "STATUS", "LAST CHECK" };
 static const int widths[] = { CELL_ID_WIDTH, CELL_NAME_WIDTH, CELL_TYPE_WIDTH, CELL_VENDOR_WIDTH, CELL_MODEL_WIDTH, CELL_IP_ADDRESS_WIDTH, CELL_MAC_ADDRESS_WIDTH, CELL_LOCATION_WIDTH, CELL_STATUS_WIDTH, CELL_LAST_CHECK_WIDTH };
@@ -218,6 +219,10 @@ static GtkWidget *build_filter_bar(equipment_view_t *view)
   gtk_widget_set_hexpand(search, TRUE);
   g_signal_connect(search, "search-changed", G_CALLBACK(on_search_entry_changed), view);
 
+  view->sort_filter = GTK_DROP_DOWN(gtk_drop_down_new_from_strings(filter_sort));
+  gtk_widget_add_css_class(GTK_WIDGET(view->sort_filter), "inventory-filter");
+  g_signal_connect(GTK_WIDGET(view->sort_filter), "notify::selected", G_CALLBACK(on_filter_dropdown_changed), view);
+
   view->type_filter = GTK_DROP_DOWN(gtk_drop_down_new_from_strings(filter_types));
   gtk_widget_add_css_class(GTK_WIDGET(view->type_filter), "inventory-filter");
   g_signal_connect(GTK_WIDGET(view->type_filter), "notify::selected", G_CALLBACK(on_filter_dropdown_changed), view);
@@ -227,6 +232,7 @@ static GtkWidget *build_filter_bar(equipment_view_t *view)
   g_signal_connect(GTK_WIDGET(view->status_filter), "notify::selected", G_CALLBACK(on_filter_dropdown_changed), view);
 
   gtk_box_append(GTK_BOX(box), search);
+  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->sort_filter));
   gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->type_filter));
   gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->status_filter));
 
@@ -457,7 +463,9 @@ static void equipment_view_apply_filters(equipment_view_t *view)
   int position_status = gtk_drop_down_get_selected(view->status_filter);
   int position_type = gtk_drop_down_get_selected(view->type_filter);
 
-  equipment_controller_apply_filters(view->controller, position_status, position_type);
+  int position_sort = gtk_drop_down_get_selected(view->sort_filter);
+
+  equipment_controller_apply_filters(view->controller, position_sort, position_status, position_type);
 }
 
 static void update_form_field(GtkWidget *layout, equipment_t equipment)

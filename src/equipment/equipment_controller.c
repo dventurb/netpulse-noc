@@ -24,6 +24,9 @@ void equipment_controller_init(equipment_controller_t *controller, equipment_vie
 
   controller->status_filter = 0;
   controller->type_filter = 0;
+
+  controller->sort = 0;
+  controller->prev_sort = 0;
 }
 
 static void equipment_controller_dispatch(equipment_controller_t *controller)
@@ -36,6 +39,9 @@ static void equipment_controller_dispatch(equipment_controller_t *controller)
 
   params->status_filter = controller->status_filter;
   params->type_filter = controller->type_filter;
+
+  params->sort = controller->sort;
+  params->prev_sort = controller->prev_sort;
 
   equipment_task_worker(params, on_equipment_finished, controller);
 }
@@ -61,10 +67,12 @@ void equipment_controller_update_table(equipment_controller_t *controller)
   equipment_controller_dispatch(controller);
 }
 
-void equipment_controller_apply_filters(equipment_controller_t *controller, int status, int type)
+void equipment_controller_apply_filters(equipment_controller_t *controller, int sort, int status, int type)
 {
   controller->status_filter = status;
   controller->type_filter = type;
+
+  controller->sort = sort;
 
   controller->pagination.page = 0;
 

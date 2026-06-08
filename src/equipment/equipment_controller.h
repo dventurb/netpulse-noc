@@ -22,6 +22,9 @@ typedef struct {
   int status_filter;
   int type_filter;
 
+  int sort;
+  int prev_sort;
+
   pagination_t pagination;
 } equipment_controller_t;
 
@@ -31,6 +34,9 @@ typedef struct {
 
   int status_filter;
   int type_filter;
+
+  int sort;
+  int prev_sort;
 
   int count;
 } equipment_params_t;
@@ -46,7 +52,7 @@ void equipment_controller_init(equipment_controller_t *controller, equipment_vie
 
 void equipment_controller_refresh_page(equipment_controller_t *controller);
 void equipment_controller_update_table(equipment_controller_t *controller);
-void equipment_controller_apply_filters(equipment_controller_t *controller, int status, int type);
+void equipment_controller_apply_filters(equipment_controller_t *controller, int sort, int status, int type);
 
 void equipment_controller_add(equipment_controller_t *controller, equipment_t data);
 void equipment_controller_edit(equipment_controller_t *controller, equipment_t data);
