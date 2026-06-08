@@ -1,0 +1,65 @@
+#ifndef INCIDENT_CONTROLLER_H
+#define INCIDENT_CONTROLLER_H
+
+#include <glib.h>
+
+#include "application.h"
+#include "incident.h"
+#include "macros.h"
+#include "pagination.h"
+
+// forward declaration to resolve circular dependencies
+typedef struct incident_view_t incident_view_t;
+
+typedef struct {
+  application_t *app;
+
+  incident_view_t *view;
+
+  int selected_count;
+  incident_node_t *selected_node;
+
+  int status_filter;
+  int priority_filter;
+
+  char search_text[STRING_MAX];
+
+  pagination_t pagination;
+} incident_controller_t;
+
+typedef struct {
+  int start;
+  int end;
+
+  int status_filter;
+  int priority_filter;
+
+  char search_text[STRING_MAX];
+} incident_params_t;
+
+typedef struct {
+  int total;
+  int pending;
+  int in_progress;
+  int concluded;
+} incident_stats_t;
+
+void incident_controller_init(incident_controller_t *controller, incident_view_t *view, void *data);
+
+void incident_controller_refresh_page(incident_controller_t *controller);
+void incident_controller_update_table(incident_controller_t *controller);
+void incident_controller_apply_filters(incident_controller_t *controller, int status, int priority);
+
+void incident_controller_add(incident_controller_t *controller, incident_t data);
+void incident_controller_process(incident_controller_t *controller);
+void incident_controller_resolve(incident_controller_t *controller);
+
+void incident_controller_search(incident_controller_t *controller, const char *text);
+void incident_controller_handle_toggled(incident_controller_t *controller, int id, bool is_active);
+int incident_controller_get_position(incident_controller_t *controller, incident_t incident, int row);
+
+void incident_controller_get_stats(incident_controller_t *controller, incident_stats_t *stats);
+
+gboolean on_incident_finished(gpointer data);
+
+#endif

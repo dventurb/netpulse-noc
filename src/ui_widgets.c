@@ -298,6 +298,8 @@ GtkWidget *create_table_checkbox(void)
 
 void remove_table_rows(GtkWidget *grid)
 {
+  if (grid == NULL) return;
+
   GtkWidget *item = gtk_widget_get_first_child(grid);
   
   while (item != NULL)
@@ -372,19 +374,4 @@ void remove_all_children_from_widget(GtkWidget *parent)
 
     child = next;
   }
-}
-
-int pagination_total_pages(pagination_t pagination, int count)
-{
-  return (count + pagination.page_size - 1) / pagination.page_size;
-}
-
-int pagination_start(pagination_t pagination)
-{
-  return pagination.page * pagination.page_size;
-}
-
-int pagination_end(pagination_t pagination)
-{
-  return pagination.page * pagination.page_size + pagination.page_size;
 }

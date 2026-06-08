@@ -3,6 +3,9 @@
 
 #include <time.h>
 #include <stdbool.h>
+#include <glib.h> // gboolean and gpointer types
+
+typedef gboolean (*callback_task)(gpointer data); // function pointer
 
 typedef enum {
   SEARCH_EQUIPMENT_ID,

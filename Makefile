@@ -1,6 +1,8 @@
 CC := gcc 
 
-CPPFLAGS := $(shell pkg-config --cflags gtk4) -Iinc/ -Iui/inc 
+INCLUDES := -Isrc -Isrc/core -Isrc/equipment -Isrc/incident -Isrc/connectivity -Isrc/sensor -Isrc/configuration -Isrc/technician -Isrc/utils
+
+CPPFLAGS := $(shell pkg-config --cflags gtk4) $(INCLUDES)
 CFLAGS := -Wall -Wextra -g -pthread
 LDLIBS := $(shell pkg-config --libs gtk4) -pthread
 # LDFLAGS := 
@@ -28,8 +30,8 @@ else
 	EXE_EXT := 
 endif
 
-HDRS := $(wildcard inc/*.h) $(wildcard ui/inc/*.h)
-SRCS := $(wildcard *.c) $(wildcard src/*.c) $(wildcard ui/src/*.c)
+HDRS := $(wildcard src/*.h) $(wildcard src/*/*.h)
+SRCS := $(wildcard *.c) $(wildcard src/*.c) $(wildcard src/*/*.c)
 OBJS := $(SRCS:%.c=build/%.o)
 
 TARGET := netpulse-noc$(EXE_EXT) # ex.: netpulse-noc.exe (Windows) or netpulse-noc (Unix)

@@ -3,6 +3,8 @@
 
 #include <gtk/gtk.h>
 
+#include "pagination.h"
+
 typedef struct {
   const char *key;
   char *dest;
@@ -26,12 +28,6 @@ typedef struct {
   
   dialog_action_t dialog_action;
 } dialog_config_t;
-
-typedef struct {
-  int total;
-  int page;
-  int page_size;
-} pagination_t;
 
 GtkWidget *create_primary_button(const char *text, const char *icon, const char *css);
 GtkWidget *create_secondary_button(const char *text, const char *icon, const char *css);
@@ -59,8 +55,5 @@ GtkWidget *create_summary_detail(const char *title, const char *value);
 void remove_table_rows(GtkWidget *grid);
 void remove_all_children_from_widget(GtkWidget *parent);
 
-int pagination_total_pages(pagination_t pagination, int count);
-int pagination_start(pagination_t pagination);
-int pagination_end(pagination_t pagination);
 
 #endif
