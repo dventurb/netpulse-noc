@@ -25,6 +25,7 @@ typedef struct ping_view_t {
   GtkCheckButton *manual_button;
 
   GtkButton      *run_button;
+  GtkButton      *ping_all_button;
 
   GtkTextView    *terminal;
 } ping_view_t;

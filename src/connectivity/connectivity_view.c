@@ -217,12 +217,12 @@ static GtkBox *ping_view_create(ping_view_t *view, connectivity_controller_t *co
   gtk_grid_set_column_spacing(GTK_GRID(form_fields_grid), 16);
 
   GtkWidget *container_search = build_search(view);
-  gtk_stack_add_named(view->stack, container_search, "target-registered-equipment");
+  gtk_stack_add_named(view->stack, container_search, "REGISTERED");
 
-  gtk_stack_set_visible_child_name(view->stack, "target-registered-equipment");
+  gtk_stack_set_visible_child_name(view->stack, "REGISTERED");
  
   view->manual_ip = create_unit_field("TARGET (IP ADDRESS)", "192.168.1.1", NULL);
-  gtk_stack_add_named(view->stack, view->manual_ip, "target-manual-ip");
+  gtk_stack_add_named(view->stack, view->manual_ip, "MANUAL");
 
   gtk_grid_attach(GTK_GRID(form_fields_grid), GTK_WIDGET(view->stack), 0, 1, 2, 1);
 
@@ -267,11 +267,11 @@ static GtkWidget *build_source_selection(ping_view_t *view)
   view->registered_button = GTK_CHECK_BUTTON(gtk_check_button_new_with_label("Registered Equipment"));
   gtk_widget_add_css_class(GTK_WIDGET(view->registered_button), "config-panel-form-checkbutton");
   gtk_check_button_set_active(view->registered_button, TRUE);
-  g_signal_connect(GTK_WIDGET(view->registered_button), "toggled", G_CALLBACK(on_target_source_selection_clicked), view->stack);
+  g_signal_connect(GTK_WIDGET(view->registered_button), "toggled", G_CALLBACK(on_target_source_selection_clicked), view);
 
   view->manual_button = GTK_CHECK_BUTTON(gtk_check_button_new_with_label("Manual IP Address"));
   gtk_widget_add_css_class(GTK_WIDGET(view->manual_button), "config-panel-form-checkbutton");
-  g_signal_connect(GTK_WIDGET(view->manual_button), "toggled", G_CALLBACK(on_target_source_selection_clicked), view->stack);
+  g_signal_connect(GTK_WIDGET(view->manual_button), "toggled", G_CALLBACK(on_target_source_selection_clicked), view);
 
   gtk_check_button_set_group(view->registered_button, view->manual_button); // mutually exclusive selection
 
@@ -320,10 +320,10 @@ static void build_actions(GtkWidget *grid, ping_view_t *view)
   view->run_button = GTK_BUTTON(create_secondary_button("Run Ping", "assets/icon-start.svg", "secondary-button"));
   g_signal_connect(GTK_WIDGET(view->run_button), "clicked", G_CALLBACK(on_run_ping_clicked), view);
 
-  GtkWidget *clear_button = create_secondary_button("Clear", NULL, "clear-button");
+  view->ping_all_button = GTK_BUTTON(create_secondary_button("Ping All Equipments", NULL, "ping-all-button"));
 
   gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->run_button), 0, 4, 1, 1);
-  gtk_grid_attach(GTK_GRID(grid), clear_button, 1, 4, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->ping_all_button), 1, 4, 1, 1);
 }
 
 static GtkWidget *build_terminal(ping_view_t *view)
@@ -490,13 +490,13 @@ static void on_target_source_selection_clicked(GtkButton *button, gpointer data)
 
   if (GTK_WIDGET(view->registered_button) == GTK_WIDGET(button))
   {
-    gtk_stack_set_visible_child_name(view->stack, "target-registered-equipment");
+    gtk_stack_set_visible_child_name(view->stack, "REGISTERED");
     source = SOURCE_SEARCH;
   }
 
   else 
   {
-    gtk_stack_set_visible_child_name(view->stack, "target-manual-ip");
+    gtk_stack_set_visible_child_name(view->stack, "MANUAL");
     source = SOURCE_MANUAL;
   }
 
