@@ -174,8 +174,10 @@ void connectivity_controller_create_incident(connectivity_controller_t *controll
 gboolean on_ping_finished(gpointer data)
 {
   ping_task_t *task = (ping_task_t *)data;
-
+  
+  ping_view_set_result(&task->controller->view->ping_view, task->result->input);
   ping_view_set_result(&task->controller->view->ping_view, task->result->output);
+  ping_view_set_result(&task->controller->view->ping_view, "\n");
 
   free(task->params); // Controller
   free(task->result); // Model 
@@ -188,7 +190,9 @@ gboolean on_ping_all_finished(gpointer data)
 {
   connectivity_controller_t *controller = (connectivity_controller_t *)data;
 
+  ping_view_set_result(&controller->view->ping_view, controller->result->input);
   ping_view_set_result(&controller->view->ping_view, controller->result->output);
+  ping_view_set_result(&controller->view->ping_view, "\n");
 
   return false;
 }

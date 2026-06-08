@@ -46,6 +46,7 @@ typedef struct connectivity_view_t{
 GtkBox *connectivity_view_create(connectivity_view_t *view, connectivity_controller_t *controller);
 
 void ping_view_set_result(ping_view_t *view, const char *output);
+void ping_view_clear_result(ping_view_t *view);
 void ping_view_update_list(ping_view_t *view, equipment_t *equipments, int count);
 
 #endif

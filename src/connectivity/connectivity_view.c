@@ -91,9 +91,18 @@ void ping_view_set_result(ping_view_t *view, const char *output)
 
   GtkTextBuffer *terminal_buffer = gtk_text_view_get_buffer(view->terminal);
 
-  gtk_text_buffer_set_text(GTK_TEXT_BUFFER(terminal_buffer), utf8_char, -1);
+  GtkTextIter end;
+  gtk_text_buffer_get_end_iter(terminal_buffer, &end);
+
+  gtk_text_buffer_insert(terminal_buffer, &end, utf8_char, -1);
 
   free(utf8_char);
+}
+
+void ping_view_clear_result(ping_view_t *view)
+{
+  GtkTextBuffer *terminal_buffer = gtk_text_view_get_buffer(view->terminal);
+  gtk_text_buffer_set_text(GTK_TEXT_BUFFER(terminal_buffer), "$ ", -1);
 }
 
 static GtkWidget *build_sidebar(connectivity_view_t *view)
@@ -367,6 +376,10 @@ static GtkWidget *build_terminal(ping_view_t *view)
   gtk_box_append(GTK_BOX(terminal_header), copy_button);
   gtk_box_append(GTK_BOX(terminal_header), save_button);
 
+  GtkWidget *scrolled = gtk_scrolled_window_new();
+  gtk_widget_set_size_request(scrolled, -1, 400);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+
   view->terminal = GTK_TEXT_VIEW(gtk_text_view_new());
   gtk_widget_set_size_request(GTK_WIDGET(view->terminal), -1, 400);
   gtk_widget_set_sensitive(GTK_WIDGET(view->terminal), FALSE);
@@ -377,8 +390,10 @@ static GtkWidget *build_terminal(ping_view_t *view)
 
   gtk_text_view_set_buffer(view->terminal, terminal_buffer);
 
+  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled), GTK_WIDGET(view->terminal));
+
   gtk_box_append(GTK_BOX(box), terminal_header);
-  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->terminal));
+  gtk_box_append(GTK_BOX(box), scrolled);
 
   return box;
 }
@@ -534,6 +549,8 @@ static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpoi
 
 static void on_run_ping_clicked(GtkButton *button, gpointer data)
 {
+  (void)button; // unused
+
   ping_view_t *view = (ping_view_t *)data; 
 
   GtkWidget *ip_entry = g_object_get_data(G_OBJECT(view->manual_ip), "entry");
@@ -569,15 +586,21 @@ static void on_run_ping_clicked(GtkButton *button, gpointer data)
       break;
   }
 
+  ping_view_clear_result(view);
+  
   gtk_widget_set_sensitive(GTK_WIDGET(view->run_button), FALSE);
   gtk_widget_set_sensitive(GTK_WIDGET(view->ping_all_button), FALSE);
 }
 
 static void on_ping_all_clicked(GtkButton *button, gpointer data)
 {
+  (void)button; // unused 
+
   ping_view_t *view = (ping_view_t *)data; 
 
   connectivity_controller_ping_all(view->controller);
+
+  ping_view_clear_result(view);
 
   gtk_widget_set_sensitive(GTK_WIDGET(view->run_button), FALSE);
   gtk_widget_set_sensitive(GTK_WIDGET(view->ping_all_button), FALSE);

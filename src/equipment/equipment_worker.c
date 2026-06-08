@@ -36,6 +36,8 @@ static void *equipment_task_thread(void *data)
 
   task->result = equipment_list_in_range(&filtered, task->params->start, task->params->end, &task->count);
 
+  task->total = equipment_get_count(&filtered);
+
   equipment_list_destroy(&filtered);
 
   g_idle_add(task->callback, task); // on_equipment_finished()
@@ -52,11 +54,12 @@ void equipment_task_worker(equipment_params_t *params, callback_task callback, e
     return;
   }
 
+  task->controller = controller;
   task->params = params;
   task->callback = callback;
   task->result = NULL;
   task->count = 0;
-  task->controller = controller;
+  task->total = 0;
 
   pthread_t thread;
   pthread_create(&thread, NULL, equipment_task_thread, task);

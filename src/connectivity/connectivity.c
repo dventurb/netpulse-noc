@@ -9,20 +9,19 @@ ping_result_t *connectivity_run_ping(const char *ip_address, int count, int time
   ping_result_t *result = malloc(sizeof(ping_result_t));
   if (result == NULL) return NULL;
 
-  char input[200];
   FILE *file = NULL;
 
   #ifdef WIN32
-    snprintf(input, sizeof(input), "ping -n %d -w %d -l %d %s", count, timeout * 1000, packet_size, ip_address);
+    snprintf(result->input, sizeof(result->input) "ping -n %d -w %d -l %d %s\n", count, timeout * 1000, packet_size, ip_address);
   #endif
   #ifdef LINUX
-    snprintf(input, sizeof(input), "ping -c %d -W %d -s %d %s", count, timeout, packet_size, ip_address);
+    snprintf(result->input, sizeof(result->input), "ping -c %d -W %d -s %d %s\n", count, timeout, packet_size, ip_address);
   #endif
   #ifdef OSX
-    snprintf(input, sizeof(input), "ping -c %d -t %d -s %d %s", count, timeout, packet_size, ip_address);
+    snprintf(result->input, sizeof(result->input), "ping -c %d -t %d -s %d %s\n", count, timeout, packet_size, ip_address);
   #endif
 
-  file = popen(input, "r");
+  file = popen(result->input, "r");
   if (file == NULL) return NULL;
 
   size_t bytes_read = fread(result->output, 1, sizeof(result->output) - 1, file);

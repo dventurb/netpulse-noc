@@ -9,6 +9,7 @@ typedef struct {
   int packets_sent;
   int packets_received;
   
+  char input[100];
   char output[4800]; // maximum theoretical size is ~4318 (not sure about that)
 } ping_result_t;
 

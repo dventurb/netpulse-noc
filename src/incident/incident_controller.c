@@ -22,7 +22,7 @@ void incident_controller_init(incident_controller_t *controller, incident_view_t
   controller->pagination.page_size = 6;
 
   int total = incident_get_count(&controller->app->incidents_pending, &controller->app->incidents_history);
-  controller->pagination.total = pagination_total_pages(controller->pagination, total);
+  controller->pagination.total = total;
 
   controller->status_filter = 0;
   controller->priority_filter = 0;
@@ -54,16 +54,12 @@ void incident_controller_refresh_page(incident_controller_t *controller)
 
   int total = incident_get_count(&controller->app->incidents_pending, &controller->app->incidents_history);
 
-  controller->pagination.total = pagination_total_pages(controller->pagination, total);
+  controller->pagination.total = total;
 
   controller->status_filter = 0;
   controller->priority_filter = 0;
 
-  incident_controller_dispatch(controller);
-
-  incident_view_update_stats_cards(controller->view);
-
-  incident_view_update_header(controller->view);
+  incident_controller_update_table(controller);
 }
 
 void incident_controller_update_table(incident_controller_t *controller)
@@ -78,17 +74,7 @@ void incident_controller_add(incident_controller_t *controller, incident_t data)
   
   incident_queue_enqueue(queue, data);
 
-  int total = incident_get_count(&controller->app->incidents_pending, &controller->app->incidents_history);
-
-  controller->pagination.total = pagination_total_pages(controller->pagination, total);
-
-  if (controller->pagination.page >= controller->pagination.total)
-    controller->pagination.page = controller->pagination.total;
-
-  if (controller->pagination.page < 0)
-    controller->pagination.page = 0;
-
-  incident_controller_refresh_page(controller);
+  incident_controller_update_table(controller);
 
   save_incidents(queue, list, "data/incidents.bin");
 }
@@ -103,7 +89,7 @@ void incident_controller_process(incident_controller_t *controller)
 
   incident_list_insert(list, node);
 
-  incident_controller_refresh_page(controller);
+  incident_controller_update_table(controller);
 
   save_incidents(queue, list, "data/incidents.bin");
 }
@@ -116,7 +102,7 @@ void incident_controller_resolve(incident_controller_t *controller)
   controller->selected_node->data.status = INCIDENT_CONCLUDED;
   controller->selected_node->data.concluded_at = time(NULL);
 
-  incident_controller_refresh_page(controller);
+  incident_controller_update_table(controller);
 
   save_incidents(queue, list, "data/incidents.bin");
 }
@@ -203,12 +189,16 @@ gboolean on_incident_finished(gpointer data)
 {
   incident_task_t *task = (incident_task_t *)data;
 
-  task->controller->pagination.total = pagination_total_pages(task->controller->pagination, task->count);
+  task->controller->pagination.total = task->total;
 
-  if (task->controller->pagination.page >= task->controller->pagination.total)
-    task->controller->pagination.page = task->controller->pagination.total;
+  int total_pages = pagination_total_pages(task->controller->pagination, task->total);
+
+  if (task->controller->pagination.page >= total_pages - 1)
+    task->controller->pagination.page = total_pages - 1;
 
   incident_view_update_table(task->controller->view, task->result, task->count);
+  incident_view_update_stats_cards(task->controller->view);
+  incident_view_update_header(task->controller->view);
 
   free(task->params);
   free(task->result);

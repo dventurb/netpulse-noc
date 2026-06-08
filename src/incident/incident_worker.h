@@ -12,7 +12,9 @@ typedef struct {
   incident_controller_t *controller;
   
   incident_t *result;
+  
   int count;
+  int total;
 } incident_task_t;
 
 void incident_task_worker(incident_params_t *params, callback_task callback, incident_controller_t *controller);

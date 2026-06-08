@@ -1,5 +1,6 @@
 #include "incident_worker.h"
 
+#include "stdio.h"
 #include <pthread.h>
 #include <stdlib.h>
 
@@ -62,6 +63,8 @@ static void *incident_task_thread(void *data)
 
   task->result = incident_in_range(&queue_filtered, &list_filtered, task->params->start, task->params->end, &task->count);
 
+  task->total = incident_get_count(&queue_filtered, &list_filtered);
+
   incident_queue_destroy(&queue_filtered);
   incident_list_destroy(&list_filtered);
 
@@ -84,6 +87,7 @@ void incident_task_worker(incident_params_t *params, callback_task callback, inc
   task->controller = controller;
   task->result = NULL;
   task->count = 0;
+  task->total = 0;
 
   pthread_t thread;
   pthread_create(&thread, NULL, incident_task_thread, task);

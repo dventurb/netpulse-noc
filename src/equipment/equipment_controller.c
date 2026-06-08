@@ -45,16 +45,15 @@ void equipment_controller_refresh_page(equipment_controller_t *controller)
   controller->selected_count = 0;
   controller->selected_node = NULL;
   controller->pagination.page = 0;
-  controller->pagination.total = pagination_total_pages(controller->pagination, controller->app->equipments.count);
+  
+  int total = equipment_get_count(&controller->app->equipments);
+
+  controller->pagination.total = total;
 
   controller->status_filter = 0;
   controller->type_filter = 0;
 
-  equipment_controller_dispatch(controller);
-
-  equipment_view_update_stats_cards(controller->view);
-
-  equipment_view_update_header(controller->view);
+  equipment_controller_update_table(controller);
 }
 
 void equipment_controller_update_table(equipment_controller_t *controller)
@@ -69,7 +68,7 @@ void equipment_controller_apply_filters(equipment_controller_t *controller, int 
 
   controller->pagination.page = 0;
 
-  equipment_controller_dispatch(controller);
+  equipment_controller_update_table(controller);
 }
 
 void equipment_controller_add(equipment_controller_t *controller, equipment_t data)
@@ -84,15 +83,7 @@ void equipment_controller_add(equipment_controller_t *controller, equipment_t da
   hashmap_insert(&controller->app->ip_index, node->data.ip_address, node);
   hashmap_insert(&controller->app->mac_index, node->data.mac_address, node);
 
-  controller->pagination.total = pagination_total_pages(controller->pagination, controller->app->equipments.count);
-
-  if (controller->pagination.page >= controller->pagination.total)
-    controller->pagination.page = controller->pagination.total;
-
-  if (controller->pagination.page < 0)
-    controller->pagination.page = 0;
-
-  equipment_controller_refresh_page(controller);
+  equipment_controller_update_table(controller);
 
   save_equipments(list, "data/equipments.bin");
 }
@@ -113,7 +104,6 @@ void equipment_controller_edit(equipment_controller_t *controller, equipment_t d
   equipment_update(&node->data, data);
 
   equipment_controller_update_table(controller);
-  equipment_view_update_stats_cards(controller->view);
 
   save_equipments(list, "data/equipments.bin");
 }
@@ -134,26 +124,14 @@ void equipment_controller_remove(equipment_controller_t *controller)
 
   equipment_list_remove(list, node);
 
-  controller->pagination.total = pagination_total_pages(controller->pagination, controller->app->equipments.count);
-
-  if (controller->pagination.page >= controller->pagination.total)
-    controller->pagination.page = controller->pagination.total;
-
-  if (controller->pagination.page < 0)
-    controller->pagination.page = 0;
-
-  equipment_controller_refresh_page(controller);
+  equipment_controller_update_table(controller);
 
   save_equipments(list, "data/equipments.bin");
 }
 
 void equipment_controller_search(equipment_controller_t *controller, const char *text)
 {
-  if (text == NULL || strlen(text) == 0)
-  {
-    equipment_controller_refresh_page(controller);
-    return;
-  }
+  if (text == NULL || strlen(text) == 0) return;
 
   equipment_node_t *node = NULL;
 
@@ -230,12 +208,16 @@ gboolean on_equipment_finished(gpointer data)
 {
   equipment_task_t *task = (equipment_task_t *)data;
 
-  task->controller->pagination.total = pagination_total_pages(task->controller->pagination, task->count);
+  task->controller->pagination.total = task->total;
 
-  if (task->controller->pagination.page >= task->controller->pagination.total)
-    task->controller->pagination.page = task->controller->pagination.total;
+  int total_pages = pagination_total_pages(task->controller->pagination, task->total);
+
+  if (task->controller->pagination.page >= total_pages - 1)
+    task->controller->pagination.page = total_pages - 1;
 
   equipment_view_update_table(task->controller->view, task->result, task->count);
+  equipment_view_update_stats_cards(task->controller->view);
+  equipment_view_update_header(task->controller->view);
 
   free(task->params);
   free(task->result);
