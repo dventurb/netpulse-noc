@@ -29,6 +29,8 @@ static void sensor_view_apply_filters(sensor_view_t *view);
 
 // Callbacks
 static void on_import_sensors_clicked(GtkButton *button, gpointer data);
+static void on_fetch_api_clicked(GtkButton *button, gpointer data);
+
 static void on_previous_page_clicked(GtkButton *button, gpointer data);
 static void on_next_page_clicked(GtkButton *button, gpointer data);
 static void on_page_clicked(GtkButton *button, gpointer data);
@@ -141,7 +143,7 @@ static GtkWidget *build_header(sensor_view_t *view)
   g_signal_connect(GTK_WIDGET(view->import_button), "clicked", G_CALLBACK(on_import_sensors_clicked), view);
 
   view->fetch_button = GTK_BUTTON(create_secondary_button("Fetch API", "assets/icon-fetch.svg", "fetch-button"));
-  //g_signal_connect(GTK_WIDGET(view->fetch_button), "clicked", G_CALLBACK(on_fetch_api_clicked), view);
+  g_signal_connect(GTK_WIDGET(view->fetch_button), "clicked", G_CALLBACK(on_fetch_api_clicked), view);
 
   gtk_box_append(GTK_BOX(box), title);
   gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->import_button));
@@ -379,6 +381,15 @@ static void on_import_sensors_clicked(GtkButton *button, gpointer data)
   gtk_file_dialog_open(dialog, window, NULL, on_import_sensors_finish, view);
 
   g_object_unref(dialog);
+}
+
+static void on_fetch_api_clicked(GtkButton *button, gpointer data)
+{
+  (void) button; // unused
+
+  sensor_view_t *view = (sensor_view_t *) data;
+
+  sensor_controller_request_import_api(view->controller);
 }
 
 static void on_previous_page_clicked(GtkButton *button, gpointer data)

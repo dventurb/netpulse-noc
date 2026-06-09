@@ -10,6 +10,10 @@
 #include <stdio.h>
 #include <string.h>
 
+
+static const char *const SENSOR_API_URL = "https://sensorlab.innominatum.pt/v1/sensors/export/txt";
+
+
 void sensor_controller_init(sensor_controller_t *controller, sensor_view_t *view, void *data)
 {
   controller->view = view;
@@ -77,6 +81,52 @@ void sensor_controller_import_from_file(sensor_controller_t *controller, const c
   sensor_insert_from_file(&controller->app->sensors, filepath);
 
   sensor_controller_update_table(controller);
+}
+
+void sensor_controller_request_import_api(sensor_controller_t *controller)
+{
+  sensor_worker_import_api(controller);
+}
+
+
+void sensor_controller_execute_import_api(sensor_controller_t *controller)
+{
+  sensor_list_t *list = &controller->app->sensors;
+
+  char input[200];
+  snprintf(input, sizeof(input), "curl -s %s", SENSOR_API_URL);
+
+  FILE *file = popen(input, "r");
+  if (file == NULL) return;
+
+  char buffer[250]; // store until '\n'
+  
+  // ignore until found 'timestamp;sequence;site;rack...'
+  while (fgets(buffer, sizeof(buffer), file))
+  {
+    if (buffer[0] != '#') break;  
+  }
+
+  while (fgets(buffer, sizeof(buffer), file))
+  {
+    sensor_t sensor = sensor_create_from_line(buffer);
+
+    if (sensor_validate(sensor) == true)
+    {
+      printf("CODE: %s | TYPE: %s | VALUE: %.2f | UNIT: %s | STATUS: %s\n\n", sensor.code, sensor.type, sensor.value, sensor.unit, sensor_status_to_string(sensor.status));
+      sensor_list_insert(list, sensor);
+    }
+  }
+
+  pclose(file);
+}
+
+gboolean on_sensor_import_api_finish(gpointer data)
+{
+  sensor_controller_t *controller = (sensor_controller_t *)data;
+
+  sensor_view_update_table(controller->view, controller->result, controller->count);
+  sensor_view_update_stats_cards(controller->view);
 }
 
 gboolean on_sensor_finished(gpointer data)

@@ -17,6 +17,9 @@ typedef struct {
 
   int status_filter;
 
+  sensor_t *result;
+  int count;
+
   pagination_t pagination;
 } sensor_controller_t;
 
@@ -47,6 +50,11 @@ void sensor_controller_get_stats(sensor_controller_t *controller, sensor_stats_t
 
 void sensor_controller_import_from_file(sensor_controller_t *controller, const char *filepath);
 
+void sensor_controller_request_import_api(sensor_controller_t *controller);
+void sensor_controller_execute_import_api(sensor_controller_t *controller);
+
+gboolean on_sensor_import_api_finish(gpointer data);
 gboolean on_sensor_finished(gpointer data);
+
 
 #endif
