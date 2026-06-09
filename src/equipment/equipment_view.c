@@ -28,7 +28,7 @@ static GtkWidget *build_filter_bar(equipment_view_t *view);
 static GtkWidget *build_table(equipment_view_t *view);
 static GtkWidget *build_pagination_bar(equipment_view_t *view);
 
-static void build_table_header(GtkWidget *grid);
+static void build_table_header(GtkWidget *table);
 static void build_table_row(equipment_view_t *view, equipment_t equipment, int row);
 static GtkWidget *build_summary_card(equipment_t equipment);
 static GtkWidget *build_status_cell(equipment_status_t status);

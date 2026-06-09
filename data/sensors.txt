@@ -1,0 +1,19 @@
+# rack-sensor-simulator-api
+# version=0.1.0
+# generated_at=2026-06-09T15:34:07.299Z
+# local_time=2026-06-09 16:34:07
+# timezone=Europe/Lisbon
+# site=PME-LAB
+# rack=RACK-01
+# day=2026-06-09
+# day_problem_factor=0.3
+# day_profile=normal
+# chaos_seed=2026-06-09:innominatum-simulator-seed:Europe/Lisbon:1
+# time_bucket_minutes=1
+timestamp;sequence;site;rack;sensor_code;sensor_label;sensor_kind;value;unit;status;severity;trend;confidence;cause;message
+2026-06-09T16:34:00;994;PME-LAB;RACK-01;TEMP_RACK;Temperatura da rack;temperature;27.8;C;NORMAL;0;falling;0.91;NORMAL_OPERATION;Temperatura dentro do intervalo esperado.
+2026-06-09T16:34:00;994;PME-LAB;RACK-01;HUM_RACK;Humidade da rack;humidity;61;%;NORMAL;0;stable;0.89;NORMAL_OPERATION;Humidade dentro do intervalo esperado.
+2026-06-09T16:34:00;994;PME-LAB;RACK-01;UPS_BAT;Bateria da UPS;ups-battery;91;%;NORMAL;0;stable;0.89;NORMAL_OPERATION;Bateria da UPS com nível aceitável.
+2026-06-09T16:34:00;994;PME-LAB;RACK-01;UPS_ENERGIA;Estado da energia;ups-power;1;-;NORMAL;0;stable;0.89;NORMAL_OPERATION;Energia da rede presente.
+2026-06-09T16:34:00;994;PME-LAB;RACK-01;FAN_RACK;Rotação das ventoinhas;fan-speed;3130;rpm;NORMAL;0;falling;0.88;NORMAL_OPERATION;Ventilação a operar normalmente.
+2026-06-09T16:34:00;994;PME-LAB;RACK-01;DOOR_RACK;Estado da porta;door-state;0;-;NORMAL;0;stable;0.88;NORMAL_OPERATION;Porta da rack fechada.

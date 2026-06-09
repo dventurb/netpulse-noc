@@ -863,3 +863,45 @@
   font-weight: 400;
   color: #6b7280;
 }
+
+.import-button {
+  all: unset; /* reset default style */
+
+  background-color: #ffffff;
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.import-button:hover {
+  background-color: #f7fafc;
+  border-color: #cbd5e0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.import-button label {
+  color: #2d3748;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.fetch-button {
+  all: unset; /* reset default style */
+
+  background-color: #ffffff;
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid #bee3f8;
+}
+
+.fetch-button:hover {
+  background-color: #ebf8ff;
+  border-color: #90cdf4;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.fetch-button label {
+  color: #2d3748;
+  font-size: 14px;
+  font-weight: 500;
+}

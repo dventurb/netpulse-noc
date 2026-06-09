@@ -39,6 +39,7 @@ typedef struct {
   int prev_sort;
 
   int count;
+  int total;
 } equipment_params_t;
 
 typedef struct {

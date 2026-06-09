@@ -63,8 +63,13 @@ static void main_window_init(main_window_t *main_window, gpointer data)
   gtk_stack_add_named(main_window->stack, GTK_WIDGET(conn_container), "CONNECTIVITY");
 
 
-  gtk_stack_set_visible_child_name(main_window->stack, "EQUIPMENT");
+  // SENSOR - Controller + Model
+  sensor_controller_init(&main_window->sensor_ctrl, &main_window->sensor_view, (void *)data);
+  GtkBox *sensor_container = sensor_view_create(&main_window->sensor_view, &main_window->sensor_ctrl);
+  gtk_stack_add_named(main_window->stack, GTK_WIDGET(sensor_container), "SENSOR");
 
+
+  gtk_stack_set_visible_child_name(main_window->stack, "EQUIPMENT");
 
   GtkCssProvider *provider = gtk_css_provider_new();
   gtk_css_provider_load_from_path(provider, "styles/style.css");
@@ -154,6 +159,11 @@ static void on_menu_button_clicked(GtkButton *button, gpointer data)
   else if (strcmp(text, "INCIDENT") == 0)
   {
     incident_controller_refresh_page(&main_window->incident_ctrl);
+  }
+
+  else if (strcmp(text, "SENSOR") == 0)
+  {
+    sensor_controller_refresh_page(&main_window->sensor_ctrl);
   }
 
   for (int i = 0; i < PAGE_COUNT; i++) 

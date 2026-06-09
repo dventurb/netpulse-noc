@@ -20,7 +20,8 @@ void equipment_controller_init(equipment_controller_t *controller, equipment_vie
 
   controller->pagination.page = 0;
   controller->pagination.page_size = 6;
-  controller->pagination.total = pagination_total_pages(controller->pagination, controller->app->equipments.count);
+ 
+  controller->pagination.total = equipment_get_count(&controller->app->equipments);
 
   controller->status_filter = 0;
   controller->type_filter = 0;
@@ -52,9 +53,7 @@ void equipment_controller_refresh_page(equipment_controller_t *controller)
   controller->selected_node = NULL;
   controller->pagination.page = 0;
   
-  int total = equipment_get_count(&controller->app->equipments);
-
-  controller->pagination.total = total;
+  controller->pagination.total = equipment_get_count(&controller->app->equipments);
 
   controller->status_filter = 0;
   controller->type_filter = 0;

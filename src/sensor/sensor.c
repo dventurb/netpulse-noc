@@ -1,5 +1,6 @@
 #include "sensor.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -89,4 +90,87 @@ int sensor_filter_by_code(const sensor_list_t *list, const char *code, sensor_t 
   }
 
   return i;
+}
+
+bool sensor_validate(sensor_t sensor)
+{
+  if (strlen(sensor.code) <= 4) return false;
+  if (strlen(sensor.type) <= 6) return false;
+  if (sensor.value < -100 || sensor.value > 10000) return false;
+  if (strlen(sensor.unit) < 1) return false;
+  if (sensor.status < SENSOR_OK || sensor.status > SENSOR_NET_FAILURE) return false;
+  else return true;
+}
+
+sensor_t sensor_create_from_line(char *line)
+{
+  sensor_t sensor;
+  char *saveptr; // thread safe instead of a static pointer by strtok
+  char *token = strtok_r(line, ";", &saveptr); // ';' as delimiter
+  
+  int column = 0;
+
+  while (token != NULL)
+  {
+    ++column;
+    
+    if (column == 5) snprintf(sensor.code, CODE_MAX, "%s", token);
+    else if (column == 6) snprintf(sensor.type, STRING_MAX, "%s", token);
+    else if (column == 8) sscanf(token, "%f", &sensor.value);
+    else if (column == 9) snprintf(sensor.unit, UNIT_MAX, "%s", token);
+    else if (column == 10) sensor.status = sensor_string_to_status(token);
+
+    token = strtok_r(NULL, ";", &saveptr);
+  }
+
+  sensor.read_at = time(NULL);
+
+  return sensor;
+}
+
+void sensor_insert_from_file(sensor_list_t *list, const char *filepath)
+{
+  FILE *file = fopen(filepath, "r");
+  if (file == NULL) return;
+
+  char buffer[250]; // store until '\n'
+  
+  // ignore until found 'timestamp;sequence;site;rack...'
+  while (fgets(buffer, sizeof(buffer), file))
+  {
+    if (buffer[0] != '#') break;  
+  }
+  
+  while (fgets(buffer, sizeof(buffer), file))
+  {
+    sensor_t sensor = sensor_create_from_line(buffer);
+
+    if (sensor_validate(sensor) == true)
+    {
+      printf("CODE: %s | TYPE: %s | VALUE: %.2f | UNIT: %s | STATUS: %s\n\n", sensor.code, sensor.type, sensor.value, sensor.unit, sensor_status_to_string(sensor.status));
+      sensor_list_insert(list, sensor);
+    }
+  }
+
+  fclose(file);
+}
+
+sensor_status_t sensor_string_to_status(const char *string)
+{
+  if (strcmp(string, "NORMAL") == 0) return SENSOR_OK;
+  if (strcmp(string, "AVISO") == 0) return SENSOR_WARNING;
+  if (strcmp(string, "CRITICO") == 0) return SENSOR_CRITICAL;
+  if (strcmp(string, "FALHA_REDE") == 0) return SENSOR_NET_FAILURE;
+}
+
+const char *sensor_status_to_string(sensor_status_t status)
+{
+  switch (status) 
+  {
+    case SENSOR_OK: return "OK";
+    case SENSOR_WARNING: return "Warning";
+    case SENSOR_CRITICAL: return "Critical";
+    case SENSOR_NET_FAILURE: return "Network Failure";
+    default: return "Unknown";
+  }
 }
