@@ -16,6 +16,6 @@ typedef struct {
   sensor_t *result;
 } sensor_task_t;
 
-void sensor_task_worker(sensor_params_t *params, callback_task callback, sensor_controller_t *controller);
+void sensor_worker_import_api(sensor_controller_t *controller);
 
 #endif

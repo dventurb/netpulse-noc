@@ -18,6 +18,7 @@ typedef struct {
   int status_filter;
 
   sensor_t *result;
+
   int count;
 
   pagination_t pagination;

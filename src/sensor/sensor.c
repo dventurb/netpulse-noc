@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "utils.h"
+#include "macros.h"
 
 void sensor_list_init(sensor_list_t *list)
 {
@@ -114,6 +116,7 @@ sensor_t sensor_create_from_line(char *line)
   {
     ++column;
     
+    if (column == 1) sensor.read_at = sensor_format_timestamp(token);
     if (column == 5) snprintf(sensor.code, CODE_MAX, "%s", token);
     else if (column == 6) snprintf(sensor.type, STRING_MAX, "%s", token);
     else if (column == 8) sscanf(token, "%f", &sensor.value);
@@ -122,8 +125,6 @@ sensor_t sensor_create_from_line(char *line)
 
     token = strtok_r(NULL, ";", &saveptr);
   }
-
-  sensor.read_at = time(NULL);
 
   return sensor;
 }
@@ -147,12 +148,29 @@ void sensor_insert_from_file(sensor_list_t *list, const char *filepath)
 
     if (sensor_validate(sensor) == true)
     {
-      printf("CODE: %s | TYPE: %s | VALUE: %.2f | UNIT: %s | STATUS: %s\n\n", sensor.code, sensor.type, sensor.value, sensor.unit, sensor_status_to_string(sensor.status));
+      char buffer[DATETIME_MAX];
+      get_datetime(sensor.read_at, buffer);
+      printf("CODE: %s | TYPE: %s | VALUE: %.2f | UNIT: %s | STATUS: %s | READ AT: %s\n\n", sensor.code, sensor.type, sensor.value, sensor.unit, sensor_status_to_string(sensor.status), buffer);
       sensor_list_insert(list, sensor);
     }
   }
 
   fclose(file);
+}
+
+time_t sensor_format_timestamp(const char *timestamp)
+{
+  struct tm tm;
+
+  // 2026-06-09T16:34:00
+  sscanf(timestamp, "%4d-%2d-%2dT%2d:%2d:%2d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
+
+  tm.tm_year -= 1900; // years since 1900
+  tm.tm_mon -= 1; // January is 0
+  
+  time_t time = mktime(&tm);
+
+  return time;
 }
 
 sensor_status_t sensor_string_to_status(const char *string)

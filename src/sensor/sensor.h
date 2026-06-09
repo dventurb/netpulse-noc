@@ -43,6 +43,8 @@ bool sensor_validate(sensor_t sensor);
 sensor_t sensor_create_from_line(char *line);
 void sensor_insert_from_file(sensor_list_t *list, const char *filepath);
 
+time_t sensor_format_timestamp(const char *timestamp);
+
 sensor_status_t sensor_string_to_status(const char *string);
 const char *sensor_status_to_string(sensor_status_t status);
 

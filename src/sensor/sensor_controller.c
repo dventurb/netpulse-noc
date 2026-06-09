@@ -36,7 +36,7 @@ static void sensor_controller_dispatch(sensor_controller_t *controller)
 
   params->status_filter = controller->status_filter;
 
-  sensor_task_worker(params, on_sensor_finished, controller);
+  //sensor_task_worker(params, on_sensor_finished, controller);
 }
 
 void sensor_controller_refresh_page(sensor_controller_t *controller)
@@ -113,7 +113,10 @@ void sensor_controller_execute_import_api(sensor_controller_t *controller)
 
     if (sensor_validate(sensor) == true)
     {
-      printf("CODE: %s | TYPE: %s | VALUE: %.2f | UNIT: %s | STATUS: %s\n\n", sensor.code, sensor.type, sensor.value, sensor.unit, sensor_status_to_string(sensor.status));
+      char buffer[DATETIME_MAX];
+      get_datetime(sensor.read_at, buffer);
+      printf("CODE: %s | TYPE: %s | VALUE: %.2f | UNIT: %s | STATUS: %s | READ AT: %s\n\n", sensor.code, sensor.type, sensor.value, sensor.unit, sensor_status_to_string(sensor.status), buffer);
+
       sensor_list_insert(list, sensor);
     }
   }
@@ -127,6 +130,8 @@ gboolean on_sensor_import_api_finish(gpointer data)
 
   sensor_view_update_table(controller->view, controller->result, controller->count);
   sensor_view_update_stats_cards(controller->view);
+
+  return false;
 }
 
 gboolean on_sensor_finished(gpointer data)
