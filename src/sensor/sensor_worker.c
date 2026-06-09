@@ -23,6 +23,6 @@ void sensor_task_worker(sensor_params_t *params, callback_task callback, sensor_
 
   
   //pthread_t thread;
- // pthread_create(&thread, NULL, equipment_task_thread, task);
+ // pthread_create(&thread, NULL, sensor_task_thread, task);
   //pthread_detach(thread);
 }

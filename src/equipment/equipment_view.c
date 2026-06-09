@@ -87,7 +87,7 @@ void equipment_view_update_stats_cards(equipment_view_t *view)
 {
   remove_all_children_from_widget(GTK_WIDGET(view->cards));
 
-  equipment_stats_t stats;
+  equipment_stats_t stats = {0};
 
   equipment_controller_get_stats(view->controller, &stats);
 
@@ -191,7 +191,7 @@ static GtkWidget *build_stats_cards(equipment_view_t *view)
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
   gtk_widget_set_hexpand(box, TRUE);
 
-  equipment_stats_t stats;
+  equipment_stats_t stats = {0};
 
   equipment_controller_get_stats(view->controller, &stats);
 
