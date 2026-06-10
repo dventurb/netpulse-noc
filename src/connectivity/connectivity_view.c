@@ -82,8 +82,7 @@ void ping_view_update_list(ping_view_t *view, equipment_t *equipments, int count
 
 void ping_view_set_result(ping_view_t *view, const char *output)
 {
-  gtk_widget_set_sensitive(GTK_WIDGET(view->run_button), TRUE);
-  gtk_widget_set_sensitive(GTK_WIDGET(view->ping_all_button), TRUE);
+  ping_view_set_actions_enabled(view, true);
 
   if (output == NULL) return;
 
@@ -103,6 +102,12 @@ void ping_view_clear_result(ping_view_t *view)
 {
   GtkTextBuffer *terminal_buffer = gtk_text_view_get_buffer(view->terminal);
   gtk_text_buffer_set_text(GTK_TEXT_BUFFER(terminal_buffer), "$ ", -1);
+}
+
+void ping_view_set_actions_enabled(ping_view_t *view, bool is_active)
+{
+  gtk_widget_set_sensitive(GTK_WIDGET(view->run_button), is_active);
+  gtk_widget_set_sensitive(GTK_WIDGET(view->ping_all_button), is_active);
 }
 
 static GtkWidget *build_sidebar(connectivity_view_t *view)
@@ -553,6 +558,10 @@ static void on_run_ping_clicked(GtkButton *button, gpointer data)
 
   ping_view_t *view = (ping_view_t *)data; 
 
+  ping_view_clear_result(view);
+  
+  ping_view_set_actions_enabled(view, false);
+
   GtkWidget *ip_entry = g_object_get_data(G_OBJECT(view->manual_ip), "entry");
   GtkWidget *count_entry = g_object_get_data(G_OBJECT(view->count), "entry");
   GtkWidget *timeout_entry = g_object_get_data(G_OBJECT(view->timeout), "entry");
@@ -571,25 +580,23 @@ static void on_run_ping_clicked(GtkButton *button, gpointer data)
   {
     case PING_INVALID_IP_ADDRESS:
       gtk_widget_add_css_class(view->manual_ip, "field-error");
-      return;
+      break;
     case PING_INVALID_COUNT:
       gtk_widget_add_css_class(view->count, "field-error");
-      return;
+      break;
     case PING_INVALID_TIMEOUT:
       gtk_widget_add_css_class(view->timeout, "field-error");
-      return;
+      break;
     case PING_INVALID_PACKET_SIZE:
       gtk_widget_add_css_class(view->packet_size, "field-error");
-      return;
+      break;
     case PING_OK:
       connectivity_controller_ping(view->controller, count, timeout, packet_size);
       break;
   }
 
-  ping_view_clear_result(view);
-  
-  gtk_widget_set_sensitive(GTK_WIDGET(view->run_button), FALSE);
-  gtk_widget_set_sensitive(GTK_WIDGET(view->ping_all_button), FALSE);
+  if (error != PING_OK) 
+    ping_view_set_actions_enabled(view, true);
 }
 
 static void on_ping_all_clicked(GtkButton *button, gpointer data)
@@ -598,10 +605,9 @@ static void on_ping_all_clicked(GtkButton *button, gpointer data)
 
   ping_view_t *view = (ping_view_t *)data; 
 
-  connectivity_controller_ping_all(view->controller);
-
+  ping_view_set_actions_enabled(view, false);
+  
   ping_view_clear_result(view);
-
-  gtk_widget_set_sensitive(GTK_WIDGET(view->run_button), FALSE);
-  gtk_widget_set_sensitive(GTK_WIDGET(view->ping_all_button), FALSE);
+  
+  connectivity_controller_ping_all(view->controller);
 }

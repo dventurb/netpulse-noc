@@ -37,6 +37,13 @@ void connectivity_controller_ping(connectivity_controller_t *controller, const c
 
 void connectivity_controller_ping_all(connectivity_controller_t *controller)
 {
+  int count = equipment_get_count(&controller->app->equipments);
+  if (count == 0) 
+  {
+    ping_view_set_actions_enabled(&controller->view->ping_view, true);
+    return;
+  }
+
   ping_params_t *params = malloc(sizeof(ping_params_t));
   if (params == NULL) return;
 

@@ -49,4 +49,6 @@ void ping_view_set_result(ping_view_t *view, const char *output);
 void ping_view_clear_result(ping_view_t *view);
 void ping_view_update_list(ping_view_t *view, equipment_t *equipments, int count);
 
+void ping_view_set_actions_enabled(ping_view_t *view, bool is_active);
+
 #endif
