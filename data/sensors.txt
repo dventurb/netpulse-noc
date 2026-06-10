@@ -11,9 +11,9 @@
 # chaos_seed=2026-06-09:innominatum-simulator-seed:Europe/Lisbon:1
 # time_bucket_minutes=1
 timestamp;sequence;site;rack;sensor_code;sensor_label;sensor_kind;value;unit;status;severity;trend;confidence;cause;message
-2026-06-09T16:34:00;994;PME-LAB;RACK-01;TEMP_RACK;Temperatura da rack;temperature;27.8;C;NORMAL;0;falling;0.91;NORMAL_OPERATION;Temperatura dentro do intervalo esperado.
+2026-06-09T16:34:00;994;PME-LAB;RACK-01;TEMP_RACK;Temperatura da rack;temperature;32.8;C;AVISO;0;falling;0.91;NORMAL_OPERATION;Temperatura dentro dos limites máximos.
 2026-06-09T16:34:00;994;PME-LAB;RACK-01;HUM_RACK;Humidade da rack;humidity;61;%;NORMAL;0;stable;0.89;NORMAL_OPERATION;Humidade dentro do intervalo esperado.
-2026-06-09T16:34:00;994;PME-LAB;RACK-01;UPS_BAT;Bateria da UPS;ups-battery;91;%;NORMAL;0;stable;0.89;NORMAL_OPERATION;Bateria da UPS com nível aceitável.
+2026-06-09T16:34:00;994;PME-LAB;RACK-01;UPS_BAT;Bateria da UPS;ups-battery;09;%;CRITICO;0;stable;0.89;NORMAL_OPERATION;Bateria da UPS com nível baixo.
 2026-06-09T16:34:00;994;PME-LAB;RACK-01;UPS_ENERGIA;Estado da energia;ups-power;1;-;NORMAL;0;stable;0.89;NORMAL_OPERATION;Energia da rede presente.
-2026-06-09T16:34:00;994;PME-LAB;RACK-01;FAN_RACK;Rotação das ventoinhas;fan-speed;3130;rpm;NORMAL;0;falling;0.88;NORMAL_OPERATION;Ventilação a operar normalmente.
+2026-06-09T16:34:00;994;PME-LAB;RACK-01;FAN_RACK;Rotação das ventoinhas;fan-speed;8630;rpm;CRITICO;0;falling;0.88;NORMAL_OPERATION;Ventilação em nível alto.
 2026-06-09T16:34:00;994;PME-LAB;RACK-01;DOOR_RACK;Estado da porta;door-state;0;-;NORMAL;0;stable;0.88;NORMAL_OPERATION;Porta da rack fechada.

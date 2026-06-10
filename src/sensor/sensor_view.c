@@ -31,6 +31,8 @@ static void sensor_view_apply_filters(sensor_view_t *view);
 static void on_import_sensors_clicked(GtkButton *button, gpointer data);
 static void on_fetch_api_clicked(GtkButton *button, gpointer data);
 
+static void on_filter_dropdown_changed(GObject *self, GParamSpec *pspec, gpointer data);
+
 static void on_previous_page_clicked(GtkButton *button, gpointer data);
 static void on_next_page_clicked(GtkButton *button, gpointer data);
 static void on_page_clicked(GtkButton *button, gpointer data);
@@ -66,7 +68,7 @@ void sensor_view_update_stats_cards(sensor_view_t *view)
 
   GtkWidget *total_card = create_stats_card("Total Sensors", stats.total, "default-card");
   GtkWidget *ok_card = create_stats_card("OK", stats.ok, "operational-card");
-  GtkWidget *warning_card = create_stats_card("Warning + Critical", stats.warning, "maintenance-card");
+  GtkWidget *warning_card = create_stats_card("Warning + Critical", stats.warning + stats.critical, "maintenance-card");
   GtkWidget *failure_card = create_stats_card("Network Failures", stats.failure, "failed-card");
 
   gtk_box_append(view->cards, total_card);
@@ -193,7 +195,7 @@ static GtkWidget *build_filter_bar(sensor_view_t *view)
 
   view->status_filter = GTK_DROP_DOWN(gtk_drop_down_new_from_strings(filter_status));
   gtk_widget_add_css_class(GTK_WIDGET(view->status_filter), "inventory-filter");
-  //g_signal_connect(GTK_WIDGET(view->status_filter), "notify::selected", G_CALLBACK(on_filter_dropdown_changed), view);
+  g_signal_connect(GTK_WIDGET(view->status_filter), "notify::selected", G_CALLBACK(on_filter_dropdown_changed), view);
 
   gtk_box_append(GTK_BOX(box), search);
   gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->status_filter));
@@ -399,6 +401,16 @@ static void on_fetch_api_clicked(GtkButton *button, gpointer data)
   sensor_controller_request_import_api(view->controller);
 
   sensor_view_set_actions_enabled(view, false);
+}
+
+static void on_filter_dropdown_changed(GObject *self, GParamSpec *pspec, gpointer data)
+{
+  (void)self; // unused parameter
+  (void)pspec; // unused parameter
+
+  sensor_view_t *view = (sensor_view_t *) data;
+
+  sensor_view_apply_filters(view);
 }
 
 static void on_previous_page_clicked(GtkButton *button, gpointer data)

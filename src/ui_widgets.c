@@ -262,7 +262,7 @@ GtkWidget *create_table_header(const char *text, int width)
   gtk_widget_set_hexpand(label, FALSE);
   gtk_widget_set_halign(label, GTK_ALIGN_FILL);
 
-  gtk_label_set_xalign(GTK_LABEL(label), 0.5);
+  gtk_label_set_xalign(GTK_LABEL(label), 0.0);
 
   return label;
 }

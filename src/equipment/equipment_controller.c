@@ -90,9 +90,6 @@ void equipment_controller_add(equipment_controller_t *controller, equipment_t da
   hashmap_insert(&controller->app->ip_index, node->data.ip_address, node);
   hashmap_insert(&controller->app->mac_index, node->data.mac_address, node);
 
-  controller->selected_node = NULL;
-  controller->selected_count = 0;
-
   equipment_controller_update_table(controller);
 
   save_equipments(list, "data/equipments.bin");
