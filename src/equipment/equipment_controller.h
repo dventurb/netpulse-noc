@@ -64,6 +64,6 @@ void equipment_controller_handle_toggled(equipment_controller_t *controller, int
 
 void equipment_controller_get_stats(equipment_controller_t *controller, equipment_stats_t *stats);
 
-gboolean on_equipment_finished(gpointer data);
+gboolean on_equipment_finish(gpointer data);
 
 #endif

@@ -44,7 +44,7 @@ static void equipment_controller_dispatch(equipment_controller_t *controller)
   params->sort = controller->sort;
   params->prev_sort = controller->prev_sort;
 
-  equipment_task_worker(params, on_equipment_finished, controller);
+  equipment_task_worker(params, on_equipment_finish, controller);
 }
 
 void equipment_controller_refresh_page(equipment_controller_t *controller)
@@ -90,6 +90,9 @@ void equipment_controller_add(equipment_controller_t *controller, equipment_t da
   hashmap_insert(&controller->app->ip_index, node->data.ip_address, node);
   hashmap_insert(&controller->app->mac_index, node->data.mac_address, node);
 
+  controller->selected_node = NULL;
+  controller->selected_count = 0;
+
   equipment_controller_update_table(controller);
 
   save_equipments(list, "data/equipments.bin");
@@ -109,6 +112,9 @@ void equipment_controller_edit(equipment_controller_t *controller, equipment_t d
     hashmap_update(&controller->app->mac_index, node->data.mac_address, data.mac_address, node);
   
   equipment_update(&node->data, data);
+
+  controller->selected_node = NULL;
+  controller->selected_count = 0;
 
   equipment_controller_update_table(controller);
 
@@ -130,6 +136,9 @@ void equipment_controller_remove(equipment_controller_t *controller)
   hashmap_remove(&controller->app->mac_index, node->data.mac_address);
 
   equipment_list_remove(list, node);
+
+  controller->selected_node = NULL;
+  controller->selected_count = 0;
 
   equipment_controller_update_table(controller);
 
@@ -211,7 +220,7 @@ void equipment_controller_get_stats(equipment_controller_t *controller, equipmen
   stats->maintenance = equipment_get_number_status(&controller->app->equipments, STATUS_MAINTENANCE);
 }
 
-gboolean on_equipment_finished(gpointer data)
+gboolean on_equipment_finish(gpointer data)
 {
   equipment_task_t *task = (equipment_task_t *)data;
 

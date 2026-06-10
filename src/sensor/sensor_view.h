@@ -26,5 +26,6 @@ GtkBox *sensor_view_create(sensor_view_t *view, sensor_controller_t *controller)
 void sensor_view_refresh(sensor_view_t *view);
 void sensor_view_update_table(sensor_view_t *view, const sensor_t *sensors, int count);
 void sensor_view_update_stats_cards(sensor_view_t *view);
+void sensor_view_set_actions_enabled(sensor_view_t *view, bool is_active);
 
 #endif

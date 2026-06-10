@@ -44,49 +44,119 @@ void sensor_list_insert(sensor_list_t *list, sensor_t data)
   list->count++;
 }
 
-int sensor_filter_status(const sensor_list_t *list, sensor_status_t status, sensor_t *sensors)
+void sensor_list_clone(sensor_list_t *source, sensor_list_t *destination)
 {
-  if (list == NULL || sensors == NULL)
+  if (source == NULL || destination == NULL)
   {
-    // TODO: Implement a log system (ex.: (datatime) [ERROR] sensor_filter_status : NULL arguments)
-    return 0;
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] sensor_list_clone : NULL arguments)
+    return;
   }
+
+  sensor_node_t *node = source->head;
+
+  while (node != NULL)
+  {
+    sensor_list_insert(destination, node->data);
+    node = node->next;
+  }
+}
+
+sensor_t *sensor_list_in_range(sensor_list_t *list, int start, int end, int *count)
+{
+  if (list == NULL) 
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] sensor_list_in_range : NULL argument)
+    return NULL;
+  }
+
+  int size = end - start;
+  if (size <= 0 || size > 6) return NULL;
+
+  sensor_t *sensors = malloc(sizeof(sensor_t) * size);
+  if (sensors == NULL) return NULL;
 
   sensor_node_t *node = list->head;
   int i = 0;
 
-  while (node != NULL && i < list->count)
+  while (node != NULL && i < start)
+  {
+    node = node->next;
+    i++;
+  }
+
+  while (node != NULL && i < end)
+  {
+    int index = i - start;
+    sensors[index] = node->data;
+
+    node = node->next;
+    i++;
+  }
+
+  *count = i - start;
+
+  return sensors;
+}
+
+void sensor_filter_by_status(const sensor_list_t *list, sensor_status_t status, sensor_list_t *filtered)
+{
+  if (list == NULL || filtered == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] sensor_filter_status : NULL arguments)
+    return;
+  }
+
+  sensor_node_t *node = list->head;
+
+  while (node != NULL)
   {
     if (node->data.status == status)
     {
-      sensors[i] = node->data;
-      i++;
+      sensor_list_insert(filtered, node->data);
     }
 
     node = node->next;
   }
 
-  return i;
+  return;
 }
 
-
-int sensor_filter_by_code(const sensor_list_t *list, const char *code, sensor_t *sensors){
-  if (list == NULL || code == NULL || sensors == NULL)
+void sensor_filter_by_code(const sensor_list_t *list, const char *code, sensor_list_t *filtered){
+  if (list == NULL || code == NULL || filtered == NULL)
   {
     // TODO: Implement a log system (ex.: (datatime) [ERROR] sensor_filter_by_code : NULL arguments)
-    return 0;
+    return;
   }
 
   sensor_node_t *node = list->head;
-  int i = 0;
 
-  while (node != NULL && i < list->count)
+  while (node != NULL)
   {
     if (strcmp(node->data.code, code) == 0)
     {
-      sensors[i] = node->data;
-      i++;
+      sensor_list_insert(filtered, node->data);
     }
+
+    node = node->next;
+  }
+
+  return;
+}
+
+int sensor_get_count(sensor_list_t *list)
+{
+  return list->count;
+}
+
+int sensor_get_number_status(sensor_list_t *list, sensor_status_t status)
+{
+  int i = 0;
+
+  sensor_node_t *node = list->head;
+
+  while (node != NULL)
+  {
+    if (node->data.status == status) i++;
 
     node = node->next;
   }
@@ -127,35 +197,6 @@ sensor_t sensor_create_from_line(char *line)
   }
 
   return sensor;
-}
-
-void sensor_insert_from_file(sensor_list_t *list, const char *filepath)
-{
-  FILE *file = fopen(filepath, "r");
-  if (file == NULL) return;
-
-  char buffer[250]; // store until '\n'
-  
-  // ignore until found 'timestamp;sequence;site;rack...'
-  while (fgets(buffer, sizeof(buffer), file))
-  {
-    if (buffer[0] != '#') break;  
-  }
-  
-  while (fgets(buffer, sizeof(buffer), file))
-  {
-    sensor_t sensor = sensor_create_from_line(buffer);
-
-    if (sensor_validate(sensor) == true)
-    {
-      char buffer[DATETIME_MAX];
-      get_datetime(sensor.read_at, buffer);
-      printf("CODE: %s | TYPE: %s | VALUE: %.2f | UNIT: %s | STATUS: %s | READ AT: %s\n\n", sensor.code, sensor.type, sensor.value, sensor.unit, sensor_status_to_string(sensor.status), buffer);
-      sensor_list_insert(list, sensor);
-    }
-  }
-
-  fclose(file);
 }
 
 time_t sensor_format_timestamp(const char *timestamp)

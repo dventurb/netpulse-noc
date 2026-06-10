@@ -34,14 +34,20 @@ typedef struct {
 
 void sensor_list_init(sensor_list_t *list);
 void sensor_list_destroy(sensor_list_t *list);
+
 void sensor_list_insert(sensor_list_t *list, sensor_t data);
 
-int sensor_filter_status(const sensor_list_t *list, sensor_status_t status, sensor_t *sensors);
-int sensor_filter_by_code(const sensor_list_t *list, const char *code, sensor_t *sensors);
+void sensor_list_clone(sensor_list_t *source, sensor_list_t *destination);
+sensor_t *sensor_list_in_range(sensor_list_t *list, int start, int end, int *count);
+
+void sensor_filter_by_status(const sensor_list_t *list, sensor_status_t status, sensor_list_t *filtered);
+void sensor_filter_by_code(const sensor_list_t *list, const char *code, sensor_list_t *filtered);
+
+int sensor_get_count(sensor_list_t *list);
+int sensor_get_number_status(sensor_list_t *list, sensor_status_t status);
 
 bool sensor_validate(sensor_t sensor);
 sensor_t sensor_create_from_line(char *line);
-void sensor_insert_from_file(sensor_list_t *list, const char *filepath);
 
 time_t sensor_format_timestamp(const char *timestamp);
 

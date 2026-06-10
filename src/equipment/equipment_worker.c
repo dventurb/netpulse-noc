@@ -20,7 +20,6 @@ static void *equipment_task_thread(void *data)
     switch (task->params->sort) 
     {
       case 1:
-        printf("status\n\n");
         equipment_list_sort_by_status(list);
         break;
       case 2:
@@ -60,7 +59,7 @@ static void *equipment_task_thread(void *data)
 
   equipment_list_destroy(&filtered);
 
-  g_idle_add(task->callback, task); // on_equipment_finished()
+  g_idle_add(task->callback, task); // on_equipment_finish()
   
   return NULL;
 }

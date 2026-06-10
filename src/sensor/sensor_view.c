@@ -7,7 +7,7 @@
 #include "pagination.h"
 
 static const char* const filter_status[] = { "All", "Critical", "Warning", "Network Failure", "OK", NULL };
-static const char* const headers[] = { "CODE", "TYPE", "VALUE", "UNIT", "STATUS", "READ AT" };
+static const char* const headers[] = { "CODE", "TYPE", "VALUE", "STATUS", "READ AT" };
 static const int widths[] = { CELL_CODE_WIDTH, CELL_TYPE_WIDTH, CELL_VALUE_WIDTH, CELL_STATUS_WIDTH, CELL_READ_AT_WIDTH };
 
 static const int SENSOR_HEADER_COLUMN_COUNT = 5;
@@ -53,7 +53,7 @@ GtkBox *sensor_view_create(sensor_view_t *view, sensor_controller_t *controller)
 
 void sensor_view_refresh(sensor_view_t *view)
 {
-  //sensor_controller_refresh_page(view->controller);
+  sensor_controller_refresh_page(view->controller);
 }
 
 void sensor_view_update_stats_cards(sensor_view_t *view)
@@ -95,6 +95,12 @@ void sensor_view_update_table(sensor_view_t *view, const sensor_t *sensors, int 
     view->pagination_bar = GTK_BOX(build_pagination_bar(view));
     gtk_box_append(GTK_BOX(parent), GTK_WIDGET(view->pagination_bar));
   }
+}
+
+void sensor_view_set_actions_enabled(sensor_view_t *view, bool is_active)
+{
+  gtk_widget_set_sensitive(GTK_WIDGET(view->import_button), is_active);
+  gtk_widget_set_sensitive(GTK_WIDGET(view->fetch_button), is_active);
 }
 
 static GtkWidget *build_sidebar(sensor_view_t *view)
@@ -163,7 +169,7 @@ static GtkWidget *build_stats_cards(sensor_view_t *view)
 
   GtkWidget *total_card = create_stats_card("Total Sensors", stats.total, "default-card");
   GtkWidget *ok_card = create_stats_card("OK", stats.ok, "operational-card");
-  GtkWidget *warning_card = create_stats_card("Warning + Critical", stats.warning, "maintenance-card");
+  GtkWidget *warning_card = create_stats_card("Warning + Critical", stats.warning + stats.critical, "maintenance-card");
   GtkWidget *failure_card = create_stats_card("Network Failures", stats.failure, "failed-card");
 
   gtk_box_append(GTK_BOX(box), total_card);
@@ -280,11 +286,10 @@ static void build_table_row(sensor_view_t *view, sensor_t sensor, int row)
   const char *css_class = (row % 2 == 0) ? "table-row-even" : "table-row-odd";
   
   char value[VALUE_MAX];
-  snprintf(value, VALUE_MAX, "%f", sensor.value);
+  snprintf(value, VALUE_MAX, "%0.2f %s", sensor.value, sensor.unit);
 
   char datetime[DATETIME_MAX];
   get_datetime(sensor.read_at, datetime);
-
   GtkWidget *columns[] = {
     create_table_cell(sensor.code, CELL_CODE_WIDTH),
     create_table_cell(sensor.type, CELL_TYPE_WIDTH),
@@ -294,9 +299,9 @@ static void build_table_row(sensor_view_t *view, sensor_t sensor, int row)
   };
 
   for (int i = 0; i < SENSOR_TABLE_COLUMN_COUNT; i++) {
-    if (i == 2) gtk_widget_add_css_class(columns[i], "table-name-cell");
-
+    
     gtk_widget_add_css_class(columns[i], css_class);
+    gtk_widget_set_hexpand(columns[i], TRUE);
 
     gtk_grid_attach(view->table, columns[i], i, row, 1, 1);
   }
@@ -361,7 +366,9 @@ static void on_import_sensors_finish(GObject *self, GAsyncResult *res, gpointer 
 
   char *filepath = g_file_get_path(file);
 
-  sensor_controller_import_from_file(view->controller, filepath);
+  sensor_controller_request_import_file(view->controller, filepath);
+
+  sensor_view_set_actions_enabled(view, false);
 
   free(filepath);
   g_object_unref(file);
@@ -390,6 +397,8 @@ static void on_fetch_api_clicked(GtkButton *button, gpointer data)
   sensor_view_t *view = (sensor_view_t *) data;
 
   sensor_controller_request_import_api(view->controller);
+
+  sensor_view_set_actions_enabled(view, false);
 }
 
 static void on_previous_page_clicked(GtkButton *button, gpointer data)

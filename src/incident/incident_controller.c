@@ -74,6 +74,9 @@ void incident_controller_add(incident_controller_t *controller, incident_t data)
   
   incident_queue_enqueue(queue, data);
 
+  controller->selected_node = NULL;
+  controller->selected_count = 0;
+
   incident_controller_update_table(controller);
 
   save_incidents(queue, list, "data/incidents.bin");
@@ -96,11 +99,19 @@ void incident_controller_process(incident_controller_t *controller)
 
 void incident_controller_resolve(incident_controller_t *controller)
 {
+  if (controller->selected_node == NULL) return;
+
   incident_queue_t *queue = &controller->app->incidents_pending;
   incident_list_t *list = &controller->app->incidents_history;
 
-  controller->selected_node->data.status = INCIDENT_CONCLUDED;
-  controller->selected_node->data.concluded_at = time(NULL);
+  if (controller->selected_node->data.status == INCIDENT_IN_PROGRESS)
+  {
+    controller->selected_node->data.status = INCIDENT_CONCLUDED;
+    controller->selected_node->data.concluded_at = time(NULL);
+  }
+
+  controller->selected_node = NULL;
+  controller->selected_count = 0;
 
   incident_controller_update_table(controller);
 
