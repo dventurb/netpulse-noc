@@ -163,7 +163,7 @@ static void on_menu_button_clicked(GtkButton *button, gpointer data)
 
   else if (strcmp(text, "SENSOR") == 0)
   {
-    sensor_controller_refresh_page(&main_window->sensor_ctrl);
+    sensor_view_refresh(&main_window->sensor_view);
   }
 
   for (int i = 0; i < PAGE_COUNT; i++) 

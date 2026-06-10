@@ -132,7 +132,7 @@ void sensor_filter_by_code(const sensor_list_t *list, const char *code, sensor_l
 
   while (node != NULL)
   {
-    if (strcmp(node->data.code, code) == 0)
+    if (strncmp(node->data.code, code, strlen(code)) == 0)
     {
       sensor_list_insert(filtered, node->data);
     }
@@ -166,7 +166,7 @@ int sensor_get_number_status(sensor_list_t *list, sensor_status_t status)
 
 bool sensor_validate(sensor_t sensor)
 {
-  if (strlen(sensor.code) <= 4) return false;
+  if (!validate_sensor_code(sensor.code)) return false;
   if (strlen(sensor.type) <= 6) return false;
   if (sensor.value < -100 || sensor.value > 10000) return false;
   if (strlen(sensor.unit) < 1) return false;
@@ -176,7 +176,7 @@ bool sensor_validate(sensor_t sensor)
 
 sensor_t sensor_create_from_line(char *line)
 {
-  sensor_t sensor;
+  sensor_t sensor = {0};
   char *saveptr; // thread safe instead of a static pointer by strtok
   char *token = strtok_r(line, ";", &saveptr); // ';' as delimiter
   
@@ -187,7 +187,7 @@ sensor_t sensor_create_from_line(char *line)
     ++column;
     
     if (column == 1) sensor.read_at = sensor_format_timestamp(token);
-    if (column == 5) snprintf(sensor.code, CODE_MAX, "%s", token);
+    else if (column == 5) snprintf(sensor.code, CODE_MAX, "%s", token);
     else if (column == 6) snprintf(sensor.type, STRING_MAX, "%s", token);
     else if (column == 8) sscanf(token, "%f", &sensor.value);
     else if (column == 9) snprintf(sensor.unit, UNIT_MAX, "%s", token);

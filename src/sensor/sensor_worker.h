@@ -11,16 +11,19 @@ typedef struct sensor_task_t {
   
   int status_filter;
 
+  char search_text[STRING_MAX];
+
   int start;
   int end;
 
   sensor_t *result;
   int count;
-  int total;
+  int total; 
 } sensor_task_t;
 
-void sensor_worker_import_file(sensor_controller_t *controller, const char *filepath);
-void sensor_worker_import_api(sensor_controller_t *controller);
-void sensor_worker_filter_and_paginate(sensor_controller_t *controller);
+void sensor_worker_start_query(sensor_controller_t *controller);
+
+void sensor_worker_file_import(sensor_controller_t *controller, const char *filepath);
+void sensor_worker_api_import(sensor_controller_t *controller);
 
 #endif

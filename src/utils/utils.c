@@ -102,6 +102,25 @@ bool validate_incident_number(const char *text)
   else return false;
 }
 
+bool validate_sensor_code(const char *text)
+{
+  const char *codes[] = {
+    "TEMP_RACK",
+    "HUM_RACK",
+    "UPS_BAT",
+    "UPS_ENERGIA",
+    "FAN_RACK",
+    "DOOR_RACK"
+  };
+
+  for (int i = 0; i < 5; i++) 
+  {
+    if (strncmp(codes[i], text, strlen(text)) == 0) return true;
+  }
+
+  return false;
+}
+
 // TODO: Add SEARCH_EQUIPMENT_ID, SEARCH_INCIDENT_ID, SEARCH_TECHNICIAN_ID
 search_type_t detect_search_type(const char *text)
 {
@@ -114,6 +133,8 @@ search_type_t detect_search_type(const char *text)
   if (validate_equipment_id(text)) return SEARCH_EQUIPMENT_ID;
 
   if (validate_incident_number(text)) return SEARCH_INCIDENT_ID;
+
+  if (validate_sensor_code(text)) return SEARCH_SENSOR_CODE;
 
   return SEARCH_INVALID;
 }

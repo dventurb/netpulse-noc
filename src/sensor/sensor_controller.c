@@ -19,84 +19,110 @@ void sensor_controller_init(sensor_controller_t *controller, sensor_view_t *view
   controller->view = view;
   controller->app = (application_t *)data;
 
+  controller->status_filter = 0;
+  
+  controller->search_text[0] = '\0';
+
   controller->pagination.page = 0;
   controller->pagination.page_size = 6;
-
   controller->pagination.total = sensor_get_count(&controller->app->sensors);
-
-  controller->status_filter = 0;
 }
 
-static void sensor_controller_dispatch(sensor_controller_t *controller)
+static void sensor_controller_execute_filters(sensor_controller_t *controller, sensor_task_t *task, sensor_list_t *filtered)
 {
-  sensor_worker_filter_and_paginate(controller);
-}
+  sensor_list_t temp;
+  sensor_list_init(&temp);
 
-void sensor_controller_refresh_page(sensor_controller_t *controller)
-{
-  controller->pagination.page = 0;
-  
-  controller->pagination.total = sensor_get_count(&controller->app->sensors);
-
-  controller->status_filter = 0;
-
-  sensor_controller_update_table(controller);
-}
-
-void sensor_controller_update_table(sensor_controller_t *controller)
-{
-  sensor_controller_dispatch(controller);
-}
-
-void sensor_controller_apply_filters(sensor_controller_t *controller, int status)
-{
-  controller->status_filter = status;
-
-  controller->pagination.page = 0;
-
-  sensor_controller_update_table(controller);
-}
-
-void sensor_controller_get_stats(sensor_controller_t *controller, sensor_stats_t *stats)
-{
   sensor_list_t *list = &controller->app->sensors;
 
-  stats->total = sensor_get_count(list);
-  stats->ok = sensor_get_number_status(list, SENSOR_OK);
-  stats->failure = sensor_get_number_status(list, SENSOR_NET_FAILURE);
-  stats->warning = sensor_get_number_status(list, SENSOR_WARNING);
-  stats->critical = sensor_get_number_status(list, SENSOR_CRITICAL);
+  if (strlen(task->search_text) >= 1)
+    sensor_filter_by_code(list, task->search_text, &temp);
+  else 
+    sensor_list_clone(list, &temp);
+
+  if (task->status_filter != 0) 
+    sensor_filter_by_status(&temp, task->status_filter - 1, filtered);
+  else 
+    sensor_list_clone(&temp, filtered);
+
+  sensor_list_destroy(&temp);
 }
 
-void sensor_controller_filter_and_paginate(sensor_controller_t *controller, sensor_task_t *task)
+static void sensor_controller_execute_pagination(sensor_task_t *task, sensor_list_t *filtered)
 {
-  sensor_list_t *list = &controller->app->sensors;
+  task->total = sensor_get_count(filtered);
+  task->result = sensor_list_in_range(filtered, task->start, task->end, &task->count);
+}
 
+void sensor_controller_execute_query(sensor_controller_t *controller, sensor_task_t *task)
+{
   sensor_list_t filtered;
   sensor_list_init(&filtered);
 
-  if (task->status_filter == 0)
-    sensor_list_clone(list, &filtered);
-  else 
-    sensor_filter_by_status(list, task->status_filter - 1, &filtered);
-
-  task->total = sensor_get_count(&filtered);
-
-  task->result = sensor_list_in_range(&filtered, task->start, task->end, &task->count);
+  sensor_controller_execute_filters(controller, task, &filtered);
+  sensor_controller_execute_pagination(task, &filtered);
 
   sensor_list_destroy(&filtered);
 
   g_idle_add(on_sensor_finish, task);
 }
 
-void sensor_controller_request_import_file(sensor_controller_t *controller, const char *filepath)
+void sensor_controller_reset_query(sensor_controller_t *controller)
+{
+  controller->status_filter = 0;
+  
+  controller->search_text[0] = '\0';
+
+  controller->pagination.page = 0;
+  controller->pagination.total = sensor_get_count(&controller->app->sensors);
+
+  sensor_worker_start_query(controller); // Create new thread so the UI doesnt freeze
+}
+
+void sensor_controller_start_query(sensor_controller_t *controller)
+{
+  sensor_worker_start_query(controller); // Create new thread so the UI doesnt freeze
+}
+
+void sensor_controller_set_filters(sensor_controller_t *controller, int status)
+{
+  controller->status_filter = status;
+
+  controller->pagination.page = 0;
+
+  sensor_controller_start_query(controller);
+}
+
+void sensor_controller_set_search(sensor_controller_t *controller, const char *text)
+{
+  if (text == NULL) return;
+
+  char buffer[strlen(text) + 1];
+  convert_to_uppercase(text, buffer);
+
+  switch (detect_search_type(buffer)) 
+  {
+    case SEARCH_SENSOR_CODE:
+      snprintf(controller->search_text, CODE_MAX, "%s", buffer);
+      break;
+    default:
+      controller->search_text[0] = '\0';
+      break;
+  }
+
+  controller->pagination.page = 0;
+
+  sensor_controller_start_query(controller);
+}
+
+void sensor_controller_request_file_import(sensor_controller_t *controller, const char *filepath)
 {
   if (filepath == NULL) return;
   
-  sensor_worker_import_file(controller, filepath);
+  sensor_worker_file_import(controller, filepath); // Create new thread so the UI doesnt freeze
 }
 
-void sensor_controller_execute_import_file(sensor_controller_t *controller, sensor_task_t *task)
+void sensor_controller_execute_file_import(sensor_controller_t *controller, sensor_task_t *task)
 {
   sensor_list_t *list = &controller->app->sensors;
 
@@ -123,15 +149,15 @@ void sensor_controller_execute_import_file(sensor_controller_t *controller, sens
 
   free(task->filepath);
 
-  sensor_controller_filter_and_paginate(controller, task);
+  sensor_controller_execute_query(controller, task);
 }
 
-void sensor_controller_request_import_api(sensor_controller_t *controller)
+void sensor_controller_request_api_import(sensor_controller_t *controller)
 {
-  sensor_worker_import_api(controller); // Create new thread so the UI doesnt freeze
+  sensor_worker_api_import(controller); // Create new thread so the UI doesnt freeze
 }
 
-void sensor_controller_execute_import_api(sensor_controller_t *controller, sensor_task_t *task)
+void sensor_controller_execute_api_import(sensor_controller_t *controller, sensor_task_t *task)
 {
   sensor_list_t *list = &controller->app->sensors;
 
@@ -159,7 +185,18 @@ void sensor_controller_execute_import_api(sensor_controller_t *controller, senso
 
   pclose(file);
 
-  sensor_controller_filter_and_paginate(controller, task);
+  sensor_controller_execute_query(controller, task);
+}
+
+void sensor_controller_get_stats(sensor_controller_t *controller, sensor_stats_t *stats)
+{
+  sensor_list_t *list = &controller->app->sensors;
+
+  stats->total = sensor_get_count(list);
+  stats->ok = sensor_get_number_status(list, SENSOR_OK);
+  stats->failure = sensor_get_number_status(list, SENSOR_NET_FAILURE);
+  stats->warning = sensor_get_number_status(list, SENSOR_WARNING);
+  stats->critical = sensor_get_number_status(list, SENSOR_CRITICAL);
 }
 
 gboolean on_sensor_finish(gpointer data)
@@ -169,6 +206,12 @@ gboolean on_sensor_finish(gpointer data)
   task->controller->pagination.total = task->total;
 
   int total_pages = pagination_total_pages(task->controller->pagination, task->total);
+
+  if (task->controller->pagination.page >= total_pages - 1)
+    task->controller->pagination.page = total_pages - 1;
+
+  if (task->controller->pagination.page < 0)
+    task->controller->pagination.page = 0;
 
   sensor_view_update_table(task->controller->view, task->result, task->count);
   sensor_view_update_stats_cards(task->controller->view);

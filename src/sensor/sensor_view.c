@@ -31,6 +31,7 @@ static void sensor_view_apply_filters(sensor_view_t *view);
 static void on_import_sensors_clicked(GtkButton *button, gpointer data);
 static void on_fetch_api_clicked(GtkButton *button, gpointer data);
 
+static void on_search_entry_changed(GtkSearchEntry *search, gpointer data);
 static void on_filter_dropdown_changed(GObject *self, GParamSpec *pspec, gpointer data);
 
 static void on_previous_page_clicked(GtkButton *button, gpointer data);
@@ -55,7 +56,12 @@ GtkBox *sensor_view_create(sensor_view_t *view, sensor_controller_t *controller)
 
 void sensor_view_refresh(sensor_view_t *view)
 {
-  sensor_controller_refresh_page(view->controller);
+  sensor_controller_reset_query(view->controller);
+}
+
+void sensor_view_update(sensor_view_t *view)
+{
+  sensor_controller_start_query(view->controller);
 }
 
 void sensor_view_update_stats_cards(sensor_view_t *view)
@@ -191,7 +197,7 @@ static GtkWidget *build_filter_bar(sensor_view_t *view)
   gtk_search_entry_set_placeholder_text(GTK_SEARCH_ENTRY(search), "Search by sensor code...");
   gtk_widget_add_css_class(search, "inventory-search");
   gtk_widget_set_hexpand(search, TRUE);
-  //g_signal_connect(search, "search-changed", G_CALLBACK(on_search_entry_changed), view);
+  g_signal_connect(search, "search-changed", G_CALLBACK(on_search_entry_changed), view);
 
   view->status_filter = GTK_DROP_DOWN(gtk_drop_down_new_from_strings(filter_status));
   gtk_widget_add_css_class(GTK_WIDGET(view->status_filter), "inventory-filter");
@@ -227,7 +233,7 @@ static GtkWidget *build_table(sensor_view_t *view)
   gtk_box_append(GTK_BOX(box), scrolled_window);
   gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->pagination_bar));
 
-  //sensor_controller_refresh_page(view->controller);
+  sensor_controller_reset_query(view->controller);
 
   return box;
 }
@@ -356,7 +362,7 @@ static void sensor_view_apply_filters(sensor_view_t *view)
 {
   int position_status = gtk_drop_down_get_selected(view->status_filter);
 
-  sensor_controller_apply_filters(view->controller, position_status);
+  sensor_controller_set_filters(view->controller, position_status);
 }
 
 static void on_import_sensors_finish(GObject *self, GAsyncResult *res, gpointer data)
@@ -368,7 +374,7 @@ static void on_import_sensors_finish(GObject *self, GAsyncResult *res, gpointer 
 
   char *filepath = g_file_get_path(file);
 
-  sensor_controller_request_import_file(view->controller, filepath);
+  sensor_controller_request_file_import(view->controller, filepath);
 
   sensor_view_set_actions_enabled(view, false);
 
@@ -398,9 +404,18 @@ static void on_fetch_api_clicked(GtkButton *button, gpointer data)
 
   sensor_view_t *view = (sensor_view_t *) data;
 
-  sensor_controller_request_import_api(view->controller);
+  sensor_controller_request_api_import(view->controller);
 
   sensor_view_set_actions_enabled(view, false);
+}
+
+static void on_search_entry_changed(GtkSearchEntry *search, gpointer data)
+{
+  sensor_view_t *view = (sensor_view_t *)data;
+
+  const char *text = gtk_editable_get_text(GTK_EDITABLE(search));
+
+  sensor_controller_set_search(view->controller, text);
 }
 
 static void on_filter_dropdown_changed(GObject *self, GParamSpec *pspec, gpointer data)
@@ -421,7 +436,7 @@ static void on_previous_page_clicked(GtkButton *button, gpointer data)
 
   pagination_previous(&view->controller->pagination);
 
-  sensor_controller_update_table(view->controller);
+  sensor_view_update(view);
 }
 
 static void on_next_page_clicked(GtkButton *button, gpointer data)
@@ -432,7 +447,7 @@ static void on_next_page_clicked(GtkButton *button, gpointer data)
 
   pagination_next(&view->controller->pagination);
 
-  sensor_controller_update_table(view->controller);
+  sensor_view_update(view);
 }
 
 static void on_page_clicked(GtkButton *button, gpointer data)
@@ -445,5 +460,5 @@ static void on_page_clicked(GtkButton *button, gpointer data)
 
   pagination_set_page_number(&view->controller->pagination, page_number);
 
-  sensor_controller_update_table(view->controller);
+  sensor_view_update(view);
 }
