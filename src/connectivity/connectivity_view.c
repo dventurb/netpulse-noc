@@ -63,12 +63,7 @@ GtkBox *connectivity_view_create(connectivity_view_t *view, connectivity_control
 
 void ping_view_update_list(ping_view_t *view, equipment_t *equipments, int count)
 {
-  GtkWidget *child = gtk_widget_get_first_child(GTK_WIDGET(view->list));
-  while (child != NULL)
-  {
-    gtk_list_box_remove(view->list, child);
-    child = gtk_widget_get_first_child(GTK_WIDGET(view->list));
-  }
+  remove_list_rows(GTK_WIDGET(view->list));
 
   gtk_widget_set_visible(GTK_WIDGET(view->list), TRUE);
 

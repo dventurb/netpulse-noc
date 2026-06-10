@@ -161,8 +161,10 @@ equipment_t *equipment_list_in_range(equipment_list_t *list, int start, int end,
     return NULL;
   }
 
+  end = (end < list->count) ? end : list->count;
+
   int size = end - start;
-  if (size <= 0 || size > 6) return NULL;
+  if (size <= 0) return NULL;
 
   equipment_t *equipments = malloc(sizeof(equipment_t) * size);
   if (equipments == NULL)

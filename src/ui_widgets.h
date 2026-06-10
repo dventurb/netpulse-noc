@@ -54,6 +54,6 @@ GtkWidget *create_summary_detail(const char *title, const char *value);
 
 void remove_table_rows(GtkWidget *grid);
 void remove_all_children_from_widget(GtkWidget *parent);
-
+void remove_list_rows(GtkWidget *list);
 
 #endif

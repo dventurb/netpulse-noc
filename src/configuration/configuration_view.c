@@ -22,7 +22,8 @@ static GtkWidget *build_pagination_bar(configuration_view_t *view);
 static void build_table_header(GtkWidget *table);
 static void build_table_row(configuration_view_t *view, configuration_t sensor, int row);
 
-static void build_list_row(GtkWidget *list, equipment_t equipment);
+static GtkWidget *build_list(configuration_view_t *view);
+static void build_equipment_sidebar_row(GtkWidget *list, equipment_t equipment);
 static GtkWidget *build_equipment_cell(equipment_t equipment);
 
 // Callbacks
@@ -85,6 +86,7 @@ void configuration_view_update_table(configuration_view_t *view, configuration_t
 
   for (int i = 0; i < count; i++) 
   {
+    printf("count: %d\n\n", count);
     build_table_row(view, configs[i], i + 1);
   }
 
@@ -96,6 +98,20 @@ void configuration_view_update_table(configuration_view_t *view, configuration_t
 
     view->pagination_bar = GTK_BOX(build_pagination_bar(view));
     gtk_box_append(GTK_BOX(parent), GTK_WIDGET(view->pagination_bar));
+  }
+}
+
+void configuration_view_update_equipment_list(configuration_view_t *view, const void *result, int count)
+{
+  remove_list_rows(GTK_WIDGET(view->list));
+
+  if (result == NULL || count == 0) return;
+
+  equipment_t *equipments = (equipment_t *)result;
+
+  for (int i = 0; i < count; i++)
+  {
+    build_equipment_sidebar_row(GTK_WIDGET(view->list), equipments[i]);
   }
 }
 
@@ -113,8 +129,8 @@ static GtkWidget *build_sidebar(configuration_view_t *view)
   gtk_widget_add_css_class(box, "sidebar");
 
   GtkWidget *sidebar = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
-  gtk_widget_set_margin_start(sidebar, 16);
-  gtk_widget_set_margin_end(sidebar, 16);
+  gtk_widget_set_margin_start(sidebar, 14);
+  gtk_widget_set_margin_end(sidebar, 14);
   gtk_widget_set_margin_top(sidebar, 24);
 
   GtkWidget *title = gtk_label_new("Equipment List");
@@ -124,14 +140,13 @@ static GtkWidget *build_sidebar(configuration_view_t *view)
   GtkWidget *search = gtk_search_entry_new();
   gtk_search_entry_set_placeholder_text(GTK_SEARCH_ENTRY(search), "Search equipments...");
   gtk_widget_add_css_class(search, "sidebar-search");
-  //g_signal_connect(search, "search-changed", G_CALLBACK(on_search_entry_changed), view);
-  view->list = GTK_LIST_BOX(gtk_list_box_new());
-  //gtk_widget_set_visible(GTK_WIDGET(view->list), FALSE);
-  //g_signal_connect(GTK_WIDGET(view->list), "row-selected", G_CALLBACK(on_equipment_row_selected), view);
+  g_signal_connect(search, "search-changed", G_CALLBACK(on_search_equipment_clicked), view);
+  
+  GtkWidget *list = build_list(view);
   
   gtk_box_append(GTK_BOX(sidebar), title);
   gtk_box_append(GTK_BOX(sidebar), search);
-  gtk_box_append(GTK_BOX(sidebar), GTK_WIDGET(view->list));
+  gtk_box_append(GTK_BOX(sidebar), list);
 
   gtk_box_append(GTK_BOX(box), sidebar);
 
@@ -206,14 +221,14 @@ static GtkWidget *build_stats_cards(configuration_view_t *view)
   return box;
 }
 
-static void build_list_row(GtkWidget *list, equipment_t equipment)
+static void build_equipment_sidebar_row(GtkWidget *list, equipment_t equipment)
 {
   GtkWidget *item = build_equipment_cell(equipment);
 
   GtkWidget *row = gtk_list_box_row_new();
 
   gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), item);
-  gtk_widget_add_css_class(row, "search-row-item");
+  gtk_widget_add_css_class(row, "list-equipment-item");
 
   gtk_list_box_append(GTK_LIST_BOX(list), row);
 }
@@ -221,9 +236,6 @@ static void build_list_row(GtkWidget *list, equipment_t equipment)
 static GtkWidget *build_equipment_cell(equipment_t equipment) 
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
-  gtk_widget_set_margin_top(box, 12);
-  gtk_widget_set_margin_bottom(box, 12);
-  gtk_widget_set_margin_start(box, 16);
 
   GtkWidget *image;
 
@@ -243,23 +255,49 @@ static GtkWidget *build_equipment_cell(equipment_t equipment)
       break;
   }
 
-  gtk_image_set_pixel_size(GTK_IMAGE(image), 6);
+  gtk_image_set_pixel_size(GTK_IMAGE(image), 8);
 
   GtkWidget *text_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+  gtk_widget_set_hexpand(text_box, TRUE);
 
   GtkWidget *name = gtk_label_new(equipment.name);
   gtk_widget_set_halign(name, GTK_ALIGN_START);
-  gtk_widget_add_css_class(name, "search-item-name");
+  gtk_widget_add_css_class(name, "list-equipment-name");
 
-  GtkWidget *ip_address = gtk_label_new(equipment.ip_address);
-  gtk_widget_set_halign(ip_address, GTK_ALIGN_START);
-  gtk_widget_add_css_class(ip_address, "search-item-ip");
+  char buffer[ID_MAX];
+  equipment_format_id(equipment.id, buffer);
+
+  GtkWidget *id = gtk_label_new(buffer);
+  gtk_widget_set_halign(id, GTK_ALIGN_START);
+  gtk_widget_add_css_class(id, "list-equipment-id");
 
   gtk_box_append(GTK_BOX(text_box), name);
-  gtk_box_append(GTK_BOX(text_box), ip_address);
+  gtk_box_append(GTK_BOX(text_box), id);
 
-  gtk_box_append(GTK_BOX(box), image);
   gtk_box_append(GTK_BOX(box), text_box);
+  gtk_box_append(GTK_BOX(box), image);
+
+  return box;
+}
+
+static GtkWidget *build_list(configuration_view_t *view)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+
+  GtkWidget *scrolled_window = gtk_scrolled_window_new();
+  gtk_widget_set_vexpand(scrolled_window, TRUE);
+  //gtk_widget_set_size_request(scrolled_window, -1, 456);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+  gtk_widget_add_css_class(scrolled_window, "table-scroll");
+
+  view->list = GTK_LIST_BOX(gtk_list_box_new());
+  //g_signal_connect(GTK_WIDGET(view->list), "row-selected", G_CALLBACK(on_equipment_row_selected), view);
+
+  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(view->list));
+
+  gtk_box_append(GTK_BOX(box), scrolled_window);
+
+  configuration_controller_start_equipment_query(view->controller);
 
   return box;
 }
@@ -375,7 +413,7 @@ static void on_search_equipment_clicked(GtkSearchEntry *search, gpointer data)
 
   const char *text = gtk_editable_get_text(GTK_EDITABLE(search));
 
-  //configuration_controller_search_equipment(view->controller, text);
+  configuration_controller_set_search(view->controller, text);
 }
 
 static void on_previous_page_clicked(GtkButton *button, gpointer data)

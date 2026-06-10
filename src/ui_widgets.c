@@ -377,3 +377,13 @@ void remove_all_children_from_widget(GtkWidget *parent)
     child = next;
   }
 }
+
+void remove_list_rows(GtkWidget *list)
+{
+  GtkWidget *child = gtk_widget_get_first_child(list);
+  while (child != NULL)
+  {
+    gtk_list_box_remove(GTK_LIST_BOX(list), child);
+    child = gtk_widget_get_first_child(list);
+  }
+}

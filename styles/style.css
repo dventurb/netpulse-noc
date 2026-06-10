@@ -982,3 +982,37 @@
   font-size: 14px;
   font-weight: 500;
 }
+
+.list-equipment-item {
+  background-color: #ffffff;
+  padding: 12px;
+  border-radius: 4px;
+  border-left: 4px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.list-equipment-item:hover {
+  background-color: #f9fafb;
+}
+
+.list-equipment-item:selected {
+  background-color: #f0fdf4;
+  border-left: 4px solid #19c37d;
+}
+
+.list-equipment-item:focus-within {
+  outline: none;
+  box-shadow: none;
+}
+
+.list-equipment-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #171717;
+}
+
+.list-equipment-id {
+  font-size: 12px;
+  font-weight: 400;
+  color: #6b7280;
+}

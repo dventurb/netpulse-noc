@@ -1,6 +1,7 @@
 #include "persistence.h"
 
 #include "hashmap.h"
+#include <stdlib.h>
 
 void load_equipments(application_t *application, const char *filepath)
 {
@@ -11,7 +12,7 @@ void load_equipments(application_t *application, const char *filepath)
   FILE *file = fopen(filepath, "rb");
   if (file == NULL) return;
 
-  equipment_t data;
+  equipment_t data = {0};
 
   while (fread(&data, sizeof(equipment_t), 1, file))
   {
@@ -59,13 +60,19 @@ void load_configurations(equipment_t *equipment, FILE *file)
   int count;
   fread(&count, sizeof(count), 1, file);
 
-  for (int i = 0; i < count; i++)
-  {
-    configuration_t data;
-    fread(&data, sizeof(configuration_t), 1, file);
+  if (count == 0) return;
 
-    configuration_stack_push(&equipment->configs, data);
+  configuration_t *temp = malloc(sizeof(configuration_t) * count);
+  if (temp == NULL) return;
+
+  fread(temp, sizeof(configuration_t), count, file);
+
+  for (int i = count - 1; i >= 0; i--)
+  {
+    configuration_stack_push(&equipment->configs, temp[i]);
   }
+
+  free(temp);
 }
 
 void save_equipments(equipment_list_t *list, const char *filepath)
@@ -78,11 +85,9 @@ void save_equipments(equipment_list_t *list, const char *filepath)
   equipment_node_t *node = list->head;
   while (node != NULL)
   {
-    equipment_t data = node->data;
+    fwrite(&node->data, sizeof(equipment_t), 1, file);
 
-    fwrite(&data, sizeof(equipment_t), 1, file);
-
-    save_configurations(&data, file);
+    save_configurations(&node->data, file);
 
     node = node->next;
   }
@@ -129,8 +134,7 @@ void save_configurations(equipment_t *equipment, FILE *file)
 
   while (node != NULL)
   {
-    configuration_t data = node->data;
-    fwrite(&data, sizeof(configuration_t), 1, file);
+    fwrite(&node->data, sizeof(configuration_t), 1, file);
 
     node = node->next;
   }

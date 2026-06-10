@@ -35,6 +35,7 @@ GtkBox *configuration_view_create(configuration_view_t *view, configuration_cont
 
 void configuration_view_refresh(configuration_view_t *view);
 void configuration_view_update_table(configuration_view_t *view, configuration_t *configs, int count);
+void configuration_view_update_equipment_list(configuration_view_t *view, const void *result, int count);
 void configuration_view_update_header(configuration_view_t *view);
 void configuration_view_update_stats_cards(configuration_view_t *view);
 
