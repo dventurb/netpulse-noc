@@ -36,6 +36,43 @@
   font-weight: 600;
 }
 
+.sidebar {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  padding: 24px 16px 0;
+}
+
+.sidebar-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #171717;
+}
+
+.incident-search,
+.inventory-search {
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.sidebar-search {
+  background-color: #f5f6f8;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.sidebar-search:focus-within {
+  outline: none;
+  box-shadow: none;
+  border-color: #19c37d;
+}
+
 .connectivity-title,
 .incident-title,
 .inventory-title {
@@ -902,6 +939,46 @@
 
 .fetch-button label {
   color: #2d3748;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.revert-button {
+  all: unset; /* reset default style */
+
+  background-color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #faad14;
+}
+
+.revert-button:hover {
+  background-color: #f7fafc;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.revert-button label {
+  color: #faad14;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.clear-button {
+  all: unset; /* reset default style */
+
+  background-color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #ff4d4f;
+}
+
+.clear-button:hover {
+  background-color: #f7fafc;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.clear-button label {
+  color: #ff4d4f;
   font-size: 14px;
   font-weight: 500;
 }
