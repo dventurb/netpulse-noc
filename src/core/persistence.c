@@ -1,6 +1,5 @@
 #include "persistence.h"
 
-#include <stdio.h>
 #include "hashmap.h"
 
 void load_equipments(application_t *application, const char *filepath)
@@ -16,6 +15,10 @@ void load_equipments(application_t *application, const char *filepath)
 
   while (fread(&data, sizeof(equipment_t), 1, file))
   {
+    configuration_stack_init(&data.configs);
+
+    load_configurations(&data, file);
+
     equipment_node_t *node = equipment_list_reinsert(list, data);
 
     char id[ID_MAX];
@@ -49,6 +52,22 @@ void load_incidents(incident_queue_t *queue, incident_list_t *list, const char *
   fclose(file);
 }
 
+void load_configurations(equipment_t *equipment, FILE *file)
+{
+  if (equipment == NULL || file == NULL) return;
+
+  int count;
+  fread(&count, sizeof(count), 1, file);
+
+  for (int i = 0; i < count; i++)
+  {
+    configuration_t data;
+    fread(&data, sizeof(configuration_t), 1, file);
+
+    configuration_stack_push(&equipment->configs, data);
+  }
+}
+
 void save_equipments(equipment_list_t *list, const char *filepath)
 {
   if (list == NULL || filepath == NULL) return;
@@ -60,7 +79,10 @@ void save_equipments(equipment_list_t *list, const char *filepath)
   while (node != NULL)
   {
     equipment_t data = node->data;
+
     fwrite(&data, sizeof(equipment_t), 1, file);
+
+    save_configurations(&data, file);
 
     node = node->next;
   }
@@ -94,4 +116,22 @@ void save_incidents(incident_queue_t *queue, incident_list_t *list, const char *
   }
 
   fclose(file);
+}
+
+void save_configurations(equipment_t *equipment, FILE *file)
+{
+  if (equipment == NULL || file == NULL) return;
+
+  int count = equipment->configs.count;
+  fwrite(&count, sizeof(count), 1, file);
+
+  configuration_node_t *node = equipment->configs.top;
+
+  while (node != NULL)
+  {
+    configuration_t data = node->data;
+    fwrite(&data, sizeof(configuration_t), 1, file);
+
+    node = node->next;
+  }
 }

@@ -1,0 +1,4 @@
+#ifndef CONFIGURATION_VIEW_H
+#define CONFIGURATION_VIEW_H
+
+#endif

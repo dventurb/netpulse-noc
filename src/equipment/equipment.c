@@ -30,6 +30,8 @@ void equipment_list_destroy(equipment_list_t *list)
   while (node != NULL)
   {
     equipment_node_t *next = node->next;
+
+    configuration_stack_destroy(&node->data.configs);
     free(node);
     node = next;
   }
@@ -53,6 +55,7 @@ equipment_node_t *equipment_list_insert(equipment_list_t *list, equipment_t data
 
   new->data.id = list->next_id++;
   new->data.last_check = time(NULL);
+  configuration_stack_init(&new->data.configs);
 
   new->next = NULL;
 

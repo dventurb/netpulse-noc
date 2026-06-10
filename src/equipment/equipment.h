@@ -1,6 +1,7 @@
 #ifndef EQUIPMENT_H
 #define EQUIPMENT_H
 
+#include "configuration.h"
 #include "macros.h"
 #include <time.h>
 
@@ -35,6 +36,7 @@ typedef struct {
   char location[STRING_MAX];
   equipment_status_t status;
   time_t last_check;
+  configuration_stack_t configs;
 } equipment_t;
 
 typedef struct equipment_node_t {

@@ -5,7 +5,6 @@ void application_init(application_t *application)
   equipment_list_init(&application->equipments);
   incident_queue_init(&application->incidents_pending);
   incident_list_init(&application->incidents_history);
-  config_stack_init(&application->configs);
   sensor_list_init(&application->sensors);
   technician_list_init(&application->technicians);
 
@@ -27,7 +26,6 @@ void application_destroy(application_t *application)
   equipment_list_destroy(&application->equipments);
   incident_queue_destroy(&application->incidents_pending);
   incident_list_destroy(&application->incidents_history);
-  config_stack_destroy(&application->configs);
   sensor_list_destroy(&application->sensors);
   technician_list_destroy(&application->technicians);
   

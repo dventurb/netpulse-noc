@@ -1,0 +1,4 @@
+#ifndef CONFIGURATION_WORKER_H
+#define CONFIGURATION_WORKER_H
+
+#endif
