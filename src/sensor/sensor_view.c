@@ -6,7 +6,7 @@
 #include "ui_macros.h"
 #include "pagination.h"
 
-static const char* const filter_status[] = { "All", "Critical", "Warning", "Network Failure", "OK", NULL };
+static const char* const filter_status[] = { "All", "OK", "Warning", "Critical", "Network Failure", NULL };
 static const char* const headers[] = { "CODE", "TYPE", "VALUE", "STATUS", "READ AT" };
 static const int widths[] = { CELL_CODE_WIDTH, CELL_TYPE_WIDTH, CELL_VALUE_WIDTH, CELL_STATUS_WIDTH, CELL_READ_AT_WIDTH };
 
