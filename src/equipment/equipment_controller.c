@@ -227,6 +227,9 @@ gboolean on_equipment_finish(gpointer data)
 
   if (task->controller->pagination.page >= total_pages - 1)
     task->controller->pagination.page = total_pages - 1;
+  
+  if (task->controller->pagination.page < 0)
+    task->controller->pagination.page = 0;
 
   equipment_view_update_table(task->controller->view, task->result, task->count);
   equipment_view_update_stats_cards(task->controller->view);

@@ -207,6 +207,9 @@ gboolean on_incident_finished(gpointer data)
   if (task->controller->pagination.page >= total_pages - 1)
     task->controller->pagination.page = total_pages - 1;
 
+  if (task->controller->pagination.page < 0)
+    task->controller->pagination.page = 0;
+
   incident_view_update_table(task->controller->view, task->result, task->count);
   incident_view_update_stats_cards(task->controller->view);
   incident_view_update_header(task->controller->view);
