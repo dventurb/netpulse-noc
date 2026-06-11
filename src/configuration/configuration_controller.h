@@ -17,6 +17,8 @@ typedef struct {
 
   configuration_view_t *view;
 
+  equipment_node_t *selected_equipment;
+
   char search_text[STRING_MAX];
 
   pagination_t pagination;

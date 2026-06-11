@@ -193,7 +193,7 @@ GtkWidget *create_dialog_window(dialog_config_t dialog_config)
 {
   GtkWidget *dialog = gtk_window_new();
   gtk_widget_add_css_class(dialog, "dialog");
-  gtk_window_set_default_size(GTK_WINDOW(dialog), 672, 640);
+  //gtk_window_set_default_size(GTK_WINDOW(dialog), 672, 640);
 
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(dialog_config.window));

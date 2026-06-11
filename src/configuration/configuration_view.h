@@ -10,7 +10,11 @@
 
 typedef struct {
   GtkWindow  *dialog;
+
   GtkWidget  *layout;
+
+  GtkEntry   *entry_equipment;
+  GtkEntry   *entry_command;
 } configuration_form_t;
 
 typedef struct configuration_view_t {

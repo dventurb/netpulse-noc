@@ -16,17 +16,22 @@ static GtkWidget *build_sidebar(configuration_view_t *view);
 static GtkWidget *build_content(configuration_view_t *view);
 static GtkWidget *build_header(configuration_view_t *view);
 static GtkWidget *build_stats_cards(configuration_view_t *view);
-static GtkWidget *build_table(configuration_view_t *view);
 static GtkWidget *build_pagination_bar(configuration_view_t *view);
 
-static void build_table_header(GtkWidget *table);
-static void build_table_row(configuration_view_t *view, configuration_t sensor, int row);
+static GtkWidget *build_configuration_table(configuration_view_t *view);
+static void build_configuration_table_header(GtkWidget *table);
+static void build_configuration_table_row(configuration_view_t *view, configuration_t sensor, int row);
 
-static GtkWidget *build_list(configuration_view_t *view);
-static void build_equipment_sidebar_row(GtkWidget *list, equipment_t equipment);
+static GtkWidget *build_equipment_list(configuration_view_t *view);
+static void build_equipment_list_row(GtkWidget *list, equipment_t equipment);
 static GtkWidget *build_equipment_cell(equipment_t equipment);
 
+static GtkWidget *build_add_configuration_form(configuration_view_t *view);
+
 // Callbacks
+static void on_add_configuration_clicked(GtkButton *button, gpointer data);
+static void on_add_configuration_form_submit(GtkButton *button, gpointer data);
+
 static void on_search_equipment_clicked(GtkSearchEntry *search, gpointer data);
 
 static void on_previous_page_clicked(GtkButton *button, gpointer data);
@@ -87,7 +92,7 @@ void configuration_view_update_table(configuration_view_t *view, configuration_t
   for (int i = 0; i < count; i++) 
   {
     printf("count: %d\n\n", count);
-    build_table_row(view, configs[i], i + 1);
+    build_configuration_table_row(view, configs[i], i + 1);
   }
 
   GtkWidget *parent = gtk_widget_get_parent(GTK_WIDGET(view->pagination_bar));
@@ -111,7 +116,7 @@ void configuration_view_update_equipment_list(configuration_view_t *view, const 
 
   for (int i = 0; i < count; i++)
   {
-    build_equipment_sidebar_row(GTK_WIDGET(view->list), equipments[i]);
+    build_equipment_list_row(GTK_WIDGET(view->list), equipments[i]);
   }
 }
 
@@ -142,7 +147,7 @@ static GtkWidget *build_sidebar(configuration_view_t *view)
   gtk_widget_add_css_class(search, "sidebar-search");
   g_signal_connect(search, "search-changed", G_CALLBACK(on_search_equipment_clicked), view);
   
-  GtkWidget *list = build_list(view);
+  GtkWidget *list = build_equipment_list(view);
   
   gtk_box_append(GTK_BOX(sidebar), title);
   gtk_box_append(GTK_BOX(sidebar), search);
@@ -165,7 +170,7 @@ static GtkWidget *build_content(configuration_view_t *view)
 
   GtkWidget *header = build_header(view);
   view->cards = GTK_BOX(build_stats_cards(view));
-  GtkWidget *table = build_table(view);
+  GtkWidget *table = build_configuration_table(view);
 
   gtk_box_append(GTK_BOX(box), header);
   gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->cards));
@@ -190,6 +195,7 @@ static GtkWidget *build_header(configuration_view_t *view)
   //g_signal_connect(GTK_WIDGET(view->fetch_button), "clicked", G_CALLBACK(on_fetch_api_clicked), view);
 
   view->add_button = GTK_BUTTON(create_secondary_button("Add Configuration", "assets/icon-add.svg", "secondary-button"));
+  g_signal_connect(GTK_WIDGET(view->add_button), "clicked", G_CALLBACK(on_add_configuration_clicked), view);
 
   gtk_box_append(GTK_BOX(box), title);
   gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->revert_button));
@@ -221,7 +227,58 @@ static GtkWidget *build_stats_cards(configuration_view_t *view)
   return box;
 }
 
-static void build_equipment_sidebar_row(GtkWidget *list, equipment_t equipment)
+static GtkWidget *build_equipment_list(configuration_view_t *view)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+
+  GtkWidget *scrolled_window = gtk_scrolled_window_new();
+  gtk_widget_set_vexpand(scrolled_window, TRUE);
+  //gtk_widget_set_size_request(scrolled_window, -1, 456);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+  gtk_widget_add_css_class(scrolled_window, "table-scroll");
+
+  view->list = GTK_LIST_BOX(gtk_list_box_new());
+  //g_signal_connect(GTK_WIDGET(view->list), "row-selected", G_CALLBACK(on_equipment_row_selected), view);
+
+  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(view->list));
+
+  gtk_box_append(GTK_BOX(box), scrolled_window);
+
+  configuration_controller_start_equipment_query(view->controller);
+
+  return box;
+}
+
+static GtkWidget *build_configuration_table(configuration_view_t *view)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_widget_add_css_class(box, "inventory");
+
+  GtkWidget *scrolled_window = gtk_scrolled_window_new();
+  gtk_widget_set_size_request(scrolled_window, -1, 456);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
+  gtk_widget_add_css_class(scrolled_window, "table-scroll");
+
+  view->table = GTK_GRID(gtk_grid_new());
+  gtk_widget_set_hexpand(GTK_WIDGET(view->table), FALSE);
+  gtk_widget_set_halign(GTK_WIDGET(view->table), GTK_ALIGN_FILL);
+  gtk_widget_add_css_class(GTK_WIDGET(view->table), "table");
+
+  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(view->table));
+
+  build_configuration_table_header(GTK_WIDGET(view->table));
+
+  view->pagination_bar = GTK_BOX(build_pagination_bar(view));
+
+  gtk_box_append(GTK_BOX(box), scrolled_window);
+  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->pagination_bar));
+
+  //configuration_controller_reset_query(view->controller);
+
+  return box;
+}
+
+static void build_equipment_list_row(GtkWidget *list, equipment_t equipment)
 {
   GtkWidget *item = build_equipment_cell(equipment);
 
@@ -280,55 +337,29 @@ static GtkWidget *build_equipment_cell(equipment_t equipment)
   return box;
 }
 
-static GtkWidget *build_list(configuration_view_t *view)
+static GtkWidget *build_add_configuration_form(configuration_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  GtkWidget *grid = gtk_grid_new();
+  gtk_widget_set_size_request(grid, 500, 268);
+  gtk_widget_set_margin_start(grid, 24);
+  gtk_widget_set_margin_end(grid, 24);
+  gtk_widget_set_margin_top(grid, 24);
+  gtk_widget_set_margin_bottom(grid, 40);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 24);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 24);
+  gtk_widget_add_css_class(grid, "dialog-form");
 
-  GtkWidget *scrolled_window = gtk_scrolled_window_new();
-  gtk_widget_set_vexpand(scrolled_window, TRUE);
-  //gtk_widget_set_size_request(scrolled_window, -1, 456);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-  gtk_widget_add_css_class(scrolled_window, "table-scroll");
+  view->form.entry_equipment = GTK_ENTRY(create_text_field(grid, "EQUIPMENT", NULL, 0, 0));
+  gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_equipment), "form-entry-disabled");
+  gtk_editable_set_editable(GTK_EDITABLE(view->form.entry_equipment), FALSE);
 
-  view->list = GTK_LIST_BOX(gtk_list_box_new());
-  //g_signal_connect(GTK_WIDGET(view->list), "row-selected", G_CALLBACK(on_equipment_row_selected), view);
+  //char name[STRING_MAX];
+  // configuration_controller_get_selected_equipment_name(view->controller, name);
 
-  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(view->list));
+  view->form.entry_command = GTK_ENTRY(create_text_field(grid, "CONFIGURATION COMMAND", "e.g. interface gigabitethernet 0/1",  1, 0));
+  gtk_entry_set_max_length(view->form.entry_command, COMMAND_MAX - 1);
 
-  gtk_box_append(GTK_BOX(box), scrolled_window);
-
-  configuration_controller_start_equipment_query(view->controller);
-
-  return box;
-}
-
-static GtkWidget *build_table(configuration_view_t *view)
-{
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-  gtk_widget_add_css_class(box, "inventory");
-
-  GtkWidget *scrolled_window = gtk_scrolled_window_new();
-  gtk_widget_set_size_request(scrolled_window, -1, 456);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
-  gtk_widget_add_css_class(scrolled_window, "table-scroll");
-
-  view->table = GTK_GRID(gtk_grid_new());
-  gtk_widget_set_hexpand(GTK_WIDGET(view->table), FALSE);
-  gtk_widget_set_halign(GTK_WIDGET(view->table), GTK_ALIGN_FILL);
-  gtk_widget_add_css_class(GTK_WIDGET(view->table), "table");
-
-  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(view->table));
-
-  build_table_header(GTK_WIDGET(view->table));
-
-  view->pagination_bar = GTK_BOX(build_pagination_bar(view));
-
-  gtk_box_append(GTK_BOX(box), scrolled_window);
-  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->pagination_bar));
-
-  //configuration_controller_reset_query(view->controller);
-
-  return box;
+  return grid;
 }
 
 static GtkWidget *build_pagination_bar(configuration_view_t *view)
@@ -373,7 +404,7 @@ static GtkWidget *build_pagination_bar(configuration_view_t *view)
   return box;
 }
 
-static void build_table_header(GtkWidget *table)
+static void build_configuration_table_header(GtkWidget *table)
 {
   for (int i = 0; i < CONFIG_HEADER_COLUMN_COUNT; i++) {
     GtkWidget *header_col = create_table_header(headers[i], widths[i]);
@@ -382,7 +413,7 @@ static void build_table_header(GtkWidget *table)
   }
 }
 
-static void build_table_row(configuration_view_t *view, configuration_t sensor, int row)
+static void build_configuration_table_row(configuration_view_t *view, configuration_t sensor, int row)
 {
   const char *css_class = (row % 2 == 0) ? "table-row-even" : "table-row-odd";
  /* 
@@ -405,6 +436,51 @@ static void build_table_row(configuration_view_t *view, configuration_t sensor, 
     gtk_grid_attach(view->table, columns[i], i, row, 1, 1);
   }
   */
+}
+
+static void on_add_configuration_clicked(GtkButton *button, gpointer data)
+{
+  configuration_view_t *view = (configuration_view_t *)data;
+
+  view->form.layout = build_add_configuration_form(view);
+
+  GtkWindow *window = GTK_WINDOW(gtk_widget_get_root(GTK_WIDGET(view->container)));
+
+  dialog_config_t config =
+  {
+    .window = GTK_WIDGET(window),
+    .form = view->form.layout,
+    .title = "Add Configuration",
+    .dialog_action = 
+    {
+      .label = "Apply Configuration",
+      .icon = "assets/icon-add.svg",
+      .css = "dialog-footer-add-button",
+      .callback = G_CALLBACK(on_add_configuration_form_submit),
+      .data = view
+    }
+  };
+
+  view->form.dialog = GTK_WINDOW(create_dialog_window(config));
+
+  gtk_window_present(view->form.dialog);
+}
+
+static void on_add_configuration_form_submit(GtkButton *button, gpointer data)
+{
+  (void)button; // unused parameter
+
+  configuration_view_t *view = (configuration_view_t *)data;
+
+  configuration_t new;
+
+  GtkEntry *entry = view->form.entry_command;
+  const char *text = gtk_editable_get_text(GTK_EDITABLE(entry));
+  snprintf(new.command, COMMAND_MAX, "%s", text);
+
+  configuration_controller_add(view->controller, new);
+
+  gtk_window_destroy(view->form.dialog);
 }
 
 static void on_search_equipment_clicked(GtkSearchEntry *search, gpointer data)

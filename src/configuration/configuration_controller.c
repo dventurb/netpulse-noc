@@ -15,6 +15,8 @@ void configuration_controller_init(configuration_controller_t *controller, confi
   controller->view = view;
   controller->app = (application_t *)data;
 
+  controller->selected_equipment = NULL;
+
   controller->search_text[0] = '\0';
 
   controller->pagination.page = 0;
@@ -71,6 +73,20 @@ void configuration_controller_reset_equipment_query(configuration_controller_t *
 void configuration_controller_start_equipment_query(configuration_controller_t *controller)
 {
   configuration_worker_start_equipment_query(controller); // Create new thread so the UI doesnt freeze
+}
+
+void configuration_controller_add(configuration_controller_t *controller, configuration_t new)
+{
+  if (controller->selected_equipment == NULL) return;
+
+  configuration_stack_t *stack = &controller->selected_equipment->data.configs;
+  equipment_list_t *list = &controller->app->equipments;
+
+  configuration_stack_push(stack, new);
+
+  //configuration_controller_start_query(controller);
+
+  save_equipments(list, "data/equipments.bin");
 }
 
 void configuration_controller_set_search(configuration_controller_t *controller, const char *text)
