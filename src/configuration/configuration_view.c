@@ -442,6 +442,8 @@ static void on_add_configuration_clicked(GtkButton *button, gpointer data)
 {
   configuration_view_t *view = (configuration_view_t *)data;
 
+  if (!configuration_controller_has_selected_equipment(view->controller)) return;
+
   view->form.layout = build_add_configuration_form(view);
 
   GtkWindow *window = GTK_WINDOW(gtk_widget_get_root(GTK_WIDGET(view->container)));

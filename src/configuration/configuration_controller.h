@@ -37,6 +37,9 @@ void configuration_controller_execute_equipment_query(configuration_controller_t
 void configuration_controller_reset_equipment_query(configuration_controller_t *controller);
 void configuration_controller_start_equipment_query(configuration_controller_t *controller);
 
+bool configuration_controller_has_selected_equipment(configuration_controller_t *controller);
+void configuration_controller_add(configuration_controller_t *controller, configuration_t new);
+
 void configuration_controller_set_search(configuration_controller_t *controller, const char *text);
 
 gboolean on_configuration_finish(gpointer data);

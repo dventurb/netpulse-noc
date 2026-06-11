@@ -75,9 +75,15 @@ void configuration_controller_start_equipment_query(configuration_controller_t *
   configuration_worker_start_equipment_query(controller); // Create new thread so the UI doesnt freeze
 }
 
+bool configuration_controller_has_selected_equipment(configuration_controller_t *controller)
+{
+  if (controller->selected_equipment == NULL) return false;
+  else return true;
+}
+
 void configuration_controller_add(configuration_controller_t *controller, configuration_t new)
 {
-  if (controller->selected_equipment == NULL) return;
+  if (!configuration_controller_has_selected_equipment(controller)) return;
 
   configuration_stack_t *stack = &controller->selected_equipment->data.configs;
   equipment_list_t *list = &controller->app->equipments;
