@@ -47,7 +47,7 @@ void configuration_controller_execute_equipment_query(configuration_controller_t
   {
     equipment_t *temp = malloc(sizeof(equipment_t));
     *temp = node->data;
-
+    
     task->result = temp;
     task->count = 1;
     task->total = 1;
@@ -79,10 +79,7 @@ void configuration_controller_start_equipment_query(configuration_controller_t *
 static void configuration_controller_execute_pagination(configuration_task_t *task, configuration_stack_t *stack)
 {
   task->total = configuration_get_count(stack);
-  printf("task->start: %d || task->end: %d \n\n", task->start, task->end);
-  printf("task->total: %d\n\n", task->total);
   task->result = configuration_stack_in_range(stack, task->start, task->end, &task->count);
-  printf("task->count: %d\n\n", task->count);
 }
 
 void configuration_controller_execute_config_query(configuration_controller_t *controller, configuration_task_t *task)
@@ -172,6 +169,14 @@ void configuration_controller_set_search(configuration_controller_t *controller,
   }
 
   configuration_controller_start_equipment_query(controller);
+}
+
+bool configuration_controller_is_top_stack(configuration_controller_t *controller, int number)
+{
+  if (!configuration_controller_has_selected_equipment(controller)) return false;
+  if(controller->selected_equipment->data.configs.top == NULL) return false;
+  if (number == controller->selected_equipment->data.configs.top->data.number) return true;
+  return false;
 }
 
 gboolean on_configuration_finish(gpointer data)

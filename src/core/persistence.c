@@ -16,11 +16,11 @@ void load_equipments(application_t *application, const char *filepath)
 
   while (fread(&data, sizeof(equipment_t), 1, file))
   {
-    configuration_stack_init(&data.configs);
-
-    load_configurations(&data, file);
-
     equipment_node_t *node = equipment_list_reinsert(list, data);
+
+    configuration_stack_init(&node->data.configs);
+
+    load_configurations(&node->data, file);
 
     char id[ID_MAX];
     equipment_format_id(node->data.id, id);
@@ -69,10 +69,9 @@ void load_configurations(equipment_t *equipment, FILE *file)
 
   for (int i = count - 1; i >= 0; i--)
   {
-    configuration_stack_push(&equipment->configs, temp[i]);
+    configuration_stack_repush(&equipment->configs, temp[i]);
   }
 
-  free(temp);
 }
 
 void save_equipments(equipment_list_t *list, const char *filepath)
@@ -83,6 +82,7 @@ void save_equipments(equipment_list_t *list, const char *filepath)
   if (file == NULL) return;
 
   equipment_node_t *node = list->head;
+
   while (node != NULL)
   {
     fwrite(&node->data, sizeof(equipment_t), 1, file);

@@ -1,5 +1,6 @@
 #include "configuration.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 
 void configuration_stack_init(configuration_stack_t *stack)
@@ -60,15 +61,22 @@ configuration_node_t *configuration_stack_pop(configuration_stack_t *stack)
   return node;
 }
 
-configuration_node_t *configuration_stack_peek(configuration_stack_t *stack)
+void configuration_stack_repush(configuration_stack_t *stack, configuration_t data)
 {
-  if (stack == NULL || stack->top == NULL)
+  configuration_node_t *new = malloc(sizeof(configuration_node_t));
+  if (new == NULL) 
   {
-    // TODO: Implement a log system (ex.: (datatime) [ERROR] configuration_stack_peek : NULL arguments)
-    return NULL;
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] configuration_stack_repush : malloc failed)
+    return;
   }
 
-  return stack->top;
+  new->data = data;
+  if (data.number >= stack->next_number) stack->next_number = data.number + 1;
+
+  new->next = stack->top;
+  stack->top = new;
+
+  stack->count++;
 }
 
 void configuration_stack_clone(configuration_stack_t *source, configuration_stack_t *destination)
@@ -79,26 +87,24 @@ void configuration_stack_clone(configuration_stack_t *source, configuration_stac
     return;
   }
 
-  if (source->count == 0 || source->top == NULL) return;
+  if (source->count == 0) return;
 
-  configuration_node_t *node = source->top;
-
-  configuration_t *temp = malloc(sizeof(configuration_t) * source->count);
+  configuration_t *temp = malloc(sizeof(configuration_t) *source->count);
   if (temp == NULL) return;
 
+  configuration_node_t *node = source->top;
   int i = 0;
+
   while (node != NULL && i < source->count)
   {
     temp[i] = node->data;
-    node = node->next;
     i++;
+    node = node->next;
   }
 
   for (int j = i - 1; j >= 0; j--) 
   {
-    configuration_stack_push(destination, temp[j]);
-    printf("command: %s\n\n", temp[j].command);
-    //destination->top->data.number = node->data.number; 
+    configuration_stack_repush(destination, temp[j]);
   }
 
   free(temp);
@@ -119,6 +125,7 @@ configuration_t *configuration_stack_in_range(configuration_stack_t *stack, int 
   if (configs == NULL) return NULL;
 
   configuration_node_t *node = stack->top;
+
   int i = 0;
 
   while (node != NULL && i < start)
@@ -127,16 +134,17 @@ configuration_t *configuration_stack_in_range(configuration_stack_t *stack, int 
     i++;
   }
 
+  int j = 0;
+
   while (node != NULL && i < end)
   {
-    int index = i - start;
-    configs[index] = node->data;
+    configs[j++] = node->data;
 
     node = node->next;
     i++;
   }
 
-  *count = i - start;
+  *count = j;
 
   return configs;
 }

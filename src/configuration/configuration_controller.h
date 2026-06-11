@@ -48,6 +48,8 @@ void configuration_controller_add(configuration_controller_t *controller, config
 
 void configuration_controller_set_search(configuration_controller_t *controller, const char *text);
 
+bool configuration_controller_is_top_stack(configuration_controller_t *controller, int number);
+
 gboolean on_configuration_finish(gpointer data);
 
 #endif

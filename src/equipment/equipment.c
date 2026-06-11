@@ -42,6 +42,26 @@ void equipment_list_destroy(equipment_list_t *list)
   list->next_id = 0;
 }
 
+void equipment_list_clear(equipment_list_t *list)
+{
+  if (list == NULL) return;
+
+  equipment_node_t *node = list->head;
+  
+  while (node != NULL)
+  {
+    equipment_node_t *next = node->next;
+
+    free(node);
+    node = next;
+  }
+
+  list->head = NULL;
+  list->tail = NULL;
+  list->count = 0;
+  list->next_id = 0;
+}
+
 equipment_node_t *equipment_list_insert(equipment_list_t *list, equipment_t data)
 {
   equipment_node_t *new = malloc(sizeof(equipment_node_t));
@@ -149,6 +169,10 @@ void equipment_list_clone(equipment_list_t *source, equipment_list_t *destinatio
   while (node != NULL) 
   {
     equipment_list_reinsert(destination, node->data);
+    
+    configuration_stack_init(&destination->tail->data.configs);
+    configuration_stack_clone(&node->data.configs, &destination->tail->data.configs);
+
     node = node->next;
   }
 }
@@ -174,24 +198,24 @@ equipment_t *equipment_list_in_range(equipment_list_t *list, int start, int end,
   }
 
   equipment_node_t *node = list->head;
-  int i = 0;
 
+  int i = 0;
   while (node != NULL && i < start)
   {
     node = node->next;
     i++;
   }
 
+  int j = 0;
   while (node != NULL && i < end)
   {
-    int index = i - start;
-    equipments[index] = node->data;
+    equipments[j++] = node->data;
 
     node = node->next;
     i++;
   }
 
-  *count = i - start;
+  *count = j;
   return equipments;
 }
 

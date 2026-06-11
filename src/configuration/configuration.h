@@ -27,7 +27,7 @@ void configuration_stack_destroy(configuration_stack_t *stack);
 
 void configuration_stack_push(configuration_stack_t *stack, configuration_t data);
 configuration_node_t *configuration_stack_pop(configuration_stack_t *stack);
-configuration_node_t *configuration_stack_peek(configuration_stack_t *stack);
+void configuration_stack_repush(configuration_stack_t *stack, configuration_t data);
 
 void configuration_stack_clone(configuration_stack_t *source, configuration_stack_t *destination);
 configuration_t *configuration_stack_in_range(configuration_stack_t *stack, int start, int end, int *count);

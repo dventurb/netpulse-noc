@@ -22,11 +22,11 @@ static GtkWidget *build_pagination_bar(configuration_view_t *view);
 
 static GtkWidget *build_config_table(configuration_view_t *view);
 static void build_config_table_header(GtkWidget *table);
-static void build_config_table_row(configuration_view_t *view, configuration_t sensor, int row);
+static void build_config_table_row(configuration_view_t *view, configuration_t config, int row);
 
 static GtkWidget *build_equipment_list(configuration_view_t *view);
-static void build_equipment_list_row(GtkWidget *list, equipment_t equipment);
-static GtkWidget *build_equipment_cell(equipment_t equipment);
+static void build_equipment_list_row(GtkWidget *list, equipment_t *equipment);
+static GtkWidget *build_equipment_cell(equipment_t *equipment);
 
 static GtkWidget *build_add_config_form(configuration_view_t *view);
 
@@ -121,7 +121,7 @@ void configuration_view_update_equipment_list(configuration_view_t *view, const 
 
   for (int i = 0; i < count; i++)
   {
-    build_equipment_list_row(GTK_WIDGET(view->list), equipments[i]);
+    build_equipment_list_row(GTK_WIDGET(view->list), &equipments[i]);
   }
 }
 
@@ -283,14 +283,14 @@ static GtkWidget *build_config_table(configuration_view_t *view)
   return box;
 }
 
-static void build_equipment_list_row(GtkWidget *list, equipment_t equipment)
+static void build_equipment_list_row(GtkWidget *list, equipment_t *equipment)
 {
   GtkWidget *item = build_equipment_cell(equipment);
 
   GtkWidget *row = gtk_list_box_row_new();
 
   char buffer[ID_MAX];
-  equipment_format_id(equipment.id, buffer);
+  equipment_format_id(equipment->id, buffer);
 
   char *equipment_id = strdup(buffer);
   g_object_set_data_full(G_OBJECT(row), DATA_EQUIPMENT_ID, equipment_id, free); // ownership + free automatic
@@ -301,13 +301,13 @@ static void build_equipment_list_row(GtkWidget *list, equipment_t equipment)
   gtk_list_box_append(GTK_LIST_BOX(list), row);
 }
 
-static GtkWidget *build_equipment_cell(equipment_t equipment) 
+static GtkWidget *build_equipment_cell(equipment_t *equipment) 
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
 
-  GtkWidget *image;
+  GtkWidget *image = NULL;
 
-  switch (equipment.status) 
+  switch (equipment->status) 
   {
     case STATUS_FAILED:
       image = gtk_image_new_from_file("assets/status-failed.svg");
@@ -321,6 +321,9 @@ static GtkWidget *build_equipment_cell(equipment_t equipment)
     case STATUS_DISABLED:
       image = gtk_image_new_from_file("assets/status-disabled.svg");
       break;
+    default:
+      image = gtk_image_new();
+      break;
   }
 
   gtk_image_set_pixel_size(GTK_IMAGE(image), 8);
@@ -328,12 +331,12 @@ static GtkWidget *build_equipment_cell(equipment_t equipment)
   GtkWidget *text_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
   gtk_widget_set_hexpand(text_box, TRUE);
 
-  GtkWidget *name = gtk_label_new(equipment.name);
+  GtkWidget *name = gtk_label_new(equipment->name);
   gtk_widget_set_halign(name, GTK_ALIGN_START);
   gtk_widget_add_css_class(name, "list-equipment-name");
 
   char buffer[ID_MAX];
-  equipment_format_id(equipment.id, buffer);
+  equipment_format_id(equipment->id, buffer);
 
   GtkWidget *id = gtk_label_new(buffer);
   gtk_widget_set_halign(id, GTK_ALIGN_START);
@@ -425,7 +428,11 @@ static void build_config_table_header(GtkWidget *table)
 
 static void build_config_table_row(configuration_view_t *view, configuration_t config, int row)
 {
-  const char *css_class = (row % 2 == 0) ? "table-row-even" : "table-row-odd";
+  bool is_top = configuration_controller_is_top_stack(view->controller, config.number);
+
+  const char *css_class = is_top ? "table-row-top" : ((row % 2 == 0) ? "table-row-even" : "table-row-odd");
+
+  const char *css_command = is_top ? "command-number-top" : "commmand-number";
  
   char number[NUMBER_MAX];
   snprintf(number, NUMBER_MAX, "%d", config.number);
@@ -433,8 +440,8 @@ static void build_config_table_row(configuration_view_t *view, configuration_t c
   char datetime[DATETIME_MAX];
   get_datetime(config.operated_at, datetime);
 
-  char name[100];
-  snprintf(name, 100, "-");
+  char name[STRING_MAX];
+  snprintf(name, STRING_MAX, "%s", config.technician_name);
 
   GtkWidget *columns[] = {
     create_table_cell(number, CELL_CODE_WIDTH),
@@ -444,8 +451,9 @@ static void build_config_table_row(configuration_view_t *view, configuration_t c
   };
 
   for (int i = 0; i < CONFIG_TABLE_COLUMN_COUNT; i++) {
-    
     gtk_widget_add_css_class(columns[i], css_class);
+    if (i == 0) gtk_widget_add_css_class(columns[i], css_command);
+
     gtk_widget_set_hexpand(columns[i], TRUE);
 
     gtk_grid_attach(view->table, columns[i], i, row, 1, 1);
@@ -491,7 +499,7 @@ static void on_add_config_form_submit(GtkButton *button, gpointer data)
   configuration_view_t *view = (configuration_view_t *)data;
 
   configuration_t new = {0};
-  new.technician_name[0] = '\0'; // TODO
+  snprintf(new.technician_name, STRING_MAX, "%s", "Ana Rocha"); // TODO: current_user
 
   GtkEntry *entry = view->form.entry_command;
   const char *text = gtk_editable_get_text(GTK_EDITABLE(entry));

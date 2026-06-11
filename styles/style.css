@@ -1016,3 +1016,19 @@
   font-weight: 400;
   color: #6b7280;
 }
+
+.command-number {
+  color: #888888;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.command-number-top {
+  color: #171717;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.table-row-top {
+  background-color: #f0fdf4;
+}
