@@ -31,9 +31,11 @@ typedef struct {
 
 void configuration_controller_init(configuration_controller_t *controller, configuration_view_t *view, void *data);
 
+void configuration_controller_execute_config_query(configuration_controller_t *controller, configuration_task_t *task);
+void configuration_controller_reset_config_query(configuration_controller_t *controller);
+void configuration_controller_start_config_query(configuration_controller_t *controller);
+
 void configuration_controller_execute_equipment_query(configuration_controller_t *controller, configuration_task_t *task);
-
-
 void configuration_controller_reset_equipment_query(configuration_controller_t *controller);
 void configuration_controller_start_equipment_query(configuration_controller_t *controller);
 

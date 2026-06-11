@@ -38,9 +38,12 @@ typedef struct configuration_view_t {
 GtkBox *configuration_view_create(configuration_view_t *view, configuration_controller_t *controller);
 
 void configuration_view_refresh(configuration_view_t *view);
-void configuration_view_update_table(configuration_view_t *view, configuration_t *configs, int count);
+void configuration_view_update(configuration_view_t *view);
+
+void configuration_view_update_cards(configuration_view_t *view);
+void configuration_view_set_actions_enabled(configuration_view_t *view, bool is_active);
+
+void configuration_view_update_config_table(configuration_view_t *view, const void *result, int count);
 void configuration_view_update_equipment_list(configuration_view_t *view, const void *result, int count);
-void configuration_view_update_header(configuration_view_t *view);
-void configuration_view_update_stats_cards(configuration_view_t *view);
 
 #endif

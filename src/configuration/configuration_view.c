@@ -20,19 +20,19 @@ static GtkWidget *build_header(configuration_view_t *view);
 static GtkWidget *build_stats_cards(configuration_view_t *view);
 static GtkWidget *build_pagination_bar(configuration_view_t *view);
 
-static GtkWidget *build_configuration_table(configuration_view_t *view);
-static void build_configuration_table_header(GtkWidget *table);
-static void build_configuration_table_row(configuration_view_t *view, configuration_t sensor, int row);
+static GtkWidget *build_config_table(configuration_view_t *view);
+static void build_config_table_header(GtkWidget *table);
+static void build_config_table_row(configuration_view_t *view, configuration_t sensor, int row);
 
 static GtkWidget *build_equipment_list(configuration_view_t *view);
 static void build_equipment_list_row(GtkWidget *list, equipment_t equipment);
 static GtkWidget *build_equipment_cell(equipment_t equipment);
 
-static GtkWidget *build_add_configuration_form(configuration_view_t *view);
+static GtkWidget *build_add_config_form(configuration_view_t *view);
 
 // Callbacks
-static void on_add_configuration_clicked(GtkButton *button, gpointer data);
-static void on_add_configuration_form_submit(GtkButton *button, gpointer data);
+static void on_add_config_clicked(GtkButton *button, gpointer data);
+static void on_add_config_form_submit(GtkButton *button, gpointer data);
 
 static void on_search_equipment_clicked(GtkSearchEntry *search, gpointer data);
 static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpointer data);
@@ -59,15 +59,16 @@ GtkBox *configuration_view_create(configuration_view_t *view, configuration_cont
 
 void configuration_view_refresh(configuration_view_t *view)
 {
-  //confguration_controller_reset_query(view->controller);
+  configuration_controller_reset_config_query(view->controller);
+  configuration_controller_reset_equipment_query(view->controller);
 }
 
 void configuration_view_update(configuration_view_t *view)
 {
-  //configuration_controller_start_query(view->controller);
+  configuration_controller_start_config_query(view->controller);
 }
 
-void configuration_view_update_stats_cards(configuration_view_t *view)
+void configuration_view_update_cards(configuration_view_t *view)
 {
   remove_all_children_from_widget(GTK_WIDGET(view->cards));
 
@@ -86,15 +87,17 @@ void configuration_view_update_stats_cards(configuration_view_t *view)
   gtk_box_append(view->cards, failure_card);
 }
 
-void configuration_view_update_table(configuration_view_t *view, configuration_t *configs, int count)
+void configuration_view_update_config_table(configuration_view_t *view, const void *result, int count)
 {
   remove_table_rows(GTK_WIDGET(view->table));
 
-  if (configs == NULL || count == 0) return;
+  if (result == NULL || count == 0) return;
+
+  configuration_t *configs = (configuration_t *)result;
 
   for (int i = 0; i < count; i++) 
   {
-    build_configuration_table_row(view, configs[i], i + 1);
+    build_config_table_row(view, configs[i], i + 1);
   }
 
   GtkWidget *parent = gtk_widget_get_parent(GTK_WIDGET(view->pagination_bar));
@@ -172,7 +175,7 @@ static GtkWidget *build_content(configuration_view_t *view)
 
   GtkWidget *header = build_header(view);
   view->cards = GTK_BOX(build_stats_cards(view));
-  GtkWidget *table = build_configuration_table(view);
+  GtkWidget *table = build_config_table(view);
 
   gtk_box_append(GTK_BOX(box), header);
   gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->cards));
@@ -197,7 +200,7 @@ static GtkWidget *build_header(configuration_view_t *view)
   //g_signal_connect(GTK_WIDGET(view->fetch_button), "clicked", G_CALLBACK(on_fetch_api_clicked), view);
 
   view->add_button = GTK_BUTTON(create_secondary_button("Add Configuration", "assets/icon-add.svg", "secondary-button"));
-  g_signal_connect(GTK_WIDGET(view->add_button), "clicked", G_CALLBACK(on_add_configuration_clicked), view);
+  g_signal_connect(GTK_WIDGET(view->add_button), "clicked", G_CALLBACK(on_add_config_clicked), view);
 
   gtk_box_append(GTK_BOX(box), title);
   gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->revert_button));
@@ -251,7 +254,7 @@ static GtkWidget *build_equipment_list(configuration_view_t *view)
   return box;
 }
 
-static GtkWidget *build_configuration_table(configuration_view_t *view)
+static GtkWidget *build_config_table(configuration_view_t *view)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_widget_add_css_class(box, "inventory");
@@ -268,14 +271,14 @@ static GtkWidget *build_configuration_table(configuration_view_t *view)
 
   gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(view->table));
 
-  build_configuration_table_header(GTK_WIDGET(view->table));
+  build_config_table_header(GTK_WIDGET(view->table));
 
   view->pagination_bar = GTK_BOX(build_pagination_bar(view));
 
   gtk_box_append(GTK_BOX(box), scrolled_window);
   gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->pagination_bar));
 
-  //configuration_controller_reset_query(view->controller);
+  configuration_controller_reset_config_query(view->controller);
 
   return box;
 }
@@ -345,7 +348,7 @@ static GtkWidget *build_equipment_cell(equipment_t equipment)
   return box;
 }
 
-static GtkWidget *build_add_configuration_form(configuration_view_t *view)
+static GtkWidget *build_add_config_form(configuration_view_t *view)
 {
   GtkWidget *grid = gtk_grid_new();
   gtk_widget_set_size_request(grid, 500, 268);
@@ -411,7 +414,7 @@ static GtkWidget *build_pagination_bar(configuration_view_t *view)
   return box;
 }
 
-static void build_configuration_table_header(GtkWidget *table)
+static void build_config_table_header(GtkWidget *table)
 {
   for (int i = 0; i < CONFIG_HEADER_COLUMN_COUNT; i++) {
     GtkWidget *header_col = create_table_header(headers[i], widths[i]);
@@ -420,18 +423,23 @@ static void build_configuration_table_header(GtkWidget *table)
   }
 }
 
-static void build_configuration_table_row(configuration_view_t *view, configuration_t sensor, int row)
+static void build_config_table_row(configuration_view_t *view, configuration_t config, int row)
 {
   const char *css_class = (row % 2 == 0) ? "table-row-even" : "table-row-odd";
- /* 
+ 
+  char number[NUMBER_MAX];
+  snprintf(number, NUMBER_MAX, "%d", config.number);
+
   char datetime[DATETIME_MAX];
-  get_datetime(sensor.read_at, datetime);
+  get_datetime(config.operated_at, datetime);
+
+  char name[100];
+  snprintf(name, 100, "-");
 
   GtkWidget *columns[] = {
-    create_table_cell(sensor.code, CELL_CODE_WIDTH),
-    create_table_cell(sensor.type, CELL_TYPE_WIDTH),
-    create_table_cell(value, CELL_VALUE_WIDTH),
-    build_status_cell(sensor.status),
+    create_table_cell(number, CELL_CODE_WIDTH),
+    create_table_cell(config.command, CELL_TYPE_WIDTH),
+    create_table_cell(name, CELL_VALUE_WIDTH),
     create_table_cell(datetime, CELL_READ_AT_WIDTH)
   };
 
@@ -442,16 +450,17 @@ static void build_configuration_table_row(configuration_view_t *view, configurat
 
     gtk_grid_attach(view->table, columns[i], i, row, 1, 1);
   }
-  */
 }
 
-static void on_add_configuration_clicked(GtkButton *button, gpointer data)
+static void on_add_config_clicked(GtkButton *button, gpointer data)
 {
+  (void)button; // unused 
+  
   configuration_view_t *view = (configuration_view_t *)data;
 
   if (!configuration_controller_has_selected_equipment(view->controller)) return;
 
-  view->form.layout = build_add_configuration_form(view);
+  view->form.layout = build_add_config_form(view);
 
   GtkWindow *window = GTK_WINDOW(gtk_widget_get_root(GTK_WIDGET(view->container)));
 
@@ -465,7 +474,7 @@ static void on_add_configuration_clicked(GtkButton *button, gpointer data)
       .label = "Apply Configuration",
       .icon = "assets/icon-add.svg",
       .css = "dialog-footer-add-button",
-      .callback = G_CALLBACK(on_add_configuration_form_submit),
+      .callback = G_CALLBACK(on_add_config_form_submit),
       .data = view
     }
   };
@@ -475,13 +484,14 @@ static void on_add_configuration_clicked(GtkButton *button, gpointer data)
   gtk_window_present(view->form.dialog);
 }
 
-static void on_add_configuration_form_submit(GtkButton *button, gpointer data)
+static void on_add_config_form_submit(GtkButton *button, gpointer data)
 {
   (void)button; // unused parameter
 
   configuration_view_t *view = (configuration_view_t *)data;
 
   configuration_t new = {0};
+  new.technician_name[0] = '\0'; // TODO
 
   GtkEntry *entry = view->form.entry_command;
   const char *text = gtk_editable_get_text(GTK_EDITABLE(entry));
@@ -518,6 +528,8 @@ static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpoi
   const char *equipment_id = g_object_get_data(G_OBJECT(row), DATA_EQUIPMENT_ID);
 
   configuration_controller_set_selected_equipment(view->controller, equipment_id);
+
+  configuration_view_update(view);
 }
 
 static void on_previous_page_clicked(GtkButton *button, gpointer data)

@@ -5,6 +5,7 @@
 void configuration_stack_init(configuration_stack_t *stack)
 {
   stack->top = NULL;
+  stack->next_number = 1;
   stack->count = 0;
 }
 
@@ -20,6 +21,7 @@ void configuration_stack_destroy(configuration_stack_t *stack)
   }
 
   stack->top = NULL;
+  stack->next_number = 0;
   stack->count = 0;
 }
 
@@ -33,6 +35,8 @@ void configuration_stack_push(configuration_stack_t *stack, configuration_t data
   }
 
   new->data = data;
+  new->data.number = stack->next_number++;
+  new->data.operated_at = time(NULL);
 
   new->next = stack->top;
   stack->top = new;
@@ -65,6 +69,76 @@ configuration_node_t *configuration_stack_peek(configuration_stack_t *stack)
   }
 
   return stack->top;
+}
+
+void configuration_stack_clone(configuration_stack_t *source, configuration_stack_t *destination)
+{
+  if (source == NULL || destination == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] configuration_stack_clone : NULL arguments)
+    return;
+  }
+
+  if (source->count == 0 || source->top == NULL) return;
+
+  configuration_node_t *node = source->top;
+
+  configuration_t *temp = malloc(sizeof(configuration_t) * source->count);
+  if (temp == NULL) return;
+
+  int i = 0;
+  while (node != NULL && i < source->count)
+  {
+    temp[i] = node->data;
+    node = node->next;
+    i++;
+  }
+
+  for (int j = i - 1; j >= 0; j--) 
+  {
+    configuration_stack_push(destination, temp[j]);
+    printf("command: %s\n\n", temp[j].command);
+    //destination->top->data.number = node->data.number; 
+  }
+
+  free(temp);
+}
+
+configuration_t *configuration_stack_in_range(configuration_stack_t *stack, int start, int end, int *count)
+{
+  if (stack == NULL || stack->count == 0)
+  {
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] configuration_stack_in_range : NULL argument)
+    return NULL;
+  }
+
+  int size = end - start;
+  if (size <= 0 || size > 6) return NULL;
+
+  configuration_t *configs = malloc(sizeof(configuration_t) * size);
+  if (configs == NULL) return NULL;
+
+  configuration_node_t *node = stack->top;
+  int i = 0;
+
+  while (node != NULL && i < start)
+  {
+    node = node->next;
+    i++;
+  }
+
+  while (node != NULL && i < end)
+  {
+    int index = i - start;
+    configs[index] = node->data;
+
+    node = node->next;
+    i++;
+  }
+
+  *count = i - start;
+
+  return configs;
 }
 
 int configuration_get_count(configuration_stack_t *stack)

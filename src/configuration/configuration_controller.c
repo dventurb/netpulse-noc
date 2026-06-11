@@ -21,7 +21,7 @@ void configuration_controller_init(configuration_controller_t *controller, confi
 
   controller->pagination.page = 0;
   controller->pagination.page_size = 6;
-  //controller->pagination.total = configuration_get_count(&controller->app->equipments.configs);
+  controller->pagination.total = 0; // blank table
 }
 
 void configuration_controller_execute_equipment_query(configuration_controller_t *controller, configuration_task_t *task)
@@ -65,6 +65,7 @@ void configuration_controller_execute_equipment_query(configuration_controller_t
 
 void configuration_controller_reset_equipment_query(configuration_controller_t *controller)
 {
+  controller->selected_equipment = NULL;
   controller->search_text[0] = '\0';
 
   configuration_worker_start_equipment_query(controller); // Create new thread so the UI doesnt freeze
@@ -73,6 +74,38 @@ void configuration_controller_reset_equipment_query(configuration_controller_t *
 void configuration_controller_start_equipment_query(configuration_controller_t *controller)
 {
   configuration_worker_start_equipment_query(controller); // Create new thread so the UI doesnt freeze
+}
+
+static void configuration_controller_execute_pagination(configuration_task_t *task, configuration_stack_t *stack)
+{
+  task->total = configuration_get_count(stack);
+  printf("task->start: %d || task->end: %d \n\n", task->start, task->end);
+  printf("task->total: %d\n\n", task->total);
+  task->result = configuration_stack_in_range(stack, task->start, task->end, &task->count);
+  printf("task->count: %d\n\n", task->count);
+}
+
+void configuration_controller_execute_config_query(configuration_controller_t *controller, configuration_task_t *task)
+{
+  configuration_stack_t *stack = &controller->selected_equipment->data.configs;
+
+  configuration_controller_execute_pagination(task, stack);
+
+  g_idle_add(on_configuration_finish, task);
+}
+
+void configuration_controller_reset_config_query(configuration_controller_t *controller)
+{
+  controller->pagination.page = 0;
+  controller->pagination.total = 0;
+
+  configuration_view_update_config_table(controller->view, NULL, 0); // blank table
+}
+
+void configuration_controller_start_config_query(configuration_controller_t *controller)
+{
+  if (!configuration_controller_has_selected_equipment(controller)) return;
+  else configuration_worker_start_config_query(controller); // Create new thread
 }
 
 void configuration_controller_set_selected_equipment(configuration_controller_t *controller, const char *id)
@@ -114,9 +147,9 @@ void configuration_controller_add(configuration_controller_t *controller, config
 
   configuration_stack_push(stack, new);
 
-  //configuration_controller_start_query(controller);
+  save_equipments(list, "data/equipments.bin"); // before create a new thread
 
-  save_equipments(list, "data/equipments.bin");
+  configuration_controller_start_config_query(controller);
 }
 
 void configuration_controller_set_search(configuration_controller_t *controller, const char *text)
@@ -148,9 +181,19 @@ gboolean on_configuration_finish(gpointer data)
   if (task->type == TASK_EQUIPMENT)
     configuration_view_update_equipment_list(task->controller->view, task->result, task->count);
 
-  else 
+  else if (task->type == TASK_CONFIGURATION)
   {
-    
+    task->controller->pagination.total = task->total;
+
+    int total_pages = pagination_total_pages(task->controller->pagination, task->total);
+
+    if (task->controller->pagination.page >= total_pages - 1)
+      task->controller->pagination.page = total_pages - 1;
+
+    if (task->controller->pagination.page < 0)
+      task->controller->pagination.page = 0;
+
+    configuration_view_update_config_table(task->controller->view, task->result, task->count);
   }
 
   free(task->result);
