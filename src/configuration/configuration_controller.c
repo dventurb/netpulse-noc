@@ -75,9 +75,33 @@ void configuration_controller_start_equipment_query(configuration_controller_t *
   configuration_worker_start_equipment_query(controller); // Create new thread so the UI doesnt freeze
 }
 
+void configuration_controller_set_selected_equipment(configuration_controller_t *controller, const char *id)
+{
+  if (id == NULL) return;
+
+  hashmap_t *id_index = &controller->app->id_index;
+
+  equipment_node_t *node = (equipment_node_t *)hashmap_get(id_index, id);
+  if (node == NULL) return;
+
+  controller->selected_equipment = node;
+}
+
 bool configuration_controller_has_selected_equipment(configuration_controller_t *controller)
 {
   if (controller->selected_equipment == NULL) return false;
+  else return true;
+}
+
+equipment_t *configuration_controller_get_selected_equipment(configuration_controller_t *controller)
+{
+  if (!configuration_controller_has_selected_equipment(controller)) return NULL;
+  return &controller->selected_equipment->data;
+}
+
+bool configuration_controller_validate(configuration_t new)
+{
+  if (strlen(new.command) <= 1 || strlen(new.command) >= COMMAND_MAX) return false;
   else return true;
 }
 

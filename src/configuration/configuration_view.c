@@ -9,6 +9,8 @@
 static const char* const headers[] = { "#", "COMMAND", "TECHNICIAN", "DATE/TIME" };
 static const int widths[] = { CELL_CODE_WIDTH, CELL_TYPE_WIDTH, CELL_VALUE_WIDTH, CELL_STATUS_WIDTH };
 
+static const char* const DATA_EQUIPMENT_ID = "equipment-id";
+
 static const int CONFIG_HEADER_COLUMN_COUNT = 4;
 static const int CONFIG_TABLE_COLUMN_COUNT = 4;
 
@@ -33,6 +35,7 @@ static void on_add_configuration_clicked(GtkButton *button, gpointer data);
 static void on_add_configuration_form_submit(GtkButton *button, gpointer data);
 
 static void on_search_equipment_clicked(GtkSearchEntry *search, gpointer data);
+static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpointer data);
 
 static void on_previous_page_clicked(GtkButton *button, gpointer data);
 static void on_next_page_clicked(GtkButton *button, gpointer data);
@@ -91,7 +94,6 @@ void configuration_view_update_table(configuration_view_t *view, configuration_t
 
   for (int i = 0; i < count; i++) 
   {
-    printf("count: %d\n\n", count);
     build_configuration_table_row(view, configs[i], i + 1);
   }
 
@@ -238,7 +240,7 @@ static GtkWidget *build_equipment_list(configuration_view_t *view)
   gtk_widget_add_css_class(scrolled_window, "table-scroll");
 
   view->list = GTK_LIST_BOX(gtk_list_box_new());
-  //g_signal_connect(GTK_WIDGET(view->list), "row-selected", G_CALLBACK(on_equipment_row_selected), view);
+  g_signal_connect(GTK_WIDGET(view->list), "row-selected", G_CALLBACK(on_equipment_row_selected), view);
 
   gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(view->list));
 
@@ -283,6 +285,12 @@ static void build_equipment_list_row(GtkWidget *list, equipment_t equipment)
   GtkWidget *item = build_equipment_cell(equipment);
 
   GtkWidget *row = gtk_list_box_row_new();
+
+  char buffer[ID_MAX];
+  equipment_format_id(equipment.id, buffer);
+
+  char *equipment_id = strdup(buffer);
+  g_object_set_data_full(G_OBJECT(row), DATA_EQUIPMENT_ID, equipment_id, free); // ownership + free automatic
 
   gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), item);
   gtk_widget_add_css_class(row, "list-equipment-item");
@@ -349,12 +357,11 @@ static GtkWidget *build_add_configuration_form(configuration_view_t *view)
   gtk_grid_set_row_spacing(GTK_GRID(grid), 24);
   gtk_widget_add_css_class(grid, "dialog-form");
 
-  view->form.entry_equipment = GTK_ENTRY(create_text_field(grid, "EQUIPMENT", NULL, 0, 0));
+  equipment_t *equipment = configuration_controller_get_selected_equipment(view->controller);
+
+  view->form.entry_equipment = GTK_ENTRY(create_text_field(grid, "EQUIPMENT", equipment->name, 0, 0));
   gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_equipment), "form-entry-disabled");
   gtk_editable_set_editable(GTK_EDITABLE(view->form.entry_equipment), FALSE);
-
-  //char name[STRING_MAX];
-  // configuration_controller_get_selected_equipment_name(view->controller, name);
 
   view->form.entry_command = GTK_ENTRY(create_text_field(grid, "CONFIGURATION COMMAND", "e.g. interface gigabitethernet 0/1",  1, 0));
   gtk_entry_set_max_length(view->form.entry_command, COMMAND_MAX - 1);
@@ -474,11 +481,17 @@ static void on_add_configuration_form_submit(GtkButton *button, gpointer data)
 
   configuration_view_t *view = (configuration_view_t *)data;
 
-  configuration_t new;
+  configuration_t new = {0};
 
   GtkEntry *entry = view->form.entry_command;
   const char *text = gtk_editable_get_text(GTK_EDITABLE(entry));
   snprintf(new.command, COMMAND_MAX, "%s", text);
+
+  if (!configuration_controller_validate(new))
+  {
+    gtk_widget_add_css_class(GTK_WIDGET(entry), "form-entry-error");
+    return;
+  }
 
   configuration_controller_add(view->controller, new);
 
@@ -492,6 +505,19 @@ static void on_search_equipment_clicked(GtkSearchEntry *search, gpointer data)
   const char *text = gtk_editable_get_text(GTK_EDITABLE(search));
 
   configuration_controller_set_search(view->controller, text);
+}
+
+static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpointer data)
+{
+  (void)list; // unused 
+
+  if (row == NULL) return;
+  
+  configuration_view_t *view = (configuration_view_t *)data;
+
+  const char *equipment_id = g_object_get_data(G_OBJECT(row), DATA_EQUIPMENT_ID);
+
+  configuration_controller_set_selected_equipment(view->controller, equipment_id);
 }
 
 static void on_previous_page_clicked(GtkButton *button, gpointer data)

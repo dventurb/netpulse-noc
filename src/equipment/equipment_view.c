@@ -677,7 +677,7 @@ static void on_add_form_submit(GtkButton *button, gpointer data)
   
   equipment_view_t *view = (equipment_view_t *) data;
 
-  equipment_t new;
+  equipment_t new = {0};
 
   form_field_t fields[] = {
     { "entry-name", new.name },
@@ -734,7 +734,7 @@ static void on_edit_form_submit(GtkButton *button, gpointer data)
   
   equipment_view_t *view = (equipment_view_t *) data;
 
-  equipment_t update_equipment;
+  equipment_t update_equipment = {0};
 
   form_field_t fields[] = {
     { "entry-name", update_equipment.name },
