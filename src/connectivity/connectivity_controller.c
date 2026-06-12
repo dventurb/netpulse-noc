@@ -132,30 +132,6 @@ void connectivity_controller_set_ip_from_source(connectivity_controller_t *contr
   }
 }
 
-static incident_priority_t incident_controller_get_priority(equipment_type_t type)
-{
-  switch (type)
-  {
-    case TYPE_ROUTER: 
-    case TYPE_FIREWALL:
-    case TYPE_SERVER:
-      return PRIORITY_CRITICAL;
-
-    case TYPE_SWITCH:
-    case TYPE_NAS:
-    case TYPE_UPS:
-      return PRIORITY_HIGH;
-
-    case TYPE_ACCESS_POINT:
-    case TYPE_IP_CAMERA:
-    case TYPE_PRINTER:
-    case TYPE_OTHER:
-      return PRIORITY_MEDIUM;
-    default:
-      return PRIORITY_LOW;
-  }
-}
-
 void connectivity_controller_create_incident(connectivity_controller_t *controller, const equipment_t *equipment)
 {
   incident_queue_t *queue = &controller->app->incidents_pending;
@@ -171,7 +147,7 @@ void connectivity_controller_create_incident(connectivity_controller_t *controll
 
   snprintf(new.technician_name, STRING_MAX, "%s", "TODO: current_user");
 
-  new.priority = incident_controller_get_priority(equipment->type);
+  new.priority = incident_get_priority(SOURCE_EQUIPMENT, equipment->type);
 
   incident_queue_enqueue(queue, new);
 

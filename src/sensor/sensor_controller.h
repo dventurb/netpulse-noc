@@ -48,6 +48,9 @@ void sensor_controller_execute_file_import(sensor_controller_t *controller, sens
 void sensor_controller_request_api_import(sensor_controller_t *controller);
 void sensor_controller_execute_api_import(sensor_controller_t *controller, sensor_task_t *task);
 
+
+void sensor_controller_create_incident(sensor_controller_t *controller, const sensor_t *sensor);
+
 void sensor_controller_get_stats(sensor_controller_t *controller, sensor_stats_t *stats);
 
 gboolean on_sensor_finish(gpointer data);

@@ -6,7 +6,7 @@
 #define DESCRIPTION_MAX 200
 #define COMMAND_MAX 300 
 
-#define ID_MAX 15 // "EQ-xxx" : (10 digits + '\0')
+#define ID_MAX 14 // "EQ-xxx" : (10 digits + '\0')
 #define CODE_MAX 30 // ex.: TEMP_RACK 
 #define NUMBER_MAX 11 // 10 digits + '\0' (always positive int)
 

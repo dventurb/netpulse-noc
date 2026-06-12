@@ -1,5 +1,8 @@
 #include "incident.h"
 
+#include "equipment.h"
+#include "sensor.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -500,33 +503,27 @@ incident_t *incident_in_range(incident_queue_t *queue, incident_list_t *list, in
     return NULL;
   }
 
-  incident_node_t *node = queue->front;
+  incident_node_t *node = queue->front; // Queue : INCIDENT_PENDING
 
   int i = 0;
   int j = 0;
 
   while (node != NULL && i < end)
   {
-    if (i >= start)
-    {
-      incidents[j] = node->data;
-      j++;
-    }
+    if (i++ >= start)
+      incidents[j++] = node->data;
+    
     node = node->next;
-    i++;
   }
 
-  node = list->head;
+  node = list->head; // Linked List : INCIDENT_IN_PROGRESS && INCIDENT_CONCLUDED
 
   while (node != NULL && i < end)
   {
-    if (i >= start)
-    {
-      incidents[j] = node->data;
-      j++;
-    }
+    if (i++ >= start)
+      incidents[j++] = node->data;
+    
     node = node->next;
-    i++;
   }
 
   *count = j;
@@ -557,7 +554,6 @@ int incident_list_get_number_status(incident_list_t *list, incident_status_t sta
   while (node != NULL)
   {
     if (node->data.status == status) i++;
-
     node = node->next;
   }
 
@@ -573,6 +569,29 @@ void incident_format_position(int position, char *buffer)
 {
   if (position != 0) snprintf(buffer, 12, "%d", position);
   else strcpy(buffer, "-");
+}
+
+incident_priority_t incident_get_priority(incident_source_t source, int num_enum)
+{
+  if (source == SOURCE_EQUIPMENT)
+    switch (num_enum)
+    {
+      case TYPE_ROUTER: case TYPE_FIREWALL: case TYPE_SERVER:
+        return PRIORITY_CRITICAL;
+      case TYPE_SWITCH: case TYPE_NAS: case TYPE_UPS:
+        return PRIORITY_HIGH;
+      case TYPE_ACCESS_POINT: case TYPE_IP_CAMERA: case TYPE_PRINTER: case TYPE_OTHER:
+        return PRIORITY_MEDIUM;
+      default: return PRIORITY_LOW;
+    } 
+  else 
+    switch (num_enum)
+    {
+      case SENSOR_WARNING: return PRIORITY_MEDIUM;
+      case SENSOR_CRITICAL: return PRIORITY_HIGH;
+      case SENSOR_NET_FAILURE: return PRIORITY_CRITICAL;
+      default: return PRIORITY_LOW; 
+    }
 }
 
 const char *incident_priority_to_string(incident_priority_t priority)

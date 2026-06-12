@@ -24,7 +24,7 @@ typedef enum {
 
 typedef struct {
   int number; // TODO: Maybe change the number to a char (ex.: INC-xxx)
-  char source_id[STRING_MAX];
+  char source_id[CODE_MAX]; // Equipment ID = 14 bytes && Sensor Code = 30 Bytes
   incident_source_t source_type;
   char type[STRING_MAX];
   char description[DESCRIPTION_MAX];
@@ -92,6 +92,8 @@ int incident_list_get_number_status(incident_list_t *list, incident_status_t sta
 
 void incident_format_id(int id, char *buffer);
 void incident_format_position(int position, char *buffer);
+
+incident_priority_t incident_get_priority(incident_source_t source, int num_enum);
 
 const char *incident_priority_to_string(incident_priority_t priority);
 const char *incident_status_to_string(incident_status_t status);

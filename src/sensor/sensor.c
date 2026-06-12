@@ -220,6 +220,7 @@ sensor_status_t sensor_string_to_status(const char *string)
   if (strcmp(string, "AVISO") == 0) return SENSOR_WARNING;
   if (strcmp(string, "CRITICO") == 0) return SENSOR_CRITICAL;
   if (strcmp(string, "FALHA_REDE") == 0) return SENSOR_NET_FAILURE;
+  else return SENSOR_WARNING;
 }
 
 const char *sensor_status_to_string(sensor_status_t status)

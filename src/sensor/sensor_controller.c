@@ -142,7 +142,12 @@ void sensor_controller_execute_file_import(sensor_controller_t *controller, sens
     sensor_t sensor = sensor_create_from_line(buffer);
 
     if (sensor_validate(sensor) == true)
+    {
       sensor_list_insert(list, sensor);
+
+      if (sensor.status != SENSOR_OK)
+        sensor_controller_create_incident(controller, &sensor);
+    }
   }
 
   fclose(file);
@@ -180,12 +185,56 @@ void sensor_controller_execute_api_import(sensor_controller_t *controller, senso
     sensor_t sensor = sensor_create_from_line(buffer);
 
     if (sensor_validate(sensor) == true)
+    {
       sensor_list_insert(list, sensor);
+      
+      if (sensor.status != SENSOR_OK)
+        sensor_controller_create_incident(controller, &sensor);
+    }
   }
 
   pclose(file);
 
   sensor_controller_execute_query(controller, task);
+}
+
+void sensor_controller_create_incident(sensor_controller_t *controller, const sensor_t *sensor)
+{
+  incident_queue_t *queue = &controller->app->incidents_pending;
+  incident_list_t *list = &controller->app->incidents_history;
+
+  incident_t new;
+
+  new.source_type = SOURCE_SENSOR;
+  snprintf(new.source_id, CODE_MAX, "%s", sensor->code);
+
+  switch (sensor->status) 
+  {
+    case SENSOR_WARNING:
+      snprintf(new.type, STRING_MAX, "%s", "Warning");
+      snprintf(new.description, DESCRIPTION_MAX, "Sensor [%s] is passing safe limits.", sensor->code);
+      break;
+
+    case SENSOR_CRITICAL:
+      snprintf(new.type, STRING_MAX, "%s", "Critical");
+      snprintf(new.description, DESCRIPTION_MAX, "Sensor [%s] hit critical levels.", sensor->code);
+      break;
+
+    case SENSOR_NET_FAILURE:
+      snprintf(new.type, STRING_MAX, "%s", "Network Down");
+      snprintf(new.description, DESCRIPTION_MAX, "Sensor [%s] did not respond.", sensor->code);
+      break;
+
+    default: return;
+  }
+
+  snprintf(new.technician_name, STRING_MAX, "%s", "TODO: current_user");
+
+  new.priority = incident_get_priority(SOURCE_SENSOR, sensor->status);
+
+  incident_queue_enqueue(queue, new);
+
+  save_incidents(queue, list, "data/incidents.bin");
 }
 
 void sensor_controller_get_stats(sensor_controller_t *controller, sensor_stats_t *stats)
