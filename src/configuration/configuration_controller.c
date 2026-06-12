@@ -154,9 +154,18 @@ void configuration_controller_execute_revert(configuration_controller_t *control
   task->count = 0;
   task->result = configuration_stack_in_range(stack, 0, stack->count, &task->total);
 
-  save_equipments(list, "data/equipments.bin");
+  while (stack->top != NULL)
+    configuration_stack_pop(stack);
 
+  for (int i = task->total - 1; i >= 0; i--)
+  {
+    configuration_t *config = (configuration_t *)task->result;
+    configuration_stack_repush(stack, config[i]);
+  }
+  
   g_timeout_add(250, on_configuration_revert, task);
+
+  save_equipments(list, "data/equipments.bin");
 }
 
 void configuration_controller_start_revert(configuration_controller_t *controller)
