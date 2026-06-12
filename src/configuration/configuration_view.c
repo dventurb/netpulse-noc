@@ -642,6 +642,10 @@ static void on_clear_history_clicked(GtkButton *button, gpointer data)
   configuration_view_t *view = (configuration_view_t *)data;
 
   if (!configuration_controller_has_selected_equipment(view->controller)) return;
+  
+  equipment_t *selected_equipment = configuration_controller_get_selected_equipment(view->controller);
+
+  if (selected_equipment->configs.top == NULL) return;
 
   view->form.layout = build_clear_history_form(view);
 
