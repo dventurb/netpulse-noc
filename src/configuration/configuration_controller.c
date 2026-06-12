@@ -124,8 +124,8 @@ void configuration_controller_execute_clear(configuration_controller_t *controll
   configuration_stack_t *stack = &controller->selected_equipment->data.configs;
   equipment_list_t *list = &controller->app->equipments;
 
-  while (stack->top != NULL)
-    configuration_stack_pop(stack);
+  configuration_stack_destroy(stack);
+  configuration_stack_init(stack);
 
   save_equipments(list, "data/equipments.bin");
 
@@ -147,25 +147,18 @@ void configuration_controller_start_clear(configuration_controller_t *controller
 void configuration_controller_execute_revert(configuration_controller_t *controller, configuration_task_t *task)
 {
   configuration_stack_t *stack = &controller->selected_equipment->data.configs;
-  equipment_list_t *list = &controller->app->equipments;
 
   if (stack->top != NULL) configuration_stack_pop(stack);
 
   task->count = 0;
   task->result = configuration_stack_in_range(stack, 0, stack->count, &task->total);
 
-  while (stack->top != NULL)
-    configuration_stack_pop(stack);
+  configuration_stack_destroy(stack); // destroy all config nodes
+  configuration_stack_init(stack);  // rebuild again
 
-  for (int i = task->total - 1; i >= 0; i--)
-  {
-    configuration_t *config = (configuration_t *)task->result;
-    configuration_stack_repush(stack, config[i]);
-  }
-  
-  g_timeout_add(250, on_configuration_revert, task);
+  task->controller->pagination.total = task->total;
 
-  save_equipments(list, "data/equipments.bin");
+  g_timeout_add(250, on_configuration_revert, task); // then repush the old data
 }
 
 void configuration_controller_start_revert(configuration_controller_t *controller)
@@ -271,27 +264,34 @@ gboolean on_configuration_revert(gpointer data)
 {
   configuration_task_t *task = (configuration_task_t *)data;
 
-  task->count++;
-  printf("task->count: %d\n\n", task->count);
-  printf("task->total: %d\n\n", task->total);
+  configuration_stack_t *stack = &task->controller->selected_equipment->data.configs;
+  equipment_list_t *list = &task->controller->app->equipments;
 
-  if (task->count > task->total)
-    task->count = task->total;
+  configuration_t *configs = (configuration_t *)task->result;
 
-  int start = 0;
-  if (task->count > 6)
-    start = task->count - 6;
-
-  printf("start: %d\n\n", start);
-
-  configuration_view_update_config_table(task->controller->view, &task->result[start], (task->count - start));
-
-  if (task->count >= task->total)
+  if (task->total == 0)
+    configuration_view_update_config_table(task->controller->view, NULL, 0); // blank table
+  if (task->count++ < task->total)
   {
-    free(task->result);
-    free(task);
-    return false; // end
+    int i = task->total - task->count;
+    configuration_stack_repush(stack, configs[i]);
+
+    int start = 0;
+    if (task->count > 6)
+      start = task->count - 6;
+
+    printf("%s\n", configs[i].command);
+    printf("count: %d | total: %d | start: %d | i: %d\n\n", task->count, task->total, start, i);
+
+    configuration_view_update_config_table(task->controller->view, &configs[i], (task->count - start));
+
+    return true; // continue until task->count == task->total
   }
 
-  return true; // continue until task->count == task->total
+  save_equipments(list, "data/equipments.bin");
+
+  free(task->result);
+  free(task);
+
+  return false;
 }
