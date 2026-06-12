@@ -3,7 +3,6 @@
 #include "utils.h"
 #include "ui_widgets.h"
 #include "macros.h"
-#include "ui_macros.h"
 #include "pagination.h"
 
 static const char* const filter_status[] = { "All", "OK", "Warning", "Critical", "Network Failure", NULL };

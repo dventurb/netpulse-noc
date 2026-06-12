@@ -3,7 +3,6 @@
 #include "utils.h"
 #include "ui_widgets.h"
 #include "macros.h"
-#include "ui_macros.h"
 #include "pagination.h"
 
 // TODO: look for better way
@@ -12,7 +11,7 @@ static const char* const incident_type[] = { "Equipment", "Sensor", NULL };
 static const char* const filter_status[] = { "All", "Pending", "In Progress", "Concluded", NULL };
 static const char* const filter_priority[] = { "All", "Low", "Medium", "High", "Critical", NULL };
 static const char* const headers[] = { "ID", "QUEUE", "SOURCE", "TYPE", "DESCRIPTION", "PRIORITY", "STATUS", "TECHNICIAN", "CREATED", "CONCLUDED"};
-static const int widths[] = { CELL_ID_WIDTH, CELL_QUEUE_WIDTH, CELL_SOURCE_WIDTH, CELL_TYPE_WIDTH, CELL_DESCRIPTION_WIDTH, CELL_PRIORITY_WIDTH, CELL_STATUS_WIDTH, CELL_TECHNICIAN_WIDTH, CELL_CREATED_WIDTH, CELL_CONCLUDED_WIDTH };
+static const int widths[] = { CELL_NUMBER_WIDTH, CELL_QUEUE_WIDTH, CELL_SOURCE_WIDTH, CELL_TYPE_WIDTH, CELL_DESCRIPTION_WIDTH, CELL_PRIORITY_WIDTH, CELL_STATUS_WIDTH, CELL_TECHNICIAN_WIDTH, CELL_CREATED_WIDTH, CELL_CONCLUDED_WIDTH };
 
 static const char* DATA_INCIDENT = "incident-id";
 

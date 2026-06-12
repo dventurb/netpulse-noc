@@ -3,11 +3,10 @@
 #include "utils.h"
 #include "ui_widgets.h"
 #include "macros.h"
-#include "ui_macros.h"
 #include "pagination.h"
 
 static const char* const headers[] = { "#", "COMMAND", "TECHNICIAN", "DATE/TIME" };
-static const int widths[] = { CELL_CODE_WIDTH, CELL_TYPE_WIDTH, CELL_VALUE_WIDTH, CELL_STATUS_WIDTH };
+static const int widths[] = { CELL_NUMBER_WIDTH, CELL_TYPE_WIDTH, CELL_VALUE_WIDTH, CELL_STATUS_WIDTH };
 
 static const char* const DATA_EQUIPMENT_ID = "equipment-id";
 

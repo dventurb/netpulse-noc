@@ -3,7 +3,6 @@
 #include "utils.h"
 #include "ui_widgets.h"
 #include "macros.h"
-#include "ui_macros.h"
 
 static const char* DATA_IP_ADDRESS = "equipment-ip";
 

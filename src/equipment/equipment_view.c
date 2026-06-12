@@ -3,7 +3,6 @@
 #include "utils.h"
 #include "ui_widgets.h"
 #include "macros.h"
-#include "ui_macros.h"
 #include "pagination.h"
 
 // TODO: look for better way
