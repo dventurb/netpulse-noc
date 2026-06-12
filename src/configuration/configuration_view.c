@@ -25,14 +25,21 @@ static void build_config_table_header(GtkWidget *table);
 static void build_config_table_row(configuration_view_t *view, configuration_t config, int row);
 
 static GtkWidget *build_equipment_list(configuration_view_t *view);
-static void build_equipment_list_row(GtkWidget *list, equipment_t *equipment);
-static GtkWidget *build_equipment_cell(equipment_t *equipment);
+static void build_equipment_list_row(GtkWidget *list, equipment_t equipment);
 
 static GtkWidget *build_add_config_form(configuration_view_t *view);
+static GtkWidget *build_clear_history_form(configuration_view_t *view);
+
+static GtkWidget *build_equipment_cell(equipment_t equipment);
+static GtkWidget *build_summary_card(equipment_t equipment);
+static GtkWidget *build_status_cell(equipment_status_t status);
 
 // Callbacks
 static void on_add_config_clicked(GtkButton *button, gpointer data);
+static void on_clear_history_clicked(GtkButton *button, gpointer data);
+
 static void on_add_config_form_submit(GtkButton *button, gpointer data);
+static void on_clear_history_form_submit(GtkButton *button, gpointer data);
 
 static void on_search_equipment_clicked(GtkSearchEntry *search, gpointer data);
 static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpointer data);
@@ -121,7 +128,7 @@ void configuration_view_update_equipment_list(configuration_view_t *view, const 
 
   for (int i = 0; i < count; i++)
   {
-    build_equipment_list_row(GTK_WIDGET(view->list), &equipments[i]);
+    build_equipment_list_row(GTK_WIDGET(view->list), equipments[i]);
   }
 }
 
@@ -197,7 +204,7 @@ static GtkWidget *build_header(configuration_view_t *view)
   //g_signal_connect(GTK_WIDGET(view->import_button), "clicked", G_CALLBACK(on_import_sensors_clicked), view);
 
   view->clear_button = GTK_BUTTON(create_secondary_button("Clear History", "assets/icon-clear.svg", "clear-button"));
-  //g_signal_connect(GTK_WIDGET(view->fetch_button), "clicked", G_CALLBACK(on_fetch_api_clicked), view);
+  g_signal_connect(GTK_WIDGET(view->clear_button), "clicked", G_CALLBACK(on_clear_history_clicked), view);
 
   view->add_button = GTK_BUTTON(create_secondary_button("Add Configuration", "assets/icon-add.svg", "secondary-button"));
   g_signal_connect(GTK_WIDGET(view->add_button), "clicked", G_CALLBACK(on_add_config_clicked), view);
@@ -283,14 +290,14 @@ static GtkWidget *build_config_table(configuration_view_t *view)
   return box;
 }
 
-static void build_equipment_list_row(GtkWidget *list, equipment_t *equipment)
+static void build_equipment_list_row(GtkWidget *list, equipment_t equipment)
 {
   GtkWidget *item = build_equipment_cell(equipment);
 
   GtkWidget *row = gtk_list_box_row_new();
 
   char buffer[ID_MAX];
-  equipment_format_id(equipment->id, buffer);
+  equipment_format_id(equipment.id, buffer);
 
   char *equipment_id = strdup(buffer);
   g_object_set_data_full(G_OBJECT(row), DATA_EQUIPMENT_ID, equipment_id, free); // ownership + free automatic
@@ -299,80 +306,6 @@ static void build_equipment_list_row(GtkWidget *list, equipment_t *equipment)
   gtk_widget_add_css_class(row, "list-equipment-item");
 
   gtk_list_box_append(GTK_LIST_BOX(list), row);
-}
-
-static GtkWidget *build_equipment_cell(equipment_t *equipment) 
-{
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
-
-  GtkWidget *image = NULL;
-
-  switch (equipment->status) 
-  {
-    case STATUS_FAILED:
-      image = gtk_image_new_from_file("assets/status-failed.svg");
-      break;
-    case STATUS_MAINTENANCE:
-      image = gtk_image_new_from_file("assets/status-maintenance.svg");
-      break;
-    case STATUS_OPERATIONAL:
-      image = gtk_image_new_from_file("assets/status-operational.svg");
-      break;
-    case STATUS_DISABLED:
-      image = gtk_image_new_from_file("assets/status-disabled.svg");
-      break;
-    default:
-      image = gtk_image_new();
-      break;
-  }
-
-  gtk_image_set_pixel_size(GTK_IMAGE(image), 8);
-
-  GtkWidget *text_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
-  gtk_widget_set_hexpand(text_box, TRUE);
-
-  GtkWidget *name = gtk_label_new(equipment->name);
-  gtk_widget_set_halign(name, GTK_ALIGN_START);
-  gtk_widget_add_css_class(name, "list-equipment-name");
-
-  char buffer[ID_MAX];
-  equipment_format_id(equipment->id, buffer);
-
-  GtkWidget *id = gtk_label_new(buffer);
-  gtk_widget_set_halign(id, GTK_ALIGN_START);
-  gtk_widget_add_css_class(id, "list-equipment-id");
-
-  gtk_box_append(GTK_BOX(text_box), name);
-  gtk_box_append(GTK_BOX(text_box), id);
-
-  gtk_box_append(GTK_BOX(box), text_box);
-  gtk_box_append(GTK_BOX(box), image);
-
-  return box;
-}
-
-static GtkWidget *build_add_config_form(configuration_view_t *view)
-{
-  GtkWidget *grid = gtk_grid_new();
-  gtk_widget_set_size_request(grid, 500, 268);
-  gtk_widget_set_margin_start(grid, 24);
-  gtk_widget_set_margin_end(grid, 24);
-  gtk_widget_set_margin_top(grid, 24);
-  gtk_widget_set_margin_bottom(grid, 40);
-  gtk_grid_set_column_spacing(GTK_GRID(grid), 24);
-  gtk_grid_set_row_spacing(GTK_GRID(grid), 24);
-  gtk_widget_add_css_class(grid, "dialog-form");
-
-  equipment_t *equipment = configuration_controller_get_selected_equipment(view->controller);
-
-  view->form.entry_equipment = GTK_ENTRY(create_text_field(grid, "EQUIPMENT", equipment->name, 0, 0));
-  gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_equipment), "form-entry-disabled");
-  gtk_editable_set_editable(GTK_EDITABLE(view->form.entry_equipment), FALSE);
-
-  view->form.entry_command = GTK_ENTRY(create_text_field(grid, "CONFIGURATION COMMAND", "e.g. interface gigabitethernet 0/1",  1, 0));
-  gtk_entry_set_max_length(view->form.entry_command, COMMAND_MAX - 1);
-
-  return grid;
 }
 
 static GtkWidget *build_pagination_bar(configuration_view_t *view)
@@ -460,6 +393,215 @@ static void build_config_table_row(configuration_view_t *view, configuration_t c
   }
 }
 
+static GtkWidget *build_equipment_cell(equipment_t equipment) 
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
+
+  GtkWidget *image = NULL;
+
+  switch (equipment.status) 
+  {
+    case STATUS_FAILED:
+      image = gtk_image_new_from_file("assets/status-failed.svg");
+      break;
+    case STATUS_MAINTENANCE:
+      image = gtk_image_new_from_file("assets/status-maintenance.svg");
+      break;
+    case STATUS_OPERATIONAL:
+      image = gtk_image_new_from_file("assets/status-operational.svg");
+      break;
+    case STATUS_DISABLED:
+      image = gtk_image_new_from_file("assets/status-disabled.svg");
+      break;
+  }
+
+  gtk_image_set_pixel_size(GTK_IMAGE(image), 8);
+
+  GtkWidget *text_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+  gtk_widget_set_hexpand(text_box, TRUE);
+
+  GtkWidget *name = gtk_label_new(equipment.name);
+  gtk_widget_set_halign(name, GTK_ALIGN_START);
+  gtk_widget_add_css_class(name, "list-equipment-name");
+
+  char buffer[ID_MAX];
+  equipment_format_id(equipment.id, buffer);
+
+  GtkWidget *id = gtk_label_new(buffer);
+  gtk_widget_set_halign(id, GTK_ALIGN_START);
+  gtk_widget_add_css_class(id, "list-equipment-id");
+
+  gtk_box_append(GTK_BOX(text_box), name);
+  gtk_box_append(GTK_BOX(text_box), id);
+
+  gtk_box_append(GTK_BOX(box), text_box);
+  gtk_box_append(GTK_BOX(box), image);
+
+  return box;
+}
+
+static GtkWidget *build_add_config_form(configuration_view_t *view)
+{
+  GtkWidget *grid = gtk_grid_new();
+  gtk_widget_set_size_request(grid, 500, 268);
+  gtk_widget_set_margin_start(grid, 24);
+  gtk_widget_set_margin_end(grid, 24);
+  gtk_widget_set_margin_top(grid, 24);
+  gtk_widget_set_margin_bottom(grid, 40);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 24);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 24);
+  gtk_widget_add_css_class(grid, "dialog-form");
+
+  equipment_t *equipment = configuration_controller_get_selected_equipment(view->controller);
+
+  view->form.entry_equipment = GTK_ENTRY(create_text_field(grid, "EQUIPMENT", equipment->name, 0, 0));
+  gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_equipment), "form-entry-disabled");
+  gtk_editable_set_editable(GTK_EDITABLE(view->form.entry_equipment), FALSE);
+
+  view->form.entry_command = GTK_ENTRY(create_text_field(grid, "CONFIGURATION COMMAND", "e.g. interface gigabitethernet 0/1",  1, 0));
+  gtk_entry_set_max_length(view->form.entry_command, COMMAND_MAX - 1);
+
+  return grid;
+}
+
+static GtkWidget *build_clear_history_form(configuration_view_t *view)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
+  gtk_widget_set_size_request(box, 500, 268);
+  gtk_widget_set_margin_top(box, 24);
+  gtk_widget_set_margin_bottom(box, 24);
+  gtk_widget_set_margin_start(box, 24);
+  gtk_widget_set_margin_end(box, 24);
+  gtk_widget_add_css_class(box, "dialog-form");
+
+  GtkWidget *image = create_alert_icon();
+
+  GtkWidget *primary_label = create_remove_primary_label("Are you sure you want to clear all configuration history?");
+
+  int count = configuration_get_count(&view->controller->selected_equipment->data.configs);
+  char name[STRING_MAX];
+  snprintf(name, STRING_MAX, "%s", view->controller->selected_equipment->data.name);
+
+  char warning[DESCRIPTION_MAX];
+  snprintf(warning, DESCRIPTION_MAX, "This will permanently remove all %d commands from %s.\n This cannot be undone.", count, name);
+
+  GtkWidget *secundary_label = create_remove_secundary_label(warning);
+
+  GtkWidget *summary_box = build_summary_card(view->controller->selected_equipment->data);
+
+  gtk_box_append(GTK_BOX(box), image);
+  gtk_box_append(GTK_BOX(box), primary_label);
+  gtk_box_append(GTK_BOX(box), secundary_label);
+  gtk_box_append(GTK_BOX(box), summary_box);
+
+  return box;
+}
+
+static GtkWidget *build_summary_card(equipment_t equipment)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_widget_add_css_class(box, "equipment-summary-card");
+  
+  GtkWidget *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+
+  GtkWidget *left = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_widget_set_hexpand(left, TRUE);
+  gtk_widget_set_halign(left, GTK_ALIGN_START);
+
+  char id[ID_MAX + 4];
+  snprintf(id, ID_MAX + 4, "ID: EQ-%03d", equipment.id);
+  
+  GtkWidget *id_label = gtk_label_new(id);
+  gtk_label_set_xalign(GTK_LABEL(id_label), 0.0);
+  gtk_widget_add_css_class(id_label, "equipment-summary-id");
+
+  GtkWidget *name_label = gtk_label_new(equipment.name);
+  gtk_label_set_xalign(GTK_LABEL(name_label), 0.0);
+  gtk_widget_add_css_class(name_label, "equipment-summary-name");
+
+  gtk_box_append(GTK_BOX(left), id_label);
+  gtk_box_append(GTK_BOX(left), name_label);
+
+  GtkWidget *status = build_status_cell(equipment.status);
+  gtk_widget_set_halign(status, GTK_ALIGN_END);
+  gtk_widget_remove_css_class(status, "table-cell");
+
+  gtk_box_append(GTK_BOX(header), left);
+  gtk_box_append(GTK_BOX(header), status);
+  
+  GtkWidget *grid = gtk_grid_new();
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 8);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 12);
+
+  char type[STRING_MAX];
+  snprintf(type, STRING_MAX, "%s", equipment_type_to_string(equipment.type));
+
+  GtkWidget *type_box = create_summary_detail("Type:", type);
+  gtk_widget_set_hexpand(type_box, TRUE);
+  gtk_widget_set_halign(type_box, GTK_ALIGN_START);
+
+  GtkWidget *ip_box = create_summary_detail("IP:", equipment.ip_address);
+
+  GtkWidget *location_box = create_summary_detail("Location:", equipment.location);
+  gtk_widget_set_hexpand(location_box, TRUE);
+  gtk_widget_set_halign(location_box, GTK_ALIGN_START);
+ 
+  GtkWidget *mac_box = create_summary_detail("MAC:", equipment.mac_address);
+
+  gtk_grid_attach(GTK_GRID(grid), type_box, 0, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), ip_box, 1, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), location_box, 0, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), mac_box, 1, 1, 1, 1);
+
+  gtk_box_append(GTK_BOX(box), header);
+  gtk_box_append(GTK_BOX(box), grid);
+
+  return box;
+}
+
+static GtkWidget *build_status_cell(equipment_status_t status)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_widget_add_css_class(box, "table-cell");
+  gtk_widget_add_css_class(box, "status-cell");
+
+  GtkWidget *border, *label, *image;
+
+  border = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  gtk_widget_add_css_class(border, "status-badge");
+
+  label = gtk_label_new(equipment_status_to_string(status));
+  gtk_widget_add_css_class(label, "status-label");
+
+  switch (status) 
+  {
+    case STATUS_FAILED:
+      image = gtk_image_new_from_file("assets/status-failed.svg");
+      gtk_widget_add_css_class(border, "status-failed");
+      break;
+    case STATUS_MAINTENANCE:
+      image = gtk_image_new_from_file("assets/status-maintenance.svg");
+      gtk_widget_add_css_class(border, "status-maintenance");
+      break;
+    case STATUS_OPERATIONAL:
+      image = gtk_image_new_from_file("assets/status-operational.svg");
+      gtk_widget_add_css_class(border, "status-operational");
+      break;
+    case STATUS_DISABLED:
+      image = gtk_image_new_from_file("assets/status-disabled.svg");
+      gtk_widget_add_css_class(border, "status-disabled");
+      break;
+  }
+
+  gtk_image_set_pixel_size(GTK_IMAGE(image), 6);
+
+  gtk_box_append(GTK_BOX(box), border);
+  gtk_box_append(GTK_BOX(border), image);
+  gtk_box_append(GTK_BOX(border), label);
+
+  return box;
+}
+
 static void on_add_config_clicked(GtkButton *button, gpointer data)
 {
   (void)button; // unused 
@@ -492,6 +634,39 @@ static void on_add_config_clicked(GtkButton *button, gpointer data)
   gtk_window_present(view->form.dialog);
 }
 
+static void on_clear_history_clicked(GtkButton *button, gpointer data)
+{
+  (void)button; // unused
+
+  configuration_view_t *view = (configuration_view_t *)data;
+
+  if (!configuration_controller_has_selected_equipment(view->controller)) return;
+
+  view->form.layout = build_clear_history_form(view);
+
+  GtkWindow *window = GTK_WINDOW(gtk_widget_get_root(GTK_WIDGET(view->container)));
+
+  dialog_config_t config =
+  {
+    .window = GTK_WIDGET(window),
+    .form = view->form.layout,
+    .title = "Clear Configuration History",
+    .dialog_action = 
+    {
+      .label = "Clear History",
+      .icon = "assets/icon-clear.svg",
+      .css = "clear-button",
+      .callback = G_CALLBACK(on_clear_history_form_submit),
+      .data = view
+    }
+  };
+
+  view->form.dialog = GTK_WINDOW(create_dialog_window(config));
+
+  gtk_window_present(view->form.dialog);
+
+}
+
 static void on_add_config_form_submit(GtkButton *button, gpointer data)
 {
   (void)button; // unused parameter
@@ -512,6 +687,17 @@ static void on_add_config_form_submit(GtkButton *button, gpointer data)
   }
 
   configuration_controller_add(view->controller, new);
+
+  gtk_window_destroy(view->form.dialog);
+}
+
+static void on_clear_history_form_submit(GtkButton *button, gpointer data)
+{
+  (void)button; // unused parameter
+
+  configuration_view_t *view = (configuration_view_t *)data;
+
+  configuration_controller_start_remove(view->controller);
 
   gtk_window_destroy(view->form.dialog);
 }

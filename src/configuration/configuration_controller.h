@@ -44,7 +44,11 @@ bool configuration_controller_has_selected_equipment(configuration_controller_t 
 equipment_t *configuration_controller_get_selected_equipment(configuration_controller_t *controller);
 
 bool configuration_controller_validate(configuration_t new);
+
 void configuration_controller_add(configuration_controller_t *controller, configuration_t new);
+
+void configuration_controller_execute_remove(configuration_controller_t *controller, configuration_task_t *task);
+void configuration_controller_start_remove(configuration_controller_t *controller);
 
 void configuration_controller_set_search(configuration_controller_t *controller, const char *text);
 

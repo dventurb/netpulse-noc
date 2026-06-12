@@ -149,6 +149,30 @@ void configuration_controller_add(configuration_controller_t *controller, config
   configuration_controller_start_config_query(controller);
 }
 
+void configuration_controller_execute_remove(configuration_controller_t *controller, configuration_task_t *task)
+{
+  configuration_stack_t *stack = &task->controller->selected_equipment->data.configs;
+  equipment_list_t *list = &task->controller->app->equipments;
+
+  while (stack->top != NULL)
+    configuration_stack_pop(stack);
+
+  save_equipments(list, "data/equipments.bin");
+
+  configuration_controller_execute_config_query(controller, task);
+}
+
+void configuration_controller_start_remove(configuration_controller_t *controller)
+{
+  if (!configuration_controller_has_selected_equipment(controller)) return;
+
+  configuration_stack_t *stack = &controller->selected_equipment->data.configs;
+
+  if (stack->top == NULL) return;
+
+  configuration_worker_remove(controller);
+}
+
 void configuration_controller_set_search(configuration_controller_t *controller, const char *text)
 {
   if (text == NULL) return;

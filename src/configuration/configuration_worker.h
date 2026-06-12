@@ -25,5 +25,6 @@ typedef struct configuration_task_t {
 
 void configuration_worker_start_equipment_query(configuration_controller_t *controller);
 void configuration_worker_start_config_query(configuration_controller_t *controller);
+void configuration_worker_remove(configuration_controller_t *controller);
 
 #endif
