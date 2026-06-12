@@ -232,6 +232,12 @@ bool configuration_controller_is_top_stack(configuration_controller_t *controlle
   return false;
 }
 
+void configuration_controller_get_stats(configuration_controller_t *controller, configuration_stats_t *stats)
+{
+  if (!configuration_controller_has_selected_equipment(controller)) return;
+  stats->total = configuration_get_count(&controller->selected_equipment->data.configs);
+}
+
 gboolean on_configuration_finish(gpointer data)
 {
   configuration_task_t *task = (configuration_task_t *)data;

@@ -26,6 +26,7 @@ typedef struct {
 
 typedef struct {
   int total;
+  int last;
   int technicians;
 } configuration_stats_t;
 
@@ -57,6 +58,8 @@ equipment_t *configuration_controller_get_selected_equipment(configuration_contr
 bool configuration_controller_validate(configuration_t new);
 
 bool configuration_controller_is_top_stack(configuration_controller_t *controller, int number);
+
+void configuration_controller_get_stats(configuration_controller_t *controller, configuration_stats_t *stats);
 
 gboolean on_configuration_finish(gpointer data);
 gboolean on_configuration_revert(gpointer data);

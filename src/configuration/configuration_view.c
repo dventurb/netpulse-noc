@@ -80,19 +80,17 @@ void configuration_view_update_cards(configuration_view_t *view)
 {
   remove_all_children_from_widget(GTK_WIDGET(view->cards));
 
-  //sensor_stats_t stats = {0};
+  configuration_stats_t stats = {0};
 
-  //configuration_controller_get_stats(view->controller, &stats);
+  configuration_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *total_card = create_stats_card("Total Sensors", 0, "default-card");
-  GtkWidget *ok_card = create_stats_card("OK", 0, "operational-card");
-  GtkWidget *warning_card = create_stats_card("Warning + Critical", 0, "maintenance-card");
-  GtkWidget *failure_card = create_stats_card("Network Failures", 0, "failed-card");
+  GtkWidget *total_card = create_stats_card("TOTAL COMMANDS", stats.total, "default-card");
+  GtkWidget *last_card = create_stats_card("LAST UPDATED", stats.last, "default-card");
+  GtkWidget *technicians_card = create_stats_card("TECHNICIANS", stats.technicians, "default-card");
 
   gtk_box_append(view->cards, total_card);
-  gtk_box_append(view->cards, ok_card);
-  gtk_box_append(view->cards, warning_card);
-  gtk_box_append(view->cards, failure_card);
+  gtk_box_append(view->cards, last_card);
+  gtk_box_append(view->cards, technicians_card);
 }
 
 void configuration_view_update_config_table(configuration_view_t *view, const void *result, int count)
@@ -223,19 +221,17 @@ static GtkWidget *build_stats_cards(configuration_view_t *view)
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
   gtk_widget_set_hexpand(box, TRUE);
 
-  //configuration_stats_t stats = {0};
+  configuration_stats_t stats = {0};
 
-  //configuration_controller_get_stats(view->controller, &stats);
+  configuration_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *total_card = create_stats_card("Total Sensors", 0, "default-card");
-  GtkWidget *ok_card = create_stats_card("OK", 0, "operational-card");
-  GtkWidget *warning_card = create_stats_card("Warning + Critical", 0, "maintenance-card");
-  GtkWidget *failure_card = create_stats_card("Network Failures", 0, "failed-card");
+  GtkWidget *total_card = create_stats_card("TOTAL COMMANDS", stats.total, "default-card");
+  GtkWidget *last_card = create_stats_card("LAST UPDATED", stats.last, "default-card");
+  GtkWidget *technicians_card = create_stats_card("TECHNICIANS", stats.technicians, "default-card");
 
   gtk_box_append(GTK_BOX(box), total_card);
-  gtk_box_append(GTK_BOX(box), ok_card);
-  gtk_box_append(GTK_BOX(box), warning_card);
-  gtk_box_append(GTK_BOX(box), failure_card);
+  gtk_box_append(GTK_BOX(box), last_card);
+  gtk_box_append(GTK_BOX(box), technicians_card);  
 
   return box;
 }
