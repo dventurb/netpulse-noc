@@ -280,8 +280,6 @@ static GtkWidget *build_pagination_bar(incident_view_t *view)
   int start, end;
 
   pagination_get_range(view->controller->pagination, &start, &end);
-  printf("start: %d | end: %d\n\n", start, end);
-  printf("total: %d\n\n", view->controller->pagination.total);
 
   for (int i = start; i <= end; i++) 
   {

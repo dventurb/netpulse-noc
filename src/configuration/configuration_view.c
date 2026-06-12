@@ -37,6 +37,7 @@ static GtkWidget *build_status_cell(equipment_status_t status);
 // Callbacks
 static void on_add_config_clicked(GtkButton *button, gpointer data);
 static void on_clear_history_clicked(GtkButton *button, gpointer data);
+static void on_revert_last_clicked(GtkButton *button, gpointer data);
 
 static void on_add_config_form_submit(GtkButton *button, gpointer data);
 static void on_clear_history_form_submit(GtkButton *button, gpointer data);
@@ -201,7 +202,7 @@ static GtkWidget *build_header(configuration_view_t *view)
   gtk_widget_set_halign(title, GTK_ALIGN_START);
 
   view->revert_button = GTK_BUTTON(create_secondary_button("Revert Last", "assets/icon-revert.svg", "revert-button"));
-  //g_signal_connect(GTK_WIDGET(view->import_button), "clicked", G_CALLBACK(on_import_sensors_clicked), view);
+  g_signal_connect(GTK_WIDGET(view->revert_button), "clicked", G_CALLBACK(on_revert_last_clicked), view);
 
   view->clear_button = GTK_BUTTON(create_secondary_button("Clear History", "assets/icon-clear.svg", "clear-button"));
   g_signal_connect(GTK_WIDGET(view->clear_button), "clicked", G_CALLBACK(on_clear_history_clicked), view);
@@ -667,6 +668,30 @@ static void on_clear_history_clicked(GtkButton *button, gpointer data)
 
 }
 
+static void on_search_equipment_clicked(GtkSearchEntry *search, gpointer data)
+{
+  configuration_view_t *view = (configuration_view_t *)data;
+
+  const char *text = gtk_editable_get_text(GTK_EDITABLE(search));
+
+  configuration_controller_set_search(view->controller, text);
+}
+
+static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpointer data)
+{
+  (void)list; // unused 
+
+  if (row == NULL) return;
+  
+  configuration_view_t *view = (configuration_view_t *)data;
+
+  const char *equipment_id = g_object_get_data(G_OBJECT(row), DATA_EQUIPMENT_ID);
+
+  configuration_controller_set_selected_equipment(view->controller, equipment_id);
+
+  configuration_view_update(view);
+}
+
 static void on_add_config_form_submit(GtkButton *button, gpointer data)
 {
   (void)button; // unused parameter
@@ -697,33 +722,18 @@ static void on_clear_history_form_submit(GtkButton *button, gpointer data)
 
   configuration_view_t *view = (configuration_view_t *)data;
 
-  configuration_controller_start_remove(view->controller);
+  configuration_controller_start_clear(view->controller);
 
   gtk_window_destroy(view->form.dialog);
 }
 
-static void on_search_equipment_clicked(GtkSearchEntry *search, gpointer data)
+static void on_revert_last_clicked(GtkButton *button, gpointer data)
 {
+  (void)button; // unused parameter
+
   configuration_view_t *view = (configuration_view_t *)data;
 
-  const char *text = gtk_editable_get_text(GTK_EDITABLE(search));
-
-  configuration_controller_set_search(view->controller, text);
-}
-
-static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpointer data)
-{
-  (void)list; // unused 
-
-  if (row == NULL) return;
-  
-  configuration_view_t *view = (configuration_view_t *)data;
-
-  const char *equipment_id = g_object_get_data(G_OBJECT(row), DATA_EQUIPMENT_ID);
-
-  configuration_controller_set_selected_equipment(view->controller, equipment_id);
-
-  configuration_view_update(view);
+  configuration_controller_start_revert(view->controller);
 }
 
 static void on_previous_page_clicked(GtkButton *button, gpointer data)

@@ -119,7 +119,7 @@ configuration_t *configuration_stack_in_range(configuration_stack_t *stack, int 
   }
 
   int size = end - start;
-  if (size <= 0 || size > 6) return NULL;
+  if (size <= 0) return NULL;
 
   configuration_t *configs = malloc(sizeof(configuration_t) * size);
   if (configs == NULL) return NULL;

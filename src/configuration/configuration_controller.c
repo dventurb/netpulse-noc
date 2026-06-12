@@ -105,6 +105,93 @@ void configuration_controller_start_config_query(configuration_controller_t *con
   else configuration_worker_start_config_query(controller); // Create new thread
 }
 
+void configuration_controller_add(configuration_controller_t *controller, configuration_t new)
+{
+  if (!configuration_controller_has_selected_equipment(controller)) return;
+
+  configuration_stack_t *stack = &controller->selected_equipment->data.configs;
+  equipment_list_t *list = &controller->app->equipments;
+
+  configuration_stack_push(stack, new); // O(1) - There is no problem insert in the main thread
+
+  save_equipments(list, "data/equipments.bin"); // TODO: But I need a new thread for this one
+
+  configuration_controller_start_config_query(controller);
+}
+
+void configuration_controller_execute_clear(configuration_controller_t *controller, configuration_task_t *task)
+{
+  configuration_stack_t *stack = &controller->selected_equipment->data.configs;
+  equipment_list_t *list = &controller->app->equipments;
+
+  while (stack->top != NULL)
+    configuration_stack_pop(stack);
+
+  save_equipments(list, "data/equipments.bin");
+
+  configuration_controller_execute_config_query(controller, task);
+}
+
+void configuration_controller_start_clear(configuration_controller_t *controller)
+{
+  if (!configuration_controller_has_selected_equipment(controller)) return;
+
+  configuration_stack_t *stack = &controller->selected_equipment->data.configs;
+
+  if (stack->top == NULL) return;
+
+  configuration_worker_clear(controller);
+}
+
+// This is just a revert animation, I have to copy the configs data to a temp array, destroy the nodes in the orginal stack, and then push them again the configs data from total->count - 1 to 0.
+void configuration_controller_execute_revert(configuration_controller_t *controller, configuration_task_t *task)
+{
+  configuration_stack_t *stack = &controller->selected_equipment->data.configs;
+  equipment_list_t *list = &controller->app->equipments;
+
+  if (stack->top != NULL) configuration_stack_pop(stack);
+
+  task->count = 0;
+  task->result = configuration_stack_in_range(stack, 0, stack->count, &task->total);
+
+  save_equipments(list, "data/equipments.bin");
+
+  g_timeout_add(250, on_configuration_revert, task);
+}
+
+void configuration_controller_start_revert(configuration_controller_t *controller)
+{
+  if (!configuration_controller_has_selected_equipment(controller)) return;
+
+  configuration_stack_t *stack = &controller->selected_equipment->data.configs;
+
+  if (stack->top == NULL) return;
+
+  controller->pagination.page = 0;
+
+  configuration_worker_revert(controller);
+}
+
+void configuration_controller_set_search(configuration_controller_t *controller, const char *text)
+{
+  if (text == NULL) return;
+
+  char buffer[strlen(text) + 1];
+  convert_to_uppercase(text, buffer);
+
+  switch (detect_search_type(buffer)) 
+  {
+    case SEARCH_EQUIPMENT_ID: case SEARCH_IP: case SEARCH_MAC:
+      snprintf(controller->search_text, STRING_MAX, "%s", buffer);
+      break;
+    default:
+      controller->search_text[0] = '\0';
+      break;
+  }
+
+  configuration_controller_start_equipment_query(controller);
+}
+
 void configuration_controller_set_selected_equipment(configuration_controller_t *controller, const char *id)
 {
   if (id == NULL) return;
@@ -133,66 +220,6 @@ bool configuration_controller_validate(configuration_t new)
 {
   if (strlen(new.command) <= 1 || strlen(new.command) >= COMMAND_MAX) return false;
   else return true;
-}
-
-void configuration_controller_add(configuration_controller_t *controller, configuration_t new)
-{
-  if (!configuration_controller_has_selected_equipment(controller)) return;
-
-  configuration_stack_t *stack = &controller->selected_equipment->data.configs;
-  equipment_list_t *list = &controller->app->equipments;
-
-  configuration_stack_push(stack, new);
-
-  save_equipments(list, "data/equipments.bin"); // before create a new thread
-
-  configuration_controller_start_config_query(controller);
-}
-
-void configuration_controller_execute_remove(configuration_controller_t *controller, configuration_task_t *task)
-{
-  configuration_stack_t *stack = &task->controller->selected_equipment->data.configs;
-  equipment_list_t *list = &task->controller->app->equipments;
-
-  while (stack->top != NULL)
-    configuration_stack_pop(stack);
-
-  save_equipments(list, "data/equipments.bin");
-
-  configuration_controller_execute_config_query(controller, task);
-}
-
-void configuration_controller_start_remove(configuration_controller_t *controller)
-{
-  if (!configuration_controller_has_selected_equipment(controller)) return;
-
-  configuration_stack_t *stack = &controller->selected_equipment->data.configs;
-
-  if (stack->top == NULL) return;
-
-  configuration_worker_remove(controller);
-}
-
-void configuration_controller_set_search(configuration_controller_t *controller, const char *text)
-{
-  if (text == NULL) return;
-
-  char buffer[strlen(text) + 1];
-  convert_to_uppercase(text, buffer);
-
-  switch (detect_search_type(buffer)) 
-  {
-    case SEARCH_EQUIPMENT_ID:
-    case SEARCH_IP:
-    case SEARCH_MAC:
-      snprintf(controller->search_text, STRING_MAX, "%s", buffer);
-      break;
-    default:
-      controller->search_text[0] = '\0';
-      break;
-  }
-
-  configuration_controller_start_equipment_query(controller);
 }
 
 bool configuration_controller_is_top_stack(configuration_controller_t *controller, int number)
@@ -229,4 +256,33 @@ gboolean on_configuration_finish(gpointer data)
   free(task);
 
   return false;
+}
+
+gboolean on_configuration_revert(gpointer data)
+{
+  configuration_task_t *task = (configuration_task_t *)data;
+
+  task->count++;
+  printf("task->count: %d\n\n", task->count);
+  printf("task->total: %d\n\n", task->total);
+
+  if (task->count > task->total)
+    task->count = task->total;
+
+  int start = 0;
+  if (task->count > 6)
+    start = task->count - 6;
+
+  printf("start: %d\n\n", start);
+
+  configuration_view_update_config_table(task->controller->view, &task->result[start], (task->count - start));
+
+  if (task->count >= task->total)
+  {
+    free(task->result);
+    free(task);
+    return false; // end
+  }
+
+  return true; // continue until task->count == task->total
 }

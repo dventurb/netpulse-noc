@@ -22,11 +22,20 @@ static void *configuration_thread_config_query(void *data)
   return NULL;
 }
 
-static void *configuration_thread_remove(void *data)
+static void *configuration_thread_clear(void *data)
 {
   configuration_task_t *task = (configuration_task_t *)data;
 
-  configuration_controller_execute_remove(task->controller, task);
+  configuration_controller_execute_clear(task->controller, task);
+
+  return NULL;
+}
+
+static void *configuration_thread_revert(void *data)
+{
+  configuration_task_t *task = (configuration_task_t *)data;
+
+  configuration_controller_execute_revert(task->controller, task);
 
   return NULL;
 }
@@ -75,7 +84,7 @@ void configuration_worker_start_config_query(configuration_controller_t *control
   pthread_detach(thread);
 }
 
-void configuration_worker_remove(configuration_controller_t *controller)
+void configuration_worker_clear(configuration_controller_t *controller)
 {
   configuration_task_t *task = malloc(sizeof(configuration_task_t));
   if (task == NULL) return;
@@ -92,6 +101,27 @@ void configuration_worker_remove(configuration_controller_t *controller)
   task->total = 0;
 
   pthread_t thread;
-  pthread_create(&thread, NULL, configuration_thread_remove, task);
+  pthread_create(&thread, NULL, configuration_thread_clear, task);
+  pthread_detach(thread);
+}
+
+void configuration_worker_revert(configuration_controller_t *controller)
+{
+  configuration_task_t *task = malloc(sizeof(configuration_task_t));
+  if (task == NULL) return;
+
+  task->controller = controller;
+
+  task->type = TASK_CONFIGURATION;
+
+  task->start = pagination_start(controller->pagination);
+  task->end = pagination_end(controller->pagination);
+
+  task->result = NULL;
+  task->count = 0;
+  task->total = 0;
+
+  pthread_t thread;
+  pthread_create(&thread, NULL, configuration_thread_revert, task);
   pthread_detach(thread);
 }
