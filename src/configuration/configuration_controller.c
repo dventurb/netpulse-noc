@@ -162,7 +162,7 @@ void configuration_controller_execute_revert(configuration_controller_t *control
 
   save_equipments(list);
 
-  int timeout = 2500 / task->total;
+  int timeout = 2500 / (task->total ? task->total : 1);
   if (timeout > 250) timeout = 250;
   if (timeout < 16) timeout = 16; 
 
@@ -274,21 +274,40 @@ gboolean on_configuration_finish(gpointer data)
   return false;
 }
 
+/*
+ *
+|    Total    |  items_per_iter  |  Steps  |  Timeout  |  Real Time |
+| ----------- | ---------------- | ------- | --------- | ---------- |
+|   1         |       1          |   1     |     250   |   0,25 sec |
+|   10        |       1          |   10    |     250   |   2,5 sec  |
+|   100       |       1          |   100   |     25    |   2,5 sec  |
+|   1000      |       10         |   100   |     16    |   1,6 sec  |
+|   10000     |       100        |   100   |     16    |   1,6 sec  |
+|   100000    |       1000       |   100   |     16    |   1,6 sec  |
+|   1000000   |       10000      |   100   |     16    |   1,6 sec  |
+*
+*/
 gboolean on_configuration_revert(gpointer data)
 {
   configuration_task_t *task = (configuration_task_t *)data;
-
   configuration_t *configs = (configuration_t *)task->result;
+  
+  int page_size = task->controller->pagination.page_size;
+
+  int items_per_iter = task->total / 100;
+  if (items_per_iter < 1) items_per_iter = 1;
 
   if (task->total == 0)
     configuration_view_update_config_table(task->controller->view, NULL, 0); // blank table
-  if (task->count++ < task->total)
+  if (task->count < task->total)
   {
+    task->count += items_per_iter;
+    if (task->count > task->total) task->count = task->total;
+
     int i = task->total - task->count;
 
     int start = 0;
-    if (task->count > 6)
-      start = task->count - 6;
+    if (task->count > page_size) start = task->count - page_size;
 
     configuration_view_update_config_table(task->controller->view, &configs[i], (task->count - start));
 
