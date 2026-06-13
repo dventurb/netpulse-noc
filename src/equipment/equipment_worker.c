@@ -23,10 +23,10 @@ static void *equipment_task_thread(void *data)
         equipment_list_sort_by_status(list);
         break;
       case 2:
-        equipment_list_sort_by_location(list);
+        equipment_list_sort_by_type(list);
         break;
       case 3:
-        equipment_list_sort_by_type(list);
+        equipment_list_sort_by_location(list);
         break;
     }
 
