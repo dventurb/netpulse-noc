@@ -3,7 +3,10 @@
 
 #include "configuration.h"
 #include "macros.h"
+#include "hashmap.h"
+
 #include <time.h>
+#include <stdbool.h>
 
 typedef enum {
   TYPE_ROUTER,
@@ -75,6 +78,9 @@ void equipment_update_last_check(equipment_t *equipment);
 void equipment_filter(const equipment_list_t *list, equipment_status_t status, equipment_type_t type, equipment_list_t *filtered);
 void equipment_filter_by_status(const equipment_list_t *list, equipment_status_t status, equipment_list_t *filtered);
 void equipment_filter_by_type(const equipment_list_t *list, equipment_type_t type, equipment_list_t *filtered);
+
+bool equipment_exists_by_ip(hashmap_t *ip_index, const char *ip_address);
+bool equipment_exists_by_mac(hashmap_t *mac_index, const char *mac_address);
 
 int equipment_get_count(equipment_list_t *list);
 int equipment_get_number_status(equipment_list_t *list, equipment_status_t status);

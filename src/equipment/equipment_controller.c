@@ -207,6 +207,28 @@ void equipment_controller_handle_toggled(equipment_controller_t *controller, int
   equipment_view_update_header(controller->view);
 }
 
+equipment_validation_t equipment_controller_validate(equipment_controller_t *controller, equipment_t equipment)
+{
+  hashmap_t *ip_index = &controller->app->ip_index;
+  hashmap_t *mac_index = &controller->app->mac_index;
+
+  if (strlen(equipment.name) <= 1) return EQUIPMENT_INVALID_NAME;
+  
+  if (strlen(equipment.vendor) <= 1) return EQUIPMENT_INVALID_VENDOR;
+
+  if (strlen(equipment.model) <= 1) return EQUIPMENT_INVALID_MODEL;
+
+  if (!validate_ip_address(equipment.ip_address) || 
+    equipment_exists_by_ip(ip_index, equipment.ip_address)) return EQUIPMENT_INVALID_IP;
+
+  if (!validate_mac_address(equipment.mac_address) || 
+    equipment_exists_by_mac(mac_index, equipment.mac_address)) return EQUIPMENT_INVALID_MAC;
+
+  if (strlen(equipment.location) <= 1) return EQUIPMENT_INVALID_LOCATION;
+
+  return EQUIPMENT_VALID;
+}
+
 void equipment_controller_get_stats(equipment_controller_t *controller, equipment_stats_t *stats)
 {
   stats->total = equipment_get_count(&controller->app->equipments);

@@ -17,6 +17,17 @@ typedef struct {
 
   GtkWidget   *layout;
 
+  GtkEntry *entry_id;
+  GtkEntry *entry_name;
+  GtkEntry *entry_vendor;
+  GtkEntry *entry_model;
+  GtkEntry *entry_ip;
+  GtkEntry *entry_mac;
+  GtkEntry *entry_location;
+
+  GtkDropDown *dropdown_type;
+  GtkDropDown *dropdown_status;
+
   equipment_form_mode_t mode;
 } equipment_form_t;
 

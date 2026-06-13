@@ -11,6 +11,16 @@
 // forward declaration to resolve circular dependencies
 typedef struct equipment_view_t equipment_view_t;
 
+typedef enum {
+  EQUIPMENT_INVALID_NAME,
+  EQUIPMENT_INVALID_VENDOR,
+  EQUIPMENT_INVALID_MODEL,
+  EQUIPMENT_INVALID_IP,
+  EQUIPMENT_INVALID_MAC,
+  EQUIPMENT_INVALID_LOCATION,
+  EQUIPMENT_VALID
+} equipment_validation_t;
+
 typedef struct {
   application_t *app;
 
@@ -61,6 +71,8 @@ void equipment_controller_edit(equipment_controller_t *controller, equipment_t d
 void equipment_controller_remove(equipment_controller_t *controller);
 void equipment_controller_search(equipment_controller_t *controller, const char *text);
 void equipment_controller_handle_toggled(equipment_controller_t *controller, int id, bool is_active);
+
+equipment_validation_t equipment_controller_validate(equipment_controller_t *controller, equipment_t equipment);
 
 void equipment_controller_get_stats(equipment_controller_t *controller, equipment_stats_t *stats);
 

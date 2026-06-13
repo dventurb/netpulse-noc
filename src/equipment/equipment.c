@@ -358,6 +358,18 @@ void equipment_list_sort_by_type(equipment_list_t *list)
   list->tail = get_tail(list);
 }
 
+bool equipment_exists_by_ip(hashmap_t *ip_index, const char *ip_address)
+{
+  equipment_node_t *node = (equipment_node_t *) hashmap_get(ip_index, ip_address);
+  return (node != NULL) ? true : false;
+}
+
+bool equipment_exists_by_mac(hashmap_t *mac_index, const char *mac_address)
+{
+  equipment_node_t *node = (equipment_node_t *) hashmap_get(mac_index, mac_address);
+  return (node != NULL) ? true : false;
+}
+
 int equipment_get_count(equipment_list_t *list)
 {
   return list->count;
