@@ -23,9 +23,8 @@ void sensor_controller_init(sensor_controller_t *controller, sensor_view_t *view
   
   controller->search_text[0] = '\0';
 
-  controller->pagination.page = 0;
-  controller->pagination.page_size = 6;
-  controller->pagination.total = sensor_get_count(&controller->app->sensors);
+  int total = sensor_get_count(&controller->app->sensors);
+  pagination_init(&controller->pagination, total);
 }
 
 static void sensor_controller_execute_filters(sensor_controller_t *controller, sensor_task_t *task, sensor_list_t *filtered)
@@ -73,8 +72,8 @@ void sensor_controller_reset_query(sensor_controller_t *controller)
   
   controller->search_text[0] = '\0';
 
-  controller->pagination.page = 0;
-  controller->pagination.total = sensor_get_count(&controller->app->sensors);
+  int total = sensor_get_count(&controller->app->sensors);
+  pagination_init(&controller->pagination, total);
 
   sensor_worker_start_query(controller); // Create new thread so the UI doesnt freeze
 }
@@ -88,7 +87,7 @@ void sensor_controller_set_filters(sensor_controller_t *controller, int status)
 {
   controller->status_filter = status;
 
-  controller->pagination.page = 0;
+  controller->pagination.current_page = 0;
 
   sensor_controller_start_query(controller);
 }
@@ -110,7 +109,7 @@ void sensor_controller_set_search(sensor_controller_t *controller, const char *t
       break;
   }
 
-  controller->pagination.page = 0;
+  controller->pagination.current_page = 0;
 
   sensor_controller_start_query(controller);
 }
@@ -252,15 +251,15 @@ gboolean on_sensor_finish(gpointer data)
 {
   sensor_task_t *task = (sensor_task_t *)data;
 
-  task->controller->pagination.total = task->total;
+  task->controller->pagination.total_items = task->total;
 
   int total_pages = pagination_total_pages(task->controller->pagination, task->total);
 
-  if (task->controller->pagination.page >= total_pages - 1)
-    task->controller->pagination.page = total_pages - 1;
+  if (task->controller->pagination.current_page >= total_pages - 1)
+    task->controller->pagination.current_page = total_pages - 1;
 
-  if (task->controller->pagination.page < 0)
-    task->controller->pagination.page = 0;
+  if (task->controller->pagination.current_page < 0)
+    task->controller->pagination.current_page = 0;
 
   sensor_view_update_table(task->controller->view, task->result, task->count);
   sensor_view_update_stats_cards(task->controller->view);

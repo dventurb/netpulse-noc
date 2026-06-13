@@ -68,10 +68,8 @@ GtkWidget *create_pagination_button(pagination_t pagination, char *text, int pag
   gtk_widget_set_size_request(button, 32, 32);
   g_object_set_data(G_OBJECT(button), "page-number", GINT_TO_POINTER(page_number));
 
-  if (page_number == pagination.page) 
-  {
+  if (page_number == pagination.current_page) 
     gtk_widget_add_css_class(button, "active-page");
-  }
 
   return button;
 }

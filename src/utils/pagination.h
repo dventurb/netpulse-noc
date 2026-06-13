@@ -2,10 +2,12 @@
 #define PAGINATION_H
 
 typedef struct {
-  int total;
-  int page;
+  int total_items;
+  int current_page;
   int page_size;
 } pagination_t;
+
+void pagination_init(pagination_t *pagination, int total);
 
 void pagination_get_range(pagination_t pagination, int *start, int *end);
 void pagination_set_page_number(pagination_t *pagination, int number);

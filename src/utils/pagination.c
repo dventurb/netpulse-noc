@@ -1,41 +1,50 @@
 #include "pagination.h"
 
+static const int itens_per_page = 6;
+
+void pagination_init(pagination_t *pagination, int total)
+{
+  pagination->current_page = 0;
+  pagination->page_size = itens_per_page;
+  pagination->total_items = total;
+}
+
 void pagination_get_range(pagination_t pagination, int *start, int *end)
 {
-  int total = pagination_total_pages(pagination, pagination.total);
-  if (total <= 0) total = 1;
+  int total_pages = pagination_total_pages(pagination, pagination.total_items);
+  if (total_pages <= 0) total_pages = 1;
 
-  *start = pagination.page - 1;
-  *end = pagination.page + 1;
+  *start = pagination.current_page - 1;
+  *end = pagination.current_page + 1;
 
   if (*start < 0) *start = 0;
-  if (*end > total - 1) *end = total - 1;
+  if (*end > total_pages - 1) *end = total_pages - 1;
 }
 
 void pagination_set_page_number(pagination_t *pagination, int number)
 {
-  pagination->page = number;
+  pagination->current_page = number;
 }
 
 void pagination_previous(pagination_t *pagination)
 {
-  pagination->page--;
+  pagination->current_page--;
 
-  if (pagination->page < 0) 
-    pagination->page = 0; 
+  if (pagination->current_page < 0) 
+    pagination->current_page = 0; 
 }
 
 void pagination_next(pagination_t *pagination)
 {
-  int total = pagination_total_pages(*pagination, pagination->total);
+  int total_pages = pagination_total_pages(*pagination, pagination->total_items);
 
-  pagination->page++;
+  pagination->current_page++;
 
-  if (pagination->page > total - 1) 
-    pagination->page = total - 1; 
+  if (pagination->current_page >= total_pages) 
+    pagination->current_page = total_pages - 1; 
 
-  if (pagination->page < 0)
-    pagination->page = 0;
+  if (pagination->current_page < 0)
+    pagination->current_page = 0;
 }
 
 int pagination_total_pages(pagination_t pagination, int count)
@@ -45,10 +54,10 @@ int pagination_total_pages(pagination_t pagination, int count)
 
 int pagination_start(pagination_t pagination)
 {
-  return pagination.page * pagination.page_size;
+  return pagination.current_page * pagination.page_size;
 }
 
 int pagination_end(pagination_t pagination)
 {
-  return pagination.page * pagination.page_size + pagination.page_size;
+  return pagination.current_page * pagination.page_size + pagination.page_size;
 }

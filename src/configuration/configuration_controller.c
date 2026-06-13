@@ -19,9 +19,7 @@ void configuration_controller_init(configuration_controller_t *controller, confi
 
   controller->search_text[0] = '\0';
 
-  controller->pagination.page = 0;
-  controller->pagination.page_size = 6;
-  controller->pagination.total = 0; // blank table
+  pagination_init(&controller->pagination, 0); // no selected equipment
 }
 
 void configuration_controller_execute_equipment_query(configuration_controller_t *controller, configuration_task_t *task)
@@ -93,9 +91,7 @@ void configuration_controller_execute_config_query(configuration_controller_t *c
 
 void configuration_controller_reset_config_query(configuration_controller_t *controller)
 {
-  controller->pagination.page = 0;
-  controller->pagination.total = 0;
-
+  pagination_init(&controller->pagination, 0); // no selected equipment
   configuration_view_update_config_table(controller->view, NULL, 0); // blank table
 }
 
@@ -153,16 +149,16 @@ void configuration_controller_execute_revert(configuration_controller_t *control
   task->count = 0;
   task->result = configuration_stack_in_range(stack, 0, stack->count, &task->total);
 
-  configuration_stack_destroy(stack); // destroy all config nodes
-  configuration_stack_init(stack);  // rebuild again
+  configuration_stack_destroy(stack);
+  configuration_stack_init(stack);
   
-  configuration_t *configs = (configuration_t *)task->result; // casting void pointer
+  configuration_t *configs = (configuration_t *)task->result;
   
   // then repush the old data 
   for (int i = task->total - 1; i >= 0; i--)
     configuration_stack_repush(stack, configs[i]);
 
-  task->controller->pagination.total = task->total;
+  task->controller->pagination.total_items = task->total;
 
   save_equipments(list);
 
@@ -181,7 +177,7 @@ void configuration_controller_start_revert(configuration_controller_t *controlle
 
   if (stack->top == NULL) return;
 
-  controller->pagination.page = 0;
+  controller->pagination.current_page = 0;
 
   configuration_worker_revert(controller);
 }
@@ -259,15 +255,15 @@ gboolean on_configuration_finish(gpointer data)
 
   else if (task->type == TASK_CONFIGURATION)
   {
-    task->controller->pagination.total = task->total;
+    task->controller->pagination.total_items = task->total;
 
     int total_pages = pagination_total_pages(task->controller->pagination, task->total);
 
-    if (task->controller->pagination.page >= total_pages - 1)
-      task->controller->pagination.page = total_pages - 1;
+    if (task->controller->pagination.current_page >= total_pages - 1)
+      task->controller->pagination.current_page = total_pages - 1;
 
-    if (task->controller->pagination.page < 0)
-      task->controller->pagination.page = 0;
+    if (task->controller->pagination.current_page < 0)
+      task->controller->pagination.current_page = 0;
 
     configuration_view_update_config_table(task->controller->view, task->result, task->count);
   }

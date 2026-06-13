@@ -18,11 +18,8 @@ void incident_controller_init(incident_controller_t *controller, incident_view_t
   controller->selected_count = 0;
   controller->selected_node = NULL;
 
-  controller->pagination.page = 0;
-  controller->pagination.page_size = 6;
-
   int total = incident_get_count(&controller->app->incidents_pending, &controller->app->incidents_history);
-  controller->pagination.total = total;
+  pagination_init(&controller->pagination, total);
 
   controller->status_filter = 0;
   controller->priority_filter = 0;
@@ -50,11 +47,9 @@ void incident_controller_refresh_page(incident_controller_t *controller)
 {
   controller->selected_count = 0;
   controller->selected_node = NULL;
-  controller->pagination.page = 0;
 
   int total = incident_get_count(&controller->app->incidents_pending, &controller->app->incidents_history);
-
-  controller->pagination.total = total;
+  pagination_init(&controller->pagination, total);
 
   controller->status_filter = 0;
   controller->priority_filter = 0;
@@ -123,7 +118,7 @@ void incident_controller_apply_filters(incident_controller_t *controller, int st
   controller->status_filter = status;
   controller->priority_filter = priority;
 
-  controller->pagination.page = 0;
+  controller->pagination.current_page = 0;
 
   incident_controller_update_table(controller);
 }
@@ -146,7 +141,7 @@ void incident_controller_search(incident_controller_t *controller, const char *t
       break;
   }
 
-  controller->pagination.page = 0;
+  controller->pagination.current_page = 0;
 
   incident_controller_update_table(controller);
 }
@@ -183,7 +178,7 @@ int incident_controller_get_position(incident_controller_t *controller, incident
   int position = 0; 
 
   if (incident.status == INCIDENT_PENDING)
-    position = controller->pagination.page * 6 + row;
+    position = controller->pagination.current_page * 6 + row;
     
   return position;
 }
@@ -200,15 +195,15 @@ gboolean on_incident_finished(gpointer data)
 {
   incident_task_t *task = (incident_task_t *)data;
 
-  task->controller->pagination.total = task->total;
+  task->controller->pagination.total_items = task->total;
 
   int total_pages = pagination_total_pages(task->controller->pagination, task->total);
 
-  if (task->controller->pagination.page >= total_pages - 1)
-    task->controller->pagination.page = total_pages - 1;
+  if (task->controller->pagination.current_page >= total_pages - 1)
+    task->controller->pagination.current_page = total_pages - 1;
 
-  if (task->controller->pagination.page < 0)
-    task->controller->pagination.page = 0;
+  if (task->controller->pagination.current_page < 0)
+    task->controller->pagination.current_page = 0;
 
   incident_view_update_table(task->controller->view, task->result, task->count);
   incident_view_update_stats_cards(task->controller->view);

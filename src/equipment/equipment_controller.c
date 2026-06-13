@@ -18,10 +18,8 @@ void equipment_controller_init(equipment_controller_t *controller, equipment_vie
   controller->selected_count = 0;
   controller->selected_node = NULL;
 
-  controller->pagination.page = 0;
-  controller->pagination.page_size = 6;
- 
-  controller->pagination.total = equipment_get_count(&controller->app->equipments);
+  int total = equipment_get_count(&controller->app->equipments);
+  pagination_init(&controller->pagination, total);
 
   controller->status_filter = 0;
   controller->type_filter = 0;
@@ -51,9 +49,9 @@ void equipment_controller_refresh_page(equipment_controller_t *controller)
 {
   controller->selected_count = 0;
   controller->selected_node = NULL;
-  controller->pagination.page = 0;
   
-  controller->pagination.total = equipment_get_count(&controller->app->equipments);
+  int total = equipment_get_count(&controller->app->equipments);
+  pagination_init(&controller->pagination, total);
 
   controller->status_filter = 0;
   controller->type_filter = 0;
@@ -73,7 +71,7 @@ void equipment_controller_apply_filters(equipment_controller_t *controller, int 
 
   controller->sort = sort;
 
-  controller->pagination.page = 0;
+  controller->pagination.current_page = 0;
 
   equipment_controller_update_table(controller);
 }
@@ -168,16 +166,16 @@ void equipment_controller_search(equipment_controller_t *controller, const char 
 
   if (node != NULL) 
   {
-    controller->pagination.page = 0;
-    controller->pagination.total = 1;
+    controller->pagination.current_page = 0;
+    controller->pagination.total_items = 1;
 
     equipment_view_update_table(controller->view, &node->data, 1);
   }
 
   else 
   {
-    controller->pagination.page = 0;
-    controller->pagination.total = 0;
+    controller->pagination.current_page = 0;
+    controller->pagination.total_items = 0;
 
     equipment_view_update_table(controller->view, NULL, 0);
   }
@@ -221,15 +219,15 @@ gboolean on_equipment_finish(gpointer data)
 {
   equipment_task_t *task = (equipment_task_t *)data;
 
-  task->controller->pagination.total = task->total;
+  task->controller->pagination.total_items = task->total;
 
   int total_pages = pagination_total_pages(task->controller->pagination, task->total);
 
-  if (task->controller->pagination.page >= total_pages - 1)
-    task->controller->pagination.page = total_pages - 1;
+  if (task->controller->pagination.current_page >= total_pages - 1)
+    task->controller->pagination.current_page = total_pages - 1;
   
-  if (task->controller->pagination.page < 0)
-    task->controller->pagination.page = 0;
+  if (task->controller->pagination.current_page < 0)
+    task->controller->pagination.current_page = 0;
 
   equipment_view_update_table(task->controller->view, task->result, task->count);
   equipment_view_update_stats_cards(task->controller->view);
