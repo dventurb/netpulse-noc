@@ -18,4 +18,6 @@ int pagination_total_pages(pagination_t pagination, int count);
 int pagination_start(pagination_t pagination);
 int pagination_end(pagination_t pagination);
 
+void pagination_fix_current_page(pagination_t *pagination, int total_pages);
+
 #endif

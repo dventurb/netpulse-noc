@@ -259,11 +259,7 @@ gboolean on_configuration_finish(gpointer data)
 
     int total_pages = pagination_total_pages(task->controller->pagination, task->total);
 
-    if (task->controller->pagination.current_page >= total_pages - 1)
-      task->controller->pagination.current_page = total_pages - 1;
-
-    if (task->controller->pagination.current_page < 0)
-      task->controller->pagination.current_page = 0;
+    pagination_fix_current_page(&task->controller->pagination, total_pages);
 
     configuration_view_update_config_table(task->controller->view, task->result, task->count);
   }

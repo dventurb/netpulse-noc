@@ -255,11 +255,7 @@ gboolean on_sensor_finish(gpointer data)
 
   int total_pages = pagination_total_pages(task->controller->pagination, task->total);
 
-  if (task->controller->pagination.current_page >= total_pages - 1)
-    task->controller->pagination.current_page = total_pages - 1;
-
-  if (task->controller->pagination.current_page < 0)
-    task->controller->pagination.current_page = 0;
+  pagination_fix_current_page(&task->controller->pagination, total_pages);
 
   sensor_view_update_table(task->controller->view, task->result, task->count);
   sensor_view_update_stats_cards(task->controller->view);

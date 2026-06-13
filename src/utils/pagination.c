@@ -61,3 +61,12 @@ int pagination_end(pagination_t pagination)
 {
   return pagination.current_page * pagination.page_size + pagination.page_size;
 }
+
+void pagination_fix_current_page(pagination_t *pagination, int total_pages)
+{
+  if (pagination->current_page >= total_pages - 1)
+    pagination->current_page = total_pages - 1;
+
+  if (pagination->current_page < 0)
+    pagination->current_page = 0;
+}
