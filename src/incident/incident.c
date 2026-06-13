@@ -560,6 +560,36 @@ int incident_list_get_number_status(incident_list_t *list, incident_status_t sta
   return i;
 }
 
+bool incident_has_active_for_source_id(incident_queue_t *queue, incident_list_t *list, const char *source_id)
+{
+  if (queue == NULL || list == NULL) return false;
+
+  incident_node_t *node = queue->front;
+
+  while (node != NULL)
+  {
+    if (strcmp(node->data.source_id, source_id) == 0)
+      return true;
+
+    node = node->next;
+  }
+
+  node = list->head;
+
+  while (node != NULL)
+  {
+    if (node->data.status == INCIDENT_IN_PROGRESS)
+    {
+      if (strcmp(node->data.source_id, source_id) == 0)
+        return true;
+    }
+
+    node = node->next;
+  }
+
+  return false;
+}
+
 void incident_format_id(int id, char *buffer)
 {
   snprintf(buffer, ID_MAX, "IN-%03d", id);

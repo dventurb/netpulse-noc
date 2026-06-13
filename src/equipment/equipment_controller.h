@@ -72,6 +72,8 @@ void equipment_controller_remove(equipment_controller_t *controller);
 void equipment_controller_search(equipment_controller_t *controller, const char *text);
 void equipment_controller_handle_toggled(equipment_controller_t *controller, int id, bool is_active);
 
+bool equipment_controller_can_remove(equipment_controller_t *controller);
+
 equipment_validation_t equipment_controller_validate(equipment_controller_t *controller, equipment_t equipment);
 
 void equipment_controller_get_stats(equipment_controller_t *controller, equipment_stats_t *stats);

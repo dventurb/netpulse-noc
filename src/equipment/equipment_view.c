@@ -805,6 +805,8 @@ static void on_remove_dialog_submit(GtkButton *button, gpointer data)
 
   equipment_view_t *view = (equipment_view_t *) data;
 
+  if (!equipment_controller_can_remove(view->controller)) return;
+
   equipment_controller_remove(view->controller);
 
   gtk_window_destroy(view->form.dialog);

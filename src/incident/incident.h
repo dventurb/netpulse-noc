@@ -2,7 +2,9 @@
 #define INCIDENT_H
 
 #include "macros.h"
+
 #include <time.h>
+#include <stdbool.h>
 
 typedef enum {
   PRIORITY_LOW,
@@ -89,6 +91,8 @@ int incident_queue_get_count(incident_queue_t *queue);
 
 int incident_list_get_count(incident_list_t *list);
 int incident_list_get_number_status(incident_list_t *list, incident_status_t status);
+
+bool incident_has_active_for_source_id(incident_queue_t *queue, incident_list_t *list, const char *source_id);
 
 void incident_format_id(int id, char *buffer);
 void incident_format_position(int position, char *buffer);

@@ -207,6 +207,21 @@ void equipment_controller_handle_toggled(equipment_controller_t *controller, int
   equipment_view_update_header(controller->view);
 }
 
+bool equipment_controller_can_remove(equipment_controller_t *controller)
+{
+  equipment_node_t *node = controller->selected_node;
+  if (node == NULL) return false;
+
+  char id[ID_MAX];
+  equipment_format_id(node->data.id, id);
+
+  incident_queue_t *queue = &controller->app->incidents_pending;
+  incident_list_t *list = &controller->app->incidents_history;
+
+  if (incident_has_active_for_source_id(queue, list, id)) return false;
+  else return true;
+}
+
 equipment_validation_t equipment_controller_validate(equipment_controller_t *controller, equipment_t equipment)
 {
   hashmap_t *ip_index = &controller->app->ip_index;
