@@ -234,7 +234,7 @@ void sensor_controller_create_incident(sensor_controller_t *controller, const se
 
   incident_queue_enqueue(queue, new);
 
-  save_incidents(queue, list, "data/incidents.bin");
+  save_incidents(queue, list);
 }
 
 void sensor_controller_get_stats(sensor_controller_t *controller, sensor_stats_t *stats)

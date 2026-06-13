@@ -3,13 +3,52 @@
 #include "hashmap.h"
 #include <stdlib.h>
 
-void load_equipments(application_t *application, const char *filepath)
+static const char *equipment_filepath = "data/equipments.bin";
+static const char *incident_filepath = "data/incidents.bin";
+
+
+static void load_configurations(equipment_t *equipment, FILE *file)
 {
-  if (application == NULL || filepath == NULL) return;
+  if (equipment == NULL || file == NULL) return;
+
+  int count;
+  fread(&count, sizeof(count), 1, file);
+
+  if (count == 0) return;
+
+  configuration_t *temp = malloc(sizeof(configuration_t) * count);
+  if (temp == NULL) return;
+
+  fread(temp, sizeof(configuration_t), count, file);
+
+  for (int i = count - 1; i >= 0; i--)
+    configuration_stack_repush(&equipment->configs, temp[i]);
+}
+
+static void save_configurations(equipment_t *equipment, FILE *file)
+{
+  if (equipment == NULL || file == NULL) return;
+
+  int count = equipment->configs.count;
+  fwrite(&count, sizeof(count), 1, file);
+
+  configuration_node_t *node = equipment->configs.top;
+
+  while (node != NULL)
+  {
+    fwrite(&node->data, sizeof(configuration_t), 1, file);
+
+    node = node->next;
+  }
+}
+
+void load_equipments(application_t *application)
+{
+  if (application == NULL) return;
   
   equipment_list_t *list = &application->equipments;
 
-  FILE *file = fopen(filepath, "rb");
+  FILE *file = fopen(equipment_filepath, "rb");
   if (file == NULL) return;
 
   equipment_t data = {0};
@@ -33,11 +72,11 @@ void load_equipments(application_t *application, const char *filepath)
   fclose(file);
 }
 
-void load_incidents(incident_queue_t *queue, incident_list_t *list, const char *filepath)
+void load_incidents(incident_queue_t *queue, incident_list_t *list)
 {
-  if (queue == NULL || list == NULL || filepath == NULL) return;
+  if (queue == NULL || list == NULL) return;
 
-  FILE *file = fopen(filepath, "rb");
+  FILE *file = fopen(incident_filepath, "rb");
   if (file == NULL) return;
 
   incident_t data;
@@ -53,32 +92,11 @@ void load_incidents(incident_queue_t *queue, incident_list_t *list, const char *
   fclose(file);
 }
 
-void load_configurations(equipment_t *equipment, FILE *file)
+void save_equipments(equipment_list_t *list)
 {
-  if (equipment == NULL || file == NULL) return;
+  if (list == NULL) return;
 
-  int count;
-  fread(&count, sizeof(count), 1, file);
-
-  if (count == 0) return;
-
-  configuration_t *temp = malloc(sizeof(configuration_t) * count);
-  if (temp == NULL) return;
-
-  fread(temp, sizeof(configuration_t), count, file);
-
-  for (int i = count - 1; i >= 0; i--)
-  {
-    configuration_stack_repush(&equipment->configs, temp[i]);
-  }
-
-}
-
-void save_equipments(equipment_list_t *list, const char *filepath)
-{
-  if (list == NULL || filepath == NULL) return;
-
-  FILE *file = fopen(filepath, "wb");
+  FILE *file = fopen(equipment_filepath, "wb");
   if (file == NULL) return;
 
   equipment_node_t *node = list->head;
@@ -95,11 +113,11 @@ void save_equipments(equipment_list_t *list, const char *filepath)
   fclose(file);
 }
 
-void save_incidents(incident_queue_t *queue, incident_list_t *list, const char *filepath)
+void save_incidents(incident_queue_t *queue, incident_list_t *list)
 {
-  if (queue == NULL || list == NULL || filepath == NULL) return;
+  if (queue == NULL || list == NULL) return;
 
-  FILE *file = fopen(filepath, "wb");
+  FILE *file = fopen(incident_filepath, "wb");
   if (file == NULL) return;
 
   incident_node_t *node = queue->front;
@@ -121,21 +139,4 @@ void save_incidents(incident_queue_t *queue, incident_list_t *list, const char *
   }
 
   fclose(file);
-}
-
-void save_configurations(equipment_t *equipment, FILE *file)
-{
-  if (equipment == NULL || file == NULL) return;
-
-  int count = equipment->configs.count;
-  fwrite(&count, sizeof(count), 1, file);
-
-  configuration_node_t *node = equipment->configs.top;
-
-  while (node != NULL)
-  {
-    fwrite(&node->data, sizeof(configuration_t), 1, file);
-
-    node = node->next;
-  }
 }

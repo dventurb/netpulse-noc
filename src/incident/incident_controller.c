@@ -79,7 +79,7 @@ void incident_controller_add(incident_controller_t *controller, incident_t data)
 
   incident_controller_update_table(controller);
 
-  save_incidents(queue, list, "data/incidents.bin");
+  save_incidents(queue, list);
 }
 
 void incident_controller_process(incident_controller_t *controller)
@@ -94,7 +94,7 @@ void incident_controller_process(incident_controller_t *controller)
 
   incident_controller_update_table(controller);
 
-  save_incidents(queue, list, "data/incidents.bin");
+  save_incidents(queue, list);
 }
 
 void incident_controller_resolve(incident_controller_t *controller)
@@ -115,7 +115,7 @@ void incident_controller_resolve(incident_controller_t *controller)
 
   incident_controller_update_table(controller);
 
-  save_incidents(queue, list, "data/incidents.bin");
+  save_incidents(queue, list);
 }
 
 void incident_controller_apply_filters(incident_controller_t *controller, int status, int priority)

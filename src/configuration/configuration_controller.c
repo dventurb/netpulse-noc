@@ -114,7 +114,7 @@ void configuration_controller_add(configuration_controller_t *controller, config
 
   configuration_stack_push(stack, new); // O(1) - There is no problem insert in the main thread
 
-  save_equipments(list, "data/equipments.bin"); // TODO: But I need a new thread for this one
+  save_equipments(list); // TODO: But I need a new thread for this one
 
   configuration_controller_start_config_query(controller);
 }
@@ -127,7 +127,7 @@ void configuration_controller_execute_clear(configuration_controller_t *controll
   configuration_stack_destroy(stack);
   configuration_stack_init(stack);
 
-  save_equipments(list, "data/equipments.bin");
+  save_equipments(list);
 
   configuration_controller_execute_config_query(controller, task);
 }
@@ -143,10 +143,10 @@ void configuration_controller_start_clear(configuration_controller_t *controller
   configuration_worker_clear(controller);
 }
 
-// This is just a revert animation, I have to copy the configs data to a temp array, destroy the nodes in the orginal stack, and then push them again the configs data from total->count - 1 to 0.
 void configuration_controller_execute_revert(configuration_controller_t *controller, configuration_task_t *task)
 {
   configuration_stack_t *stack = &controller->selected_equipment->data.configs;
+  equipment_list_t *list = &controller->app->equipments;
 
   if (stack->top != NULL) configuration_stack_pop(stack);
 
@@ -155,10 +155,22 @@ void configuration_controller_execute_revert(configuration_controller_t *control
 
   configuration_stack_destroy(stack); // destroy all config nodes
   configuration_stack_init(stack);  // rebuild again
+  
+  configuration_t *configs = (configuration_t *)task->result; // casting void pointer
+  
+  // then repush the old data 
+  for (int i = task->total - 1; i >= 0; i--)
+    configuration_stack_repush(stack, configs[i]);
 
   task->controller->pagination.total = task->total;
 
-  g_timeout_add(250, on_configuration_revert, task); // then repush the old data
+  save_equipments(list);
+
+  int timeout = 2500 / task->total;
+  if (timeout > 250) timeout = 250;
+  if (timeout < 16) timeout = 16; 
+
+  g_timeout_add(timeout, on_configuration_revert, task); // fake animation with timeout
 }
 
 void configuration_controller_start_revert(configuration_controller_t *controller)
@@ -270,9 +282,6 @@ gboolean on_configuration_revert(gpointer data)
 {
   configuration_task_t *task = (configuration_task_t *)data;
 
-  configuration_stack_t *stack = &task->controller->selected_equipment->data.configs;
-  equipment_list_t *list = &task->controller->app->equipments;
-
   configuration_t *configs = (configuration_t *)task->result;
 
   if (task->total == 0)
@@ -280,21 +289,15 @@ gboolean on_configuration_revert(gpointer data)
   if (task->count++ < task->total)
   {
     int i = task->total - task->count;
-    configuration_stack_repush(stack, configs[i]);
 
     int start = 0;
     if (task->count > 6)
       start = task->count - 6;
 
-    printf("%s\n", configs[i].command);
-    printf("count: %d | total: %d | start: %d | i: %d\n\n", task->count, task->total, start, i);
-
     configuration_view_update_config_table(task->controller->view, &configs[i], (task->count - start));
 
     return true; // continue until task->count == task->total
   }
-
-  save_equipments(list, "data/equipments.bin");
 
   free(task->result);
   free(task);

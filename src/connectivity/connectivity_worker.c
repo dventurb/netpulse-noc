@@ -22,7 +22,7 @@ static void *ping_single_task_thread(void *data)
    
     connectivity_controller_create_incident(task->controller, task->controller->selected_equipment);
 
-    save_equipments(&task->controller->app->equipments, "data/equipments.bin");
+    save_equipments(&task->controller->app->equipments);
   }
 
   else if (task->result->responded == true && task->controller->selected_equipment != NULL)
@@ -30,7 +30,7 @@ static void *ping_single_task_thread(void *data)
     equipment_update_status(task->controller->selected_equipment, STATUS_OPERATIONAL);
     equipment_update_last_check(task->controller->selected_equipment);
 
-    save_equipments(&task->controller->app->equipments, "data/equipments.bin");
+    save_equipments(&task->controller->app->equipments);
   }
 
   g_idle_add(task->callback, task); //  on_ping_finished()

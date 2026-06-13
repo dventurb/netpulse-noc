@@ -92,7 +92,7 @@ void equipment_controller_add(equipment_controller_t *controller, equipment_t da
 
   equipment_controller_update_table(controller);
 
-  save_equipments(list, "data/equipments.bin");
+  save_equipments(list);
 }
 
 void equipment_controller_edit(equipment_controller_t *controller, equipment_t data)
@@ -115,7 +115,7 @@ void equipment_controller_edit(equipment_controller_t *controller, equipment_t d
 
   equipment_controller_update_table(controller);
 
-  save_equipments(list, "data/equipments.bin");
+  save_equipments(list);
 }
 
 void equipment_controller_remove(equipment_controller_t *controller)
@@ -139,7 +139,7 @@ void equipment_controller_remove(equipment_controller_t *controller)
 
   equipment_controller_update_table(controller);
 
-  save_equipments(list, "data/equipments.bin");
+  save_equipments(list);
 }
 
 void equipment_controller_search(equipment_controller_t *controller, const char *text)

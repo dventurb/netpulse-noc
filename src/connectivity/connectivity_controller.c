@@ -151,7 +151,7 @@ void connectivity_controller_create_incident(connectivity_controller_t *controll
 
   incident_queue_enqueue(queue, new);
 
-  save_incidents(queue, list, "data/incidents.bin");
+  save_incidents(queue, list);
 }
 
 gboolean on_ping_finished(gpointer data)
