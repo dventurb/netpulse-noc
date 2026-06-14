@@ -8,6 +8,9 @@ static GtkWidget *build_header(login_window_t *login_window);
 static GtkWidget *build_login_page(login_window_t *login_window);
 static GtkWidget *build_register_page(login_window_t *login_window);
 
+// Callbacks
+static void on_sign_up_clicked(GtkButton *button, gpointer *data);
+static void on_login_clicked(GtkButton *button, gpointer *data);
 
 login_window_t *login_window_create(GtkApplication *gtk_app, app_t *app)
 {
@@ -30,13 +33,18 @@ static void login_window_init(login_window_t *login_window, app_t *app)
   login_window->window = GTK_WINDOW(gtk_window_new());
   gtk_window_set_title(login_window->window, "NetPulse NOC");
   gtk_window_set_default_size(login_window->window, 1440, 900);
+  gtk_widget_add_css_class(GTK_WIDGET(login_window->window), "login-window");
 
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 30);
   gtk_window_set_child(login_window->window, box);
+  gtk_widget_add_css_class(box, "login-container");
+  gtk_widget_set_halign(box, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
 
   GtkWidget *header = build_header(login_window);
 
   login_window->stack = GTK_STACK(gtk_stack_new());
+  gtk_stack_set_vhomogeneous(login_window->stack, FALSE);
 
   GtkWidget *login_page = build_login_page(login_window);
   GtkWidget *register_page = build_register_page(login_window);
@@ -59,14 +67,17 @@ static void login_window_init(login_window_t *login_window, app_t *app)
 static GtkWidget *build_header(login_window_t *login_window)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  gtk_widget_add_css_class(box, "header");
+  gtk_widget_add_css_class(box, "login-header");
+  gtk_widget_set_halign(box, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
 
   GtkWidget *logo = gtk_picture_new_for_filename("assets/logo-white.svg");
-  gtk_widget_set_halign(logo, GTK_ALIGN_START);
+  gtk_widget_set_halign(logo, GTK_ALIGN_CENTER);
   gtk_widget_set_valign(logo, GTK_ALIGN_CENTER);
-  gtk_widget_set_margin_top(logo, 194);
-  //gtk_widget_set_margin_start(logo, 24);
-  //gtk_widget_set_margin_bottom(logo, 4);
+  //gtk_widget_set_margin_top(logo, 190);
+  gtk_widget_set_margin_start(logo, 40);
+  gtk_widget_set_margin_bottom(logo, 20);
+  gtk_widget_set_size_request(logo, 64, 64);
 
   gtk_box_append(GTK_BOX(box), logo);
 
@@ -78,18 +89,52 @@ static GtkWidget *build_login_page(login_window_t *login_window)
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_spacing(GTK_GRID(grid), 12);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 24);
+  gtk_widget_add_css_class(grid, "login-page");
 
   GtkWidget *label_username = gtk_label_new("Username");
+  gtk_widget_set_halign(label_username, GTK_ALIGN_START);
+  gtk_widget_add_css_class(label_username, "login-label");
+
   login_window->login_username = GTK_ENTRY(gtk_entry_new());
+  gtk_widget_add_css_class(GTK_WIDGET(login_window->login_username), "login-entry");
+  gtk_widget_set_size_request(GTK_WIDGET(login_window->login_username), 336, 40);
 
   GtkWidget *label_password = gtk_label_new("Password");
+  gtk_widget_set_halign(label_password, GTK_ALIGN_START);
+  gtk_widget_add_css_class(label_password, "login-label");
+
   login_window->login_password = GTK_ENTRY(gtk_entry_new());
+  gtk_widget_add_css_class(GTK_WIDGET(login_window->login_password), "login-entry");
+  gtk_entry_set_visibility(login_window->login_password, FALSE);
+  gtk_widget_set_size_request(GTK_WIDGET(login_window->login_password), 336, 40);
 
-  gtk_grid_attach(GTK_GRID(grid), label_username, 0, 0, 2, 1);
-  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(login_window->login_username), 0, 1, 2, 1);
+  GtkWidget *login_button = create_secondary_button("Sign In", NULL, "secondary-button");
+  gtk_widget_set_hexpand(login_button, TRUE);
+  //g_signal_connect(GTK_WIDGET(view->add_button), "clicked", G_CALLBACK(on_add_equipment_clicked), view);
 
-  gtk_grid_attach(GTK_GRID(grid), label_password, 0, 2, 2, 1);
-  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(login_window->login_password), 0, 3, 2, 1);
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_widget_add_css_class(box, "login-footer-box");
+  gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
+  gtk_widget_set_halign(box, GTK_ALIGN_CENTER);
+
+  GtkWidget *label_technician = gtk_label_new("Don't have an account? ");
+  gtk_widget_add_css_class(label_technician, "login-label");
+
+  GtkWidget *register_button = create_secondary_button("Sing up", NULL, "register-button");
+  g_signal_connect(register_button, "clicked", G_CALLBACK(on_sign_up_clicked), login_window);
+
+  gtk_box_append(GTK_BOX(box), label_technician);
+  gtk_box_append(GTK_BOX(box), register_button);
+
+  gtk_grid_attach(GTK_GRID(grid), label_username, 0, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(login_window->login_username), 0, 1, 1, 1);
+
+  gtk_grid_attach(GTK_GRID(grid), label_password, 0, 2, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(login_window->login_password), 0, 3, 1, 1);
+
+  gtk_grid_attach(GTK_GRID(grid), login_button, 0, 4, 1, 1);
+
+  gtk_grid_attach(GTK_GRID(grid), box, 0, 5, 1, 1);
 
   return grid;
 }
@@ -99,18 +144,81 @@ static GtkWidget *build_register_page(login_window_t *login_window)
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_spacing(GTK_GRID(grid), 12);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 24);
+  gtk_widget_add_css_class(grid, "login-page");
+
+  GtkWidget *label_name = gtk_label_new("Name");
+  gtk_widget_set_halign(label_name, GTK_ALIGN_START);
+  gtk_widget_add_css_class(label_name, "login-label");
+
+  login_window->register_name = GTK_ENTRY(gtk_entry_new());
+  gtk_widget_add_css_class(GTK_WIDGET(login_window->register_name), "login-entry");
+  gtk_widget_set_size_request(GTK_WIDGET(login_window->register_name), 336, 40);
 
   GtkWidget *label_username = gtk_label_new("Username");
+  gtk_widget_set_halign(label_username, GTK_ALIGN_START);
+  gtk_widget_add_css_class(label_username, "login-label");
+
   login_window->register_username = GTK_ENTRY(gtk_entry_new());
+  gtk_widget_add_css_class(GTK_WIDGET(login_window->register_username), "login-entry");
+  gtk_widget_set_size_request(GTK_WIDGET(login_window->register_username), 336, 40);
 
   GtkWidget *label_password = gtk_label_new("Password");
+  gtk_widget_set_halign(label_password, GTK_ALIGN_START);
+  gtk_widget_add_css_class(label_password, "login-label");
+
   login_window->register_password = GTK_ENTRY(gtk_entry_new());
+  gtk_widget_add_css_class(GTK_WIDGET(login_window->register_password), "login-entry");
+  gtk_entry_set_visibility(login_window->register_password, FALSE);
+  gtk_widget_set_size_request(GTK_WIDGET(login_window->register_password), 336, 40);
 
-  gtk_grid_attach(GTK_GRID(grid), label_username, 0, 0, 2, 1);
-  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(login_window->register_username), 0, 1, 2, 1);
+  GtkWidget *register_button = create_secondary_button("Sign Up", NULL, "secondary-button");
+  gtk_widget_set_hexpand(register_button, TRUE);
+  //g_signal_connect(GTK_WIDGET(view->add_button), "clicked", G_CALLBACK(on_add_equipment_clicked), view);
 
-  gtk_grid_attach(GTK_GRID(grid), label_password, 0, 2, 2, 1);
-  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(login_window->register_password), 0, 3, 2, 1);
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_widget_add_css_class(box, "login-footer-box");
+  gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
+  gtk_widget_set_halign(box, GTK_ALIGN_CENTER);
+
+  GtkWidget *label_technician = gtk_label_new("Already have an account? ");
+  gtk_widget_add_css_class(label_technician, "login-label");
+
+  GtkWidget *login_button = create_secondary_button("Log In", NULL, "register-button");
+  g_signal_connect(login_button, "clicked", G_CALLBACK(on_login_clicked), login_window);
+
+  gtk_box_append(GTK_BOX(box), label_technician);
+  gtk_box_append(GTK_BOX(box), login_button);
+
+  gtk_grid_attach(GTK_GRID(grid), label_name, 0, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(login_window->register_name), 0, 1, 1, 1);
+
+  gtk_grid_attach(GTK_GRID(grid), label_username, 0, 2, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(login_window->register_username), 0, 3, 1, 1);
+
+  gtk_grid_attach(GTK_GRID(grid), label_password, 0, 4, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(login_window->register_password), 0, 5, 1, 1);
+
+  gtk_grid_attach(GTK_GRID(grid), register_button, 0, 6, 1, 1);
+
+  gtk_grid_attach(GTK_GRID(grid), box, 0, 7, 1, 1);
 
   return grid;
+}
+
+static void on_sign_up_clicked(GtkButton *button, gpointer *data)
+{
+  (void)button;
+
+  login_window_t *login_window = (login_window_t *)data;
+
+  gtk_stack_set_visible_child_name(login_window->stack, "REGISTER");
+}
+
+static void on_login_clicked(GtkButton *button, gpointer *data)
+{
+  (void)button;
+
+  login_window_t *login_window = (login_window_t *)data;
+
+  gtk_stack_set_visible_child_name(login_window->stack, "LOGIN");
 }
