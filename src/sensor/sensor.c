@@ -264,8 +264,8 @@ const char *sensor_status_to_string(sensor_status_t status)
 
 static void binary_search(FILE *file, time_t date, int total, int *start, int *end)
 {
-  time_t date_start = get_datetime_start(date);
-  time_t date_end = get_datetime_end(date);
+  time_t date_start = get_day_start_timestamp(date);
+  time_t date_end = get_day_end_timestamp(date);
 
   int left = 0;
   int right = total - 1;
@@ -279,7 +279,7 @@ static void binary_search(FILE *file, time_t date, int total, int *start, int *e
     fseek(file, mid * sizeof(sensor_t), SEEK_SET);
     fread(&sensor, sizeof(sensor_t), 1, file);
 
-    time_t sensor_date = get_datetime_start(sensor.read_at);
+    time_t sensor_date = get_day_start_timestamp(sensor.read_at);
     printf("sensor_date start: %ld\n", sensor_date);
 
     if (sensor_date >= date_start)
@@ -305,7 +305,7 @@ static void binary_search(FILE *file, time_t date, int total, int *start, int *e
     fseek(file, mid * sizeof(sensor_t), SEEK_SET);
     fread(&sensor, sizeof(sensor_t), 1, file);
 
-    time_t sensor_date = get_datetime_end(sensor.read_at);
+    time_t sensor_date = get_day_end_timestamp(sensor.read_at);
     printf("sensor_date end: %ld\n", sensor_date);
 
     if (sensor_date <= date_end)

@@ -367,7 +367,7 @@ static void build_config_table_row(configuration_view_t *view, configuration_t c
   snprintf(number, NUMBER_MAX, "%d", config.number);
 
   char datetime[DATETIME_MAX];
-  get_datetime(config.operated_at, datetime);
+  format_timestamp_to_datetime(config.operated_at, datetime);
 
   char name[STRING_MAX];
   snprintf(name, STRING_MAX, "%s", config.technician_name);

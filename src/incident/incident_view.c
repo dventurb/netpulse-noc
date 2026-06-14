@@ -333,10 +333,10 @@ static void build_table_row(incident_view_t *view, incident_t incident, int row)
   incident_format_position(position, position_buffer);
 
   char created[DATETIME_MAX];
-  get_datetime(incident.created_at, created);
+  format_timestamp_to_datetime(incident.created_at, created);
 
   char concluded[DATETIME_MAX];
-  get_datetime(incident.concluded_at, concluded);
+  format_timestamp_to_datetime(incident.concluded_at, concluded);
 
   GtkWidget *columns[] = {
     check_button,

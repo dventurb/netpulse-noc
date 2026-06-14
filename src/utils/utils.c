@@ -5,10 +5,10 @@
 #include <stdio.h>
 #include <string.h>
 
-time_t set_datetime(const char *date)
+time_t parse_date_to_timestamp(const char *string)
 {
   struct tm tm = {0};
-  sscanf(date, "%2d-%2d-%4d", &tm.tm_mday, &tm.tm_mon, &tm.tm_year);
+  sscanf(string, "%2d-%2d-%4d", &tm.tm_mday, &tm.tm_mon, &tm.tm_year);
 
   tm.tm_year -= 1900; // years since 1900
   tm.tm_mon -= 1; // January is 0
@@ -16,29 +16,28 @@ time_t set_datetime(const char *date)
   return mktime(&tm);
 }
 
-void get_datetime(time_t time, char *string)
+void format_timestamp_to_datetime(time_t timestamp, char *buffer)
 {
-  if (time == 0) 
-    strcpy(string, "-");
+  if (timestamp == 0) strcpy(buffer, "-");
 
   else 
   {
-    struct tm *tm = localtime(&time);
-    strftime(string, DATETIME_MAX, "%d-%m-%Y %H:%M", tm);
+    struct tm *tm = localtime(&timestamp);
+    strftime(buffer, DATETIME_MAX, "%d-%m-%Y %H:%M", tm);
   }
 }
 
-void get_current_date(char *string)
+void format_current_date(char *buffer)
 {
-  time_t current = time(NULL);
+  time_t current_timestamp = time(NULL);
 
-  struct tm *tm = localtime(&current);
-  strftime(string, DATE_MAX, "%d-%m-%Y", tm);
+  struct tm *tm = localtime(&current_timestamp);
+  strftime(buffer, DATE_MAX, "%d-%m-%Y", tm);
 }
 
-time_t get_datetime_start(time_t date)
+time_t get_day_start_timestamp(time_t timestamp)
 {
-  struct tm *tm_date = localtime(&date);
+  struct tm *tm_date = localtime(&timestamp);
 
   struct tm tm_start = *tm_date;
   tm_start.tm_hour = 0;
@@ -48,9 +47,9 @@ time_t get_datetime_start(time_t date)
   return mktime(&tm_start);
 }
 
-time_t get_datetime_end(time_t date)
+time_t get_day_end_timestamp(time_t timestamp)
 {
-  struct tm *tm_date = localtime(&date);
+  struct tm *tm_date = localtime(&timestamp);
 
   struct tm tm_end = *tm_date;
   tm_end.tm_hour = 23;
@@ -127,25 +126,25 @@ bool validate_ping_packet_size(int packet_size)
   return false;
 }
 
-bool validate_equipment_id(const char *text)
+bool validate_equipment_id(const char *string)
 {
   int id;
   char garbage;
 
-  if (sscanf(text, "EQ-%d%c", &id, &garbage) == 1) return true;
+  if (sscanf(string, "EQ-%d%c", &id, &garbage) == 1) return true;
   else return false;
 }
 
-bool validate_incident_number(const char *text)
+bool validate_incident_number(const char *string)
 {
   int number;
   char garbage;
 
-  if (sscanf(text, "IN-%d%c", &number, &garbage) == 1) return true;
+  if (sscanf(string, "IN-%d%c", &number, &garbage) == 1) return true;
   else return false;
 }
 
-bool validate_sensor_code(const char *text)
+bool validate_sensor_code(const char *string)
 {
   const char *codes[] = {
     "TEMP_RACK",
@@ -158,48 +157,48 @@ bool validate_sensor_code(const char *text)
 
   for (int i = 0; i < 5; i++) 
   {
-    if (strncmp(codes[i], text, strlen(text)) == 0) return true;
+    if (strncmp(codes[i], string, strlen(string)) == 0) return true;
   }
 
   return false;
 }
 
-bool validate_date(const char *text)
+bool validate_date(const char *string)
 {
   int day, month, year;
   char garbage;
 
-  if (sscanf(text, "%d-%d-%4d%c", &day, &month, &year, &garbage) != 3) return false;
+  if (sscanf(string, "%d-%d-%4d%c", &day, &month, &year, &garbage) != 3) return false;
   else return true;
 }
 
 // TODO: Add SEARCH_EQUIPMENT_ID, SEARCH_INCIDENT_ID, SEARCH_TECHNICIAN_ID
-search_type_t detect_search_type(const char *text)
+search_type_t detect_search_type(const char *string)
 {
-  if (text == NULL) return SEARCH_INVALID;
+  if (string == NULL) return SEARCH_INVALID;
   
-  if (validate_ip_address(text)) return SEARCH_IP;
+  if (validate_ip_address(string)) return SEARCH_IP;
 
-  if (validate_mac_address(text)) return SEARCH_MAC;
+  if (validate_mac_address(string)) return SEARCH_MAC;
 
-  if (validate_equipment_id(text)) return SEARCH_EQUIPMENT_ID;
+  if (validate_equipment_id(string)) return SEARCH_EQUIPMENT_ID;
 
-  if (validate_incident_number(text)) return SEARCH_INCIDENT_ID;
+  if (validate_incident_number(string)) return SEARCH_INCIDENT_ID;
 
-  if (validate_sensor_code(text)) return SEARCH_SENSOR_CODE;
+  if (validate_sensor_code(string)) return SEARCH_SENSOR_CODE;
 
   return SEARCH_INVALID;
 }
 
-void convert_to_uppercase(const char *text, char *buffer)
+void convert_to_uppercase(const char *string, char *buffer)
 {
   int i;
-  for (i = 0; text[i] != '\0'; i ++) 
+  for (i = 0; string[i] != '\0'; i ++) 
   {
-    if (text[i] >= 'a' && text[i] <= 'z')
-      buffer[i] = text[i] - ('a' - 'A');
+    if (string[i] >= 'a' && string[i] <= 'z')
+      buffer[i] = string[i] - ('a' - 'A');
     else
-       buffer[i] = text[i];
+       buffer[i] = string[i];
   }
 
   buffer[i] = '\0';

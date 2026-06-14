@@ -206,7 +206,7 @@ static GtkWidget *build_filter_bar(sensor_view_t *view)
   g_signal_connect(view->date_filter, "activate", G_CALLBACK(on_date_entry_changed), view);
 
   char date[DATE_MAX];
-  get_current_date(date);
+  format_current_date(date);
   gtk_editable_set_text(GTK_EDITABLE(view->date_filter), date);
 
   view->status_filter = GTK_DROP_DOWN(gtk_drop_down_new_from_strings(filter_status));
@@ -308,7 +308,7 @@ static void build_table_row(sensor_view_t *view, sensor_t sensor, int row)
   snprintf(value, VALUE_MAX, "%0.2f %s", sensor.value, sensor.unit);
 
   char datetime[DATETIME_MAX];
-  get_datetime(sensor.read_at, datetime);
+  format_timestamp_to_datetime(sensor.read_at, datetime);
   GtkWidget *columns[] = {
     create_table_cell(sensor.code, CELL_CODE_WIDTH),
     create_table_cell(sensor.type, CELL_TYPE_WIDTH),

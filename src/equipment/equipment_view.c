@@ -335,7 +335,7 @@ static void build_table_row(equipment_view_t *view, equipment_t equipment, int r
   equipment_format_id(equipment.id, id);
 
   char datetime[DATETIME_MAX];
-  get_datetime(equipment.last_check, datetime);
+  format_timestamp_to_datetime(equipment.last_check, datetime);
 
   GtkWidget *columns[] = {
     check_button,

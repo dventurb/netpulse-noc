@@ -22,7 +22,7 @@ void sensor_controller_init(sensor_controller_t *controller, sensor_view_t *view
   controller->status_filter = 0;
   
   controller->search_text[0] = '\0';
-  get_current_date(controller->search_date);
+  format_current_date(controller->search_date);
   printf("current: %s\n\n", controller->search_date);
 
   int total = sensor_get_count(controller->app->sensors);
@@ -124,7 +124,7 @@ void sensor_controller_execute_search_date(sensor_controller_t *controller, sens
 {
   sensor_array_t *array = &controller->app->sensors;
 
-  time_t datetime = set_datetime(controller->search_date);
+  time_t datetime = parse_date_to_timestamp(controller->search_date);
   sensor_search_by_date(array, datetime);
   printf("array->count by date: %d\n\n", array->count);
 
