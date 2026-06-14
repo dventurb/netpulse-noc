@@ -2,8 +2,9 @@
 #define SENSOR_H
 
 #include "macros.h"
-#include <time.h>
+#include <stdio.h>
 #include <stdbool.h>
+#include <time.h>
 
 typedef enum {
   SENSOR_OK,
@@ -21,30 +22,29 @@ typedef struct {
   time_t read_at;
 } sensor_t;
 
-typedef struct sensor_node_t {
-  sensor_t data;
-  struct sensor_node_t *next;
-} sensor_node_t;
-
 typedef struct {
-  sensor_node_t *head;
+  sensor_t *sensors;
   int count;
-} sensor_list_t;
+} sensor_array_t;
 
 
-void sensor_list_init(sensor_list_t *list);
-void sensor_list_destroy(sensor_list_t *list);
+void sensor_array_init(sensor_array_t *array);
+void sensor_array_destroy(sensor_array_t *array);
 
-void sensor_list_insert(sensor_list_t *list, sensor_t data);
+void sensor_persistence_append(sensor_t *sensor);
 
-void sensor_list_clone(sensor_list_t *source, sensor_list_t *destination);
-sensor_t *sensor_list_in_range(sensor_list_t *list, int start, int end, int *count);
+void sensor_array_clone(sensor_array_t *source, sensor_array_t *destination);
 
-void sensor_filter_by_status(const sensor_list_t *list, sensor_status_t status, sensor_list_t *filtered);
-void sensor_filter_by_code(const sensor_list_t *list, const char *code, sensor_list_t *filtered);
+sensor_t *sensor_array_in_range(sensor_array_t *array, int start, int end, int *count);
 
-int sensor_get_count(sensor_list_t *list);
-int sensor_get_number_status(sensor_list_t *list, sensor_status_t status);
+void sensor_search_by_date(sensor_array_t *array, time_t date);
+
+void sensor_filter_by_status(const sensor_array_t *array, sensor_status_t status, sensor_array_t *filtered);
+void sensor_filter_by_code(const sensor_array_t *array, const char *code, sensor_array_t *filtered);
+
+int sensor_get_count(sensor_array_t array);
+int sensor_get_number_code(sensor_array_t array, const char *code);
+int sensor_get_number_status(sensor_array_t array, sensor_status_t status);
 
 bool sensor_validate(sensor_t sensor);
 sensor_t sensor_create_from_line(char *line);

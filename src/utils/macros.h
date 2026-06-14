@@ -22,7 +22,8 @@
 #define KEY_MAX 30  // = USERNAME_MAX 
 #define HASHMAP_SIZE 61 // prime number
 
-#define DATETIME_MAX 17 // "2026-05-16 00:25" + '\0'
+#define DATE_MAX 11   // "14-06-2026" + '\0'
+#define DATETIME_MAX 17 // "16-05-2026 00:25" + '\0'
 
 #define CELL_ID_WIDTH 100
 #define CELL_NAME_WIDTH 160

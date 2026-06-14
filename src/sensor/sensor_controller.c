@@ -11,7 +11,7 @@
 #include <string.h>
 
 
-static const char *const SENSOR_API_URL = "https://sensorlab.innominatum.pt/v1/sensors/export/txt";
+static const char *SENSOR_API_URL = "https://sensorlab.innominatum.pt/v1/sensors/export/txt";
 
 
 void sensor_controller_init(sensor_controller_t *controller, sensor_view_t *view, void *data)
@@ -22,46 +22,52 @@ void sensor_controller_init(sensor_controller_t *controller, sensor_view_t *view
   controller->status_filter = 0;
   
   controller->search_text[0] = '\0';
+  get_current_date(controller->search_date);
+  printf("current: %s\n\n", controller->search_date);
 
-  int total = sensor_get_count(&controller->app->sensors);
+  int total = sensor_get_count(controller->app->sensors);
   pagination_init(&controller->pagination, total);
 }
 
-static void sensor_controller_execute_filters(sensor_controller_t *controller, sensor_task_t *task, sensor_list_t *filtered)
+static void sensor_controller_execute_filters(sensor_controller_t *controller, sensor_task_t *task, sensor_array_t *filtered)
 {
-  sensor_list_t temp;
-  sensor_list_init(&temp);
+  sensor_array_t *array = &controller->app->sensors;
 
-  sensor_list_t *list = &controller->app->sensors;
+  sensor_array_t temp;
+  sensor_array_init(&temp);
 
   if (strlen(task->search_text) >= 1)
-    sensor_filter_by_code(list, task->search_text, &temp);
+  {
+    printf("search: %s\n\n", task->search_text);
+    sensor_filter_by_code(array, task->search_text, &temp);
+  }
   else 
-    sensor_list_clone(list, &temp);
+    sensor_array_clone(array, &temp);
 
   if (task->status_filter != 0) 
     sensor_filter_by_status(&temp, task->status_filter - 1, filtered);
   else 
-    sensor_list_clone(&temp, filtered);
+    sensor_array_clone(&temp, filtered);
 
-  sensor_list_destroy(&temp);
+  sensor_array_destroy(&temp);
 }
 
-static void sensor_controller_execute_pagination(sensor_task_t *task, sensor_list_t *filtered)
+static void sensor_controller_execute_pagination(sensor_task_t *task, sensor_array_t *filtered)
 {
-  task->total = sensor_get_count(filtered);
-  task->result = sensor_list_in_range(filtered, task->start, task->end, &task->count);
+  task->total = sensor_get_count(*filtered);
+  printf("Total: %d\n\n", task->total);
+  task->result = sensor_array_in_range(filtered, task->start, task->end, &task->count);
 }
 
 void sensor_controller_execute_query(sensor_controller_t *controller, sensor_task_t *task)
 {
-  sensor_list_t filtered;
-  sensor_list_init(&filtered);
+  sensor_array_t filtered;
+  sensor_array_init(&filtered);
 
   sensor_controller_execute_filters(controller, task, &filtered);
   sensor_controller_execute_pagination(task, &filtered);
 
-  sensor_list_destroy(&filtered);
+  sensor_array_destroy(&filtered);
 
   g_idle_add(on_sensor_finish, task);
 }
@@ -72,7 +78,7 @@ void sensor_controller_reset_query(sensor_controller_t *controller)
   
   controller->search_text[0] = '\0';
 
-  int total = sensor_get_count(&controller->app->sensors);
+  int total = sensor_get_count(controller->app->sensors);
   pagination_init(&controller->pagination, total);
 
   sensor_worker_start_query(controller); // Create new thread so the UI doesnt freeze
@@ -114,6 +120,33 @@ void sensor_controller_set_search(sensor_controller_t *controller, const char *t
   sensor_controller_start_query(controller);
 }
 
+void sensor_controller_execute_search_date(sensor_controller_t *controller, sensor_task_t *task)
+{
+  sensor_array_t *array = &controller->app->sensors;
+
+  time_t datetime = set_datetime(controller->search_date);
+  sensor_search_by_date(array, datetime);
+  printf("array->count by date: %d\n\n", array->count);
+
+  printf("datetime: %ld\n\n", datetime);
+
+  sensor_controller_execute_query(controller, task);
+}
+
+void sensor_controller_start_search_date(sensor_controller_t *controller)
+{
+  sensor_worker_search_date(controller);
+}
+
+void sensor_controller_set_date(sensor_controller_t *controller, const char *text)
+{
+  if (text == NULL) return;
+
+  controller->pagination.current_page = 0;
+
+  sensor_controller_start_search_date(controller);
+}
+
 void sensor_controller_request_file_import(sensor_controller_t *controller, const char *filepath)
 {
   if (filepath == NULL) return;
@@ -123,8 +156,6 @@ void sensor_controller_request_file_import(sensor_controller_t *controller, cons
 
 void sensor_controller_execute_file_import(sensor_controller_t *controller, sensor_task_t *task)
 {
-  sensor_list_t *list = &controller->app->sensors;
-
   FILE *file = fopen(task->filepath, "r");
   if (file == NULL) return;
 
@@ -142,7 +173,8 @@ void sensor_controller_execute_file_import(sensor_controller_t *controller, sens
 
     if (sensor_validate(sensor) == true)
     {
-      sensor_list_insert(list, sensor);
+      printf("sensor_validate vai append no file");
+      sensor_persistence_append(&sensor);
 
       if (sensor.status != SENSOR_OK)
         sensor_controller_create_incident(controller, &sensor);
@@ -153,7 +185,7 @@ void sensor_controller_execute_file_import(sensor_controller_t *controller, sens
 
   free(task->filepath);
 
-  sensor_controller_execute_query(controller, task);
+  sensor_controller_execute_search_date(controller, task);
 }
 
 void sensor_controller_request_api_import(sensor_controller_t *controller)
@@ -163,8 +195,6 @@ void sensor_controller_request_api_import(sensor_controller_t *controller)
 
 void sensor_controller_execute_api_import(sensor_controller_t *controller, sensor_task_t *task)
 {
-  sensor_list_t *list = &controller->app->sensors;
-
   char input[200];
   snprintf(input, sizeof(input), "curl -s %s", SENSOR_API_URL);
 
@@ -185,16 +215,18 @@ void sensor_controller_execute_api_import(sensor_controller_t *controller, senso
 
     if (sensor_validate(sensor) == true)
     {
-      sensor_list_insert(list, sensor);
-      
+      sensor_persistence_append(&sensor);
+
       if (sensor.status != SENSOR_OK)
         sensor_controller_create_incident(controller, &sensor);
+
+      printf("sensor time_t: %ld\n\n", sensor.read_at);
     }
   }
 
   pclose(file);
 
-  sensor_controller_execute_query(controller, task);
+  sensor_controller_execute_search_date(controller, task);
 }
 
 void sensor_controller_create_incident(sensor_controller_t *controller, const sensor_t *sensor)
@@ -236,15 +268,21 @@ void sensor_controller_create_incident(sensor_controller_t *controller, const se
   save_incidents(queue, list);
 }
 
+bool sensor_controller_validate_date(const char *text)
+{
+  if (validate_date(text)) return true;
+  else return false;
+}
+
 void sensor_controller_get_stats(sensor_controller_t *controller, sensor_stats_t *stats)
 {
-  sensor_list_t *list = &controller->app->sensors;
+  sensor_array_t array = controller->app->sensors;
 
-  stats->total = sensor_get_count(list);
-  stats->ok = sensor_get_number_status(list, SENSOR_OK);
-  stats->failure = sensor_get_number_status(list, SENSOR_NET_FAILURE);
-  stats->warning = sensor_get_number_status(list, SENSOR_WARNING);
-  stats->critical = sensor_get_number_status(list, SENSOR_CRITICAL);
+  stats->total = sensor_get_count(array);
+  stats->ok = sensor_get_number_status(array, SENSOR_OK);
+  stats->failure = sensor_get_number_status(array, SENSOR_NET_FAILURE);
+  stats->warning = sensor_get_number_status(array, SENSOR_WARNING);
+  stats->critical = sensor_get_number_status(array, SENSOR_CRITICAL);
 }
 
 gboolean on_sensor_finish(gpointer data)
@@ -261,7 +299,8 @@ gboolean on_sensor_finish(gpointer data)
   sensor_view_update_stats_cards(task->controller->view);
   sensor_view_set_actions_enabled(task->controller->view, true);
 
-  free(task->result);
+  if (task->result != NULL)
+    free(task->result);
   free(task);
 
   return false;

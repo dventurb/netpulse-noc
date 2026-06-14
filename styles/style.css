@@ -1032,3 +1032,18 @@
 .table-row-top {
   background-color: #f0fdf4;
 }
+
+.date-entry {
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.date-entry:focus-within {
+  outline: none;
+  box-shadow: none;
+  border-color: #19c37d;
+}

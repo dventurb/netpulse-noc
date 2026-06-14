@@ -5,7 +5,7 @@ void application_init(application_t *application)
   equipment_list_init(&application->equipments);
   incident_queue_init(&application->incidents_pending);
   incident_list_init(&application->incidents_history);
-  sensor_list_init(&application->sensors);
+  sensor_array_init(&application->sensors);
   technician_list_init(&application->technicians);
 
   hashmap_init(&application->id_index);
@@ -26,7 +26,7 @@ void application_destroy(application_t *application)
   equipment_list_destroy(&application->equipments);
   incident_queue_destroy(&application->incidents_pending);
   incident_list_destroy(&application->incidents_history);
-  sensor_list_destroy(&application->sensors);
+  sensor_array_destroy(&application->sensors);
   technician_list_destroy(&application->technicians);
   
   // TODO: technician_t *current_user

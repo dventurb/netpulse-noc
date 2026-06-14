@@ -17,7 +17,7 @@ typedef struct {
   incident_queue_t incidents_pending; // PENDING
   incident_list_t incidents_history; // IN_PROGRESS + CONCLUDED
  
-  sensor_list_t sensors;
+  sensor_array_t sensors;
 
   technician_list_t technicians;
   technician_t *current_user;

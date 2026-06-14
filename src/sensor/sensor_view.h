@@ -18,6 +18,7 @@ typedef struct sensor_view_t {
   GtkButton   *import_button;
   GtkButton   *fetch_button;
 
+  GtkEntry    *date_filter;
   GtkDropDown *status_filter;
 } sensor_view_t;
 

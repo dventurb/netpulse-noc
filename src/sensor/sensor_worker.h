@@ -12,6 +12,7 @@ typedef struct sensor_task_t {
   int status_filter;
 
   char search_text[STRING_MAX];
+  char search_date[DATE_MAX];
 
   int start;
   int end;
@@ -25,5 +26,7 @@ void sensor_worker_start_query(sensor_controller_t *controller);
 
 void sensor_worker_file_import(sensor_controller_t *controller, const char *filepath);
 void sensor_worker_api_import(sensor_controller_t *controller);
+
+void sensor_worker_search_date(sensor_controller_t *controller);
 
 #endif

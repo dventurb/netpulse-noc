@@ -5,6 +5,17 @@
 #include <stdio.h>
 #include <string.h>
 
+time_t set_datetime(const char *date)
+{
+  struct tm tm = {0};
+  sscanf(date, "%2d-%2d-%4d", &tm.tm_mday, &tm.tm_mon, &tm.tm_year);
+
+  tm.tm_year -= 1900; // years since 1900
+  tm.tm_mon -= 1; // January is 0
+  
+  return mktime(&tm);
+}
+
 void get_datetime(time_t time, char *string)
 {
   if (time == 0) 
@@ -15,6 +26,38 @@ void get_datetime(time_t time, char *string)
     struct tm *tm = localtime(&time);
     strftime(string, DATETIME_MAX, "%d-%m-%Y %H:%M", tm);
   }
+}
+
+void get_current_date(char *string)
+{
+  time_t current = time(NULL);
+
+  struct tm *tm = localtime(&current);
+  strftime(string, DATE_MAX, "%d-%m-%Y", tm);
+}
+
+time_t get_datetime_start(time_t date)
+{
+  struct tm *tm_date = localtime(&date);
+
+  struct tm tm_start = *tm_date;
+  tm_start.tm_hour = 0;
+  tm_start.tm_min = 0;
+  tm_start.tm_sec = 0;
+
+  return mktime(&tm_start);
+}
+
+time_t get_datetime_end(time_t date)
+{
+  struct tm *tm_date = localtime(&date);
+
+  struct tm tm_end = *tm_date;
+  tm_end.tm_hour = 23;
+  tm_end.tm_min = 59;
+  tm_end.tm_sec = 59;
+
+  return mktime(&tm_end);
 }
 
 bool validate_ip_address(const char *ip_address)
@@ -119,6 +162,15 @@ bool validate_sensor_code(const char *text)
   }
 
   return false;
+}
+
+bool validate_date(const char *text)
+{
+  int day, month, year;
+  char garbage;
+
+  if (sscanf(text, "%d-%d-%4d%c", &day, &month, &year, &garbage) != 3) return false;
+  else return true;
 }
 
 // TODO: Add SEARCH_EQUIPMENT_ID, SEARCH_INCIDENT_ID, SEARCH_TECHNICIAN_ID

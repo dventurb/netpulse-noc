@@ -6,66 +6,61 @@
 #include "utils.h"
 #include "macros.h"
 
-void sensor_list_init(sensor_list_t *list)
+static const char *filepath = "data/sensors.bin";
+
+
+static void binary_search(FILE *file, time_t date, int total, int *start, int *end);
+
+
+void sensor_array_init(sensor_array_t *array)
 {
-  list->head = NULL;
-  list->count = 0;
+  array->sensors = NULL;
+  array->count = 0;
 }
 
-void sensor_list_destroy(sensor_list_t *list)
+void sensor_array_destroy(sensor_array_t *array)
 {
-  sensor_node_t *node = list->head;
-
-  while (node != NULL)
-  {
-    sensor_node_t *next = node->next;
-    free(node);
-    node = next;
-  }
-
-  list->head = NULL;
-  list->count = 0;
+  if (array->sensors != NULL) free(array->sensors);
+  array->count = 0;
 }
 
-void sensor_list_insert(sensor_list_t *list, sensor_t data)
+void sensor_persistence_append(sensor_t *sensor)
 {
-  sensor_node_t *new = malloc(sizeof(sensor_node_t));
-  if (new == NULL) {
-    // TODO: Implement a log system (ex.: (datatime) [ERROR] sensor_list_insert : malloc failed)
-    
-    return;
-  }
+  if (sensor == NULL) return;
 
-  new->data = data;
+  FILE *file = fopen(filepath, "ab");
+  if (file == NULL) return;
 
-  new->next = list->head;
-  list->head = new;
+  fwrite(sensor, sizeof(sensor_t), 1, file);
 
-  list->count++;
+  fclose(file);
 }
 
-void sensor_list_clone(sensor_list_t *source, sensor_list_t *destination)
+void sensor_array_clone(sensor_array_t *source, sensor_array_t *destination)
 {
   if (source == NULL || destination == NULL)
   {
-    // TODO: Implement a log system (ex.: (datatime) [ERROR] sensor_list_clone : NULL arguments)
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] sensor_array_clone : NULL arguments)
     return;
   }
 
-  sensor_node_t *node = source->head;
+  if (source->count == 0) return;
 
-  while (node != NULL)
+  destination->sensors = malloc(sizeof(sensor_t) * source->count);
+  if (destination->sensors == NULL) return;
+
+  for (int i = 0; i < source->count; i++) 
   {
-    sensor_list_insert(destination, node->data);
-    node = node->next;
+    destination->sensors[i] = source->sensors[i];
+    destination->count++;
   }
 }
 
-sensor_t *sensor_list_in_range(sensor_list_t *list, int start, int end, int *count)
+sensor_t *sensor_array_in_range(sensor_array_t *array, int start, int end, int *count)
 {
-  if (list == NULL) 
+  if (array == NULL) 
   {
-    // TODO: Implement a log system (ex.: (datetime) [ERROR] sensor_list_in_range : NULL argument)
+    // TODO: Implement a log system (ex.: (datetime) [ERROR] sensor_array_in_range : NULL argument)
     return NULL;
   }
 
@@ -75,90 +70,122 @@ sensor_t *sensor_list_in_range(sensor_list_t *list, int start, int end, int *cou
   sensor_t *sensors = malloc(sizeof(sensor_t) * size);
   if (sensors == NULL) return NULL;
 
-  sensor_node_t *node = list->head;
   int i = 0;
 
-  while (node != NULL && i < start)
+  for (int j = start; j < end; j++)
   {
-    node = node->next;
-    i++;
+    if (j < array->count)
+      sensors[i++] = array->sensors[j];
   }
 
-  while (node != NULL && i < end)
-  {
-    int index = i - start;
-    sensors[index] = node->data;
-
-    node = node->next;
-    i++;
-  }
-
-  *count = i - start;
+  *count = i;
 
   return sensors;
 }
 
-void sensor_filter_by_status(const sensor_list_t *list, sensor_status_t status, sensor_list_t *filtered)
+void sensor_search_by_date(sensor_array_t *array, time_t date)
 {
-  if (list == NULL || filtered == NULL)
+  FILE *file = fopen(filepath, "rb");
+  if (file == NULL) return;
+
+  fseek(file, 0, SEEK_END);
+  long size = ftell(file);
+
+  int total = (int)size / sizeof(sensor_t);
+  if (total <= 0) return;
+
+  int start = 0, end = 0;
+  binary_search(file, date, total, &start, &end);
+
+  if (start == 0 || end == 0 || end < start) return;
+
+  printf("start: %d | end %d\n\n", start, end);
+
+  int count = (end - start) + 1;
+
+  if (array->sensors != NULL) free(array->sensors);
+
+  array->sensors = malloc(sizeof(sensor_t) * count);
+  if (array->sensors == NULL) return;
+
+  fseek(file, start * sizeof(sensor_t), SEEK_SET);
+  fread(array->sensors, sizeof(sensor_t), count, file);
+  
+  array->count = count;
+}
+
+void sensor_filter_by_status(const sensor_array_t *array, sensor_status_t status, sensor_array_t *filtered)
+{
+  if (array == NULL || filtered == NULL)
   {
     // TODO: Implement a log system (ex.: (datatime) [ERROR] sensor_filter_status : NULL arguments)
     return;
   }
 
-  sensor_node_t *node = list->head;
+  int count = sensor_get_number_status(*array, status);
+ 
+  filtered->sensors = malloc(sizeof(sensor_t) * count);
+  if (filtered->sensors == NULL) return;
 
-  while (node != NULL)
+  int i = 0;
+
+  for (int j = 0; j < array->count; j++) 
   {
-    if (node->data.status == status)
-    {
-      sensor_list_insert(filtered, node->data);
-    }
-
-    node = node->next;
+    if (array->sensors[j].status == status)
+      filtered->sensors[i++] = array->sensors[j];
   }
 
-  return;
+  filtered->count = i;
 }
 
-void sensor_filter_by_code(const sensor_list_t *list, const char *code, sensor_list_t *filtered){
-  if (list == NULL || code == NULL || filtered == NULL)
+void sensor_filter_by_code(const sensor_array_t *array, const char *code, sensor_array_t *filtered){
+  if (array == NULL || code == NULL || filtered == NULL)
   {
     // TODO: Implement a log system (ex.: (datatime) [ERROR] sensor_filter_by_code : NULL arguments)
     return;
   }
 
-  sensor_node_t *node = list->head;
+  int count = sensor_get_number_code(*array, code);
 
-  while (node != NULL)
+  filtered->sensors = malloc(sizeof(sensor_t) * count);
+  if (filtered->sensors == NULL) return;
+
+  int i = 0;
+
+  for (int j = 0; j < array->count; j++) 
   {
-    if (strncmp(node->data.code, code, strlen(code)) == 0)
-    {
-      sensor_list_insert(filtered, node->data);
-    }
-
-    node = node->next;
+    printf("code: %s | sensor.code: %s\n\n", code, array->sensors[j].code);
+    if (strncmp(array->sensors[j].code, code, strlen(code)) == 0)
+      filtered->sensors[i++] = array->sensors[j];
   }
 
-  return;
+  filtered->count = i;
 }
 
-int sensor_get_count(sensor_list_t *list)
+int sensor_get_count(sensor_array_t array)
 {
-  return list->count;
+  return array.count;
 }
 
-int sensor_get_number_status(sensor_list_t *list, sensor_status_t status)
+int sensor_get_number_code(sensor_array_t array, const char *code)
 {
   int i = 0;
 
-  sensor_node_t *node = list->head;
-
-  while (node != NULL)
+  for (int j = 0; j < array.count; j++) 
   {
-    if (node->data.status == status) i++;
+    if (strncmp(array.sensors[j].code, code, strlen(code)) == 0) i++;
+  }
 
-    node = node->next;
+  return i;
+}
+
+int sensor_get_number_status(sensor_array_t array, sensor_status_t status)
+{
+  int i = 0;
+
+  for (int j = 0; j < array.count; j++) 
+  {
+    if (array.sensors->status == status) i++;
   }
 
   return i;
@@ -232,5 +259,61 @@ const char *sensor_status_to_string(sensor_status_t status)
     case SENSOR_CRITICAL: return "Critical";
     case SENSOR_NET_FAILURE: return "Network Failure";
     default: return "Unknown";
+  }
+}
+
+static void binary_search(FILE *file, time_t date, int total, int *start, int *end)
+{
+  time_t date_start = get_datetime_start(date);
+  time_t date_end = get_datetime_end(date);
+
+  int left = 0;
+  int right = total - 1;
+
+  while (left <= right)
+  {
+    int mid = left + (right - left) / 2;
+
+    sensor_t sensor = {0};
+
+    fseek(file, mid * sizeof(sensor_t), SEEK_SET);
+    fread(&sensor, sizeof(sensor_t), 1, file);
+
+    time_t sensor_date = get_datetime_start(sensor.read_at);
+    printf("sensor_date start: %ld\n", sensor_date);
+
+    if (sensor_date >= date_start)
+    {
+      *start = mid;
+      right = mid - 1;
+    }
+    
+    else left = mid + 1;
+  }
+
+  if (start == 0) return;
+
+  left = 0;
+  right = total - 1;
+
+  while (left <= right)
+  {
+    int mid = left + (right - left) / 2;
+
+    sensor_t sensor = {0};
+
+    fseek(file, mid * sizeof(sensor_t), SEEK_SET);
+    fread(&sensor, sizeof(sensor_t), 1, file);
+
+    time_t sensor_date = get_datetime_end(sensor.read_at);
+    printf("sensor_date end: %ld\n", sensor_date);
+
+    if (sensor_date <= date_end)
+    {
+      *end = mid;
+      left = mid + 1;
+    }
+
+    else right = mid - 1;
   }
 }

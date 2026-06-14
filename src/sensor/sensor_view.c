@@ -31,6 +31,7 @@ static void on_import_sensors_clicked(GtkButton *button, gpointer data);
 static void on_fetch_api_clicked(GtkButton *button, gpointer data);
 
 static void on_search_entry_changed(GtkSearchEntry *search, gpointer data);
+static void on_date_entry_changed(GtkEntry *entry, gpointer data);
 static void on_filter_dropdown_changed(GObject *self, GParamSpec *pspec, gpointer data);
 
 static void on_previous_page_clicked(GtkButton *button, gpointer data);
@@ -198,11 +199,22 @@ static GtkWidget *build_filter_bar(sensor_view_t *view)
   gtk_widget_set_hexpand(search, TRUE);
   g_signal_connect(search, "search-changed", G_CALLBACK(on_search_entry_changed), view);
 
+  view->date_filter = GTK_ENTRY(gtk_entry_new());
+  gtk_entry_set_placeholder_text(view->date_filter, "DD-MM-AAAA");
+  gtk_entry_set_max_length(view->date_filter, DATE_MAX - 1);
+  gtk_widget_add_css_class(GTK_WIDGET(view->date_filter), "date-entry");
+  g_signal_connect(view->date_filter, "activate", G_CALLBACK(on_date_entry_changed), view);
+
+  char date[DATE_MAX];
+  get_current_date(date);
+  gtk_editable_set_text(GTK_EDITABLE(view->date_filter), date);
+
   view->status_filter = GTK_DROP_DOWN(gtk_drop_down_new_from_strings(filter_status));
   gtk_widget_add_css_class(GTK_WIDGET(view->status_filter), "inventory-filter");
   g_signal_connect(GTK_WIDGET(view->status_filter), "notify::selected", G_CALLBACK(on_filter_dropdown_changed), view);
 
   gtk_box_append(GTK_BOX(box), search);
+  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->date_filter));
   gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->status_filter));
 
   return box;
@@ -415,6 +427,17 @@ static void on_search_entry_changed(GtkSearchEntry *search, gpointer data)
   const char *text = gtk_editable_get_text(GTK_EDITABLE(search));
 
   sensor_controller_set_search(view->controller, text);
+}
+
+static void on_date_entry_changed(GtkEntry *entry, gpointer data)
+{
+  sensor_view_t *view = (sensor_view_t *)data;
+
+  const char *text = gtk_editable_get_text(GTK_EDITABLE(entry));
+
+  if (!sensor_controller_validate_date(text)) return;
+
+  sensor_controller_set_date(view->controller, text);
 }
 
 static void on_filter_dropdown_changed(GObject *self, GParamSpec *pspec, gpointer data)
