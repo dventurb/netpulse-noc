@@ -1099,6 +1099,10 @@
   color: #4b5563;
 }
 
+.login-entry-error {
+  border-color: #ef4444;
+}
+
 .login-footer-box {
  background-color: transparent;
  border-top: 1px solid #232529;

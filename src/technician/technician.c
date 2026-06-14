@@ -78,6 +78,12 @@ void technician_list_remove(technician_list_t *list, technician_node_t *node)
   list->count--;
 }
 
+bool technician_exists_by_username(hashmap_t *username_index, const char *username)
+{
+  technician_node_t *node = (technician_node_t *) hashmap_get(username_index, username);
+  return (node != NULL) ? true : false;
+}
+
 int technician_filter_by_role(technician_list_t *list, technician_role_t role, technician_t *technicians)
 {
   if (list == NULL || technicians == NULL)

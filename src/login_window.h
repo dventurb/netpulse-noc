@@ -3,22 +3,10 @@
 
 #include <gtk/gtk.h>
 
-#include "equipment_view.h"
-#include "incident_view.h"
-#include "connectivity_view.h"
-#include "sensor_view.h"
-#include "configuration_view.h"
-
-#include "equipment_controller.h"
-#include "incident_controller.h"
-#include "connectivity_controller.h"
-#include "sensor_controller.h"
-#include "configuration_controller.h"
-
 // forward declaration to resolve circular dependencies
 typedef struct app_t app_t;
 
-typedef struct {
+typedef struct login_window_t {
   app_t *app;
 
   GtkWindow             *window;

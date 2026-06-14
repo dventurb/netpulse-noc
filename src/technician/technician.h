@@ -2,6 +2,7 @@
 #define TECHNICIAN_H
 
 #include "macros.h"
+#include "hashmap.h"
 #include <stdbool.h>
 
 typedef enum {
@@ -13,8 +14,7 @@ typedef struct {
   int id; // TODO: Maybe change the id to a char (ex.: TE-xxx)
   char name[STRING_MAX];
   char username[USERNAME_MAX];
-  char salt[SALT_MAX];
-  char password_hash[HASH_MAX];
+  char password_hash[PASSWORD_HASH_MAX];
   char avatar_path[STRING_MAX];
   technician_role_t role;
   bool is_active;
@@ -35,8 +35,11 @@ typedef struct {
 
 void technician_list_init(technician_list_t *list);
 void technician_list_destroy(technician_list_t *list);
+
 void technician_list_insert(technician_list_t *list, technician_t data);
 void technician_list_remove(technician_list_t *list, technician_node_t *node);
+
+bool technician_exists_by_username(hashmap_t *username_index, const char *username);
 
 int technician_filter_by_role(technician_list_t *list, technician_role_t role, technician_t *technicians);
 

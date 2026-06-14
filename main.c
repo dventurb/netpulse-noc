@@ -1,8 +1,11 @@
 #include "app.h"
 #include "persistence.h"
+#include <sodium.h>
 
 int main(int argc, char **argv)
 {
+  if (sodium_init() < 0) return 1;
+
   app_t app;
   app_init(&app);
 

@@ -1,5 +1,6 @@
 #include "login_window.h"
 
+#include "auth.h"
 #include "app.h"
 
 static void login_window_init(login_window_t *login_window, app_t *app);
@@ -9,8 +10,9 @@ static GtkWidget *build_login_page(login_window_t *login_window);
 static GtkWidget *build_register_page(login_window_t *login_window);
 
 // Callbacks
-static void on_sign_up_clicked(GtkButton *button, gpointer *data);
-static void on_login_clicked(GtkButton *button, gpointer *data);
+static void on_sign_up_clicked(GtkButton *button, gpointer data);
+static void on_login_clicked(GtkButton *button, gpointer data);
+static void on_register_clicked(GtkButton *button, gpointer data);
 
 login_window_t *login_window_create(GtkApplication *gtk_app, app_t *app)
 {
@@ -173,7 +175,7 @@ static GtkWidget *build_register_page(login_window_t *login_window)
 
   GtkWidget *register_button = create_secondary_button("Sign Up", NULL, "secondary-button");
   gtk_widget_set_hexpand(register_button, TRUE);
-  //g_signal_connect(GTK_WIDGET(view->add_button), "clicked", G_CALLBACK(on_add_equipment_clicked), view);
+  g_signal_connect(register_button, "clicked", G_CALLBACK(on_register_clicked), login_window);
 
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   gtk_widget_add_css_class(box, "login-footer-box");
@@ -205,7 +207,7 @@ static GtkWidget *build_register_page(login_window_t *login_window)
   return grid;
 }
 
-static void on_sign_up_clicked(GtkButton *button, gpointer *data)
+static void on_sign_up_clicked(GtkButton *button, gpointer data)
 {
   (void)button;
 
@@ -214,11 +216,48 @@ static void on_sign_up_clicked(GtkButton *button, gpointer *data)
   gtk_stack_set_visible_child_name(login_window->stack, "REGISTER");
 }
 
-static void on_login_clicked(GtkButton *button, gpointer *data)
+static void on_login_clicked(GtkButton *button, gpointer data)
 {
   (void)button;
 
   login_window_t *login_window = (login_window_t *)data;
 
   gtk_stack_set_visible_child_name(login_window->stack, "LOGIN");
+}
+
+static void on_register_clicked(GtkButton *button, gpointer data)
+{
+  (void)button;
+
+  login_window_t *login_window = (login_window_t *)data;
+
+  const char *name = gtk_editable_get_text(GTK_EDITABLE(login_window->register_name));
+  const char *username = gtk_editable_get_text(GTK_EDITABLE(login_window->register_username));
+  const char *password = gtk_editable_get_text(GTK_EDITABLE(login_window->register_password));
+
+  gtk_widget_remove_css_class(GTK_WIDGET(login_window->register_name), "login-entry-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(login_window->register_username), "login-entry-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(login_window->register_password), "login-entry-error");
+
+  register_validate_t error = auth_validate_register(login_window->app, name, username, password);
+  printf("error: %d\n\n", error);
+
+  switch (error) 
+  {
+    case REGISTER_INVALID_NAME:
+      gtk_widget_add_css_class(GTK_WIDGET(login_window->register_name), "login-entry-error");
+      return;
+    case REGISTER_INVALID_USERNAME:
+      gtk_widget_add_css_class(GTK_WIDGET(login_window->register_username), "login-entry-error");
+      return;
+    case REGISTER_INVALID_PASSWORD:
+      gtk_widget_add_css_class(GTK_WIDGET(login_window->register_password), "login-entry-error");
+      return;
+    case REGISTER_VALID: break;
+  }
+
+  bool is_registered = auth_register_new_technician(login_window->app, name, username, password);
+
+  if (is_registered == FALSE) return;
+  else  gtk_stack_set_visible_child_name(login_window->stack, "LOGIN");
 }
