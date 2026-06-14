@@ -1,8 +1,9 @@
 #include "main_window.h"
 
+#include "app.h"
 #include "ui_widgets.h"
 
-static void main_window_init(main_window_t *main_window, gpointer data);
+static void main_window_init(main_window_t *main_window, app_t *app);
 
 static GtkWidget *build_header(void);
 static GtkWidget *build_menu_bar(main_window_t *main_window);
@@ -11,23 +12,24 @@ static GtkWidget *build_menu_button(main_window_t *main_window, const char *text
 // Callbacks
 static void on_menu_button_clicked(GtkButton *button, gpointer data);
 
-
-void main_window_create(GtkApplication *gui, gpointer data)
+main_window_t *main_window_create(GtkApplication *gtk_app, app_t *app)
 {
   main_window_t *main_window = malloc(sizeof(main_window_t));
-  if (main_window == NULL) return;
+  if (main_window == NULL) return NULL;
 
-  main_window_init(main_window, data);
+  main_window_init(main_window, app);
 
-  gtk_application_add_window(gui, main_window->window);
+  gtk_application_add_window(gtk_app, main_window->window);
 
   g_object_set_data_full(G_OBJECT(main_window->window), "user-interface", main_window, free); // ownership + free
 
-  gtk_window_present(main_window->window);
+  return main_window;
 }
 
-static void main_window_init(main_window_t *main_window, gpointer data)
+static void main_window_init(main_window_t *main_window, app_t *app)
 {
+  main_window->app = app;
+
   main_window->window = GTK_WINDOW(gtk_window_new());
   gtk_window_set_title(main_window->window, "NetPulse NOC");
   gtk_window_set_default_size(main_window->window, 1440, 900);
@@ -46,34 +48,33 @@ static void main_window_init(main_window_t *main_window, gpointer data)
 
 
   // EQUIPMENT - Controller + Model
-  equipment_controller_init(&main_window->equipment_ctrl, &main_window->equipment_view, (void *)data);
+  equipment_controller_init(&main_window->equipment_ctrl, &main_window->equipment_view, &app->data);
   GtkBox *equip_container = equipment_view_create(&main_window->equipment_view, &main_window->equipment_ctrl);
   gtk_stack_add_named(main_window->stack, GTK_WIDGET(equip_container), "EQUIPMENT");
 
 
   // INCIDENT - Controller + Model
-  incident_controller_init(&main_window->incident_ctrl, &main_window->incident_view, (void *)data);
+  incident_controller_init(&main_window->incident_ctrl, &main_window->incident_view, &app->data);
   GtkBox *inc_container = incident_view_create(&main_window->incident_view, &main_window->incident_ctrl);
   gtk_stack_add_named(main_window->stack, GTK_WIDGET(inc_container), "INCIDENT");
 
 
   // CONNECTIVITY - Controller + Model
-  connectivity_controller_init(&main_window->connectivity_ctrl, &main_window->connectivity_view, (void *)data);
+  connectivity_controller_init(&main_window->connectivity_ctrl, &main_window->connectivity_view, &app->data);
   GtkBox *conn_container = connectivity_view_create(&main_window->connectivity_view, &main_window->connectivity_ctrl);
   gtk_stack_add_named(main_window->stack, GTK_WIDGET(conn_container), "CONNECTIVITY");
 
 
   // SENSOR - Controller + Model
-  sensor_controller_init(&main_window->sensor_ctrl, &main_window->sensor_view, (void *)data);
+  sensor_controller_init(&main_window->sensor_ctrl, &main_window->sensor_view, &app->data);
   GtkBox *sensor_container = sensor_view_create(&main_window->sensor_view, &main_window->sensor_ctrl);
   gtk_stack_add_named(main_window->stack, GTK_WIDGET(sensor_container), "SENSOR");
 
 
   // CONFIGURATION - Controller + Model
-  configuration_controller_init(&main_window->config_ctrl, &main_window->config_view, (void *)data);
+  configuration_controller_init(&main_window->config_ctrl, &main_window->config_view, &app->data);
   GtkBox *config_container = configuration_view_create(&main_window->config_view, &main_window->config_ctrl);
   gtk_stack_add_named(main_window->stack, GTK_WIDGET(config_container), "CONFIGURATION");
-
 
   gtk_stack_set_visible_child_name(main_window->stack, "EQUIPMENT");
 

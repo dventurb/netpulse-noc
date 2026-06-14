@@ -10,15 +10,15 @@
 #include <stdio.h>
 #include <string.h>
 
-void equipment_controller_init(equipment_controller_t *controller, equipment_view_t *view, void *data)
+void equipment_controller_init(equipment_controller_t *controller, equipment_view_t *view, app_data_t *data)
 {
   controller->view = view;
-  controller->app = (application_t *)data;
+  controller->data = data;
 
   controller->selected_count = 0;
   controller->selected_node = NULL;
 
-  int total = equipment_get_count(&controller->app->equipments);
+  int total = equipment_get_count(&controller->data->equipments);
   pagination_init(&controller->pagination, total);
 
   controller->status_filter = 0;
@@ -50,7 +50,7 @@ void equipment_controller_refresh_page(equipment_controller_t *controller)
   controller->selected_count = 0;
   controller->selected_node = NULL;
   
-  int total = equipment_get_count(&controller->app->equipments);
+  int total = equipment_get_count(&controller->data->equipments);
   pagination_init(&controller->pagination, total);
 
   controller->status_filter = 0;
@@ -78,15 +78,15 @@ void equipment_controller_apply_filters(equipment_controller_t *controller, int 
 
 void equipment_controller_add(equipment_controller_t *controller, equipment_t data)
 {
-  equipment_list_t *list = &controller->app->equipments;
+  equipment_list_t *list = &controller->data->equipments;
   equipment_node_t *node = equipment_list_insert(list, data);
 
   char id[ID_MAX];
   equipment_format_id(node->data.id, id);
 
-  hashmap_insert(&controller->app->id_index, id, node);
-  hashmap_insert(&controller->app->ip_index, node->data.ip_address, node);
-  hashmap_insert(&controller->app->mac_index, node->data.mac_address, node);
+  hashmap_insert(&controller->data->id_index, id, node);
+  hashmap_insert(&controller->data->ip_index, node->data.ip_address, node);
+  hashmap_insert(&controller->data->mac_index, node->data.mac_address, node);
 
   equipment_controller_update_table(controller);
 
@@ -95,16 +95,16 @@ void equipment_controller_add(equipment_controller_t *controller, equipment_t da
 
 void equipment_controller_edit(equipment_controller_t *controller, equipment_t data)
 {
-  equipment_list_t *list = &controller->app->equipments;
+  equipment_list_t *list = &controller->data->equipments;
 
   equipment_node_t *node = controller->selected_node;
   if (node == NULL) return;
 
   if (strcmp(node->data.ip_address, data.ip_address) != 0)
-    hashmap_update(&controller->app->ip_index, node->data.ip_address, data.ip_address, node);
+    hashmap_update(&controller->data->ip_index, node->data.ip_address, data.ip_address, node);
 
   if (strcmp(node->data.mac_address, data.mac_address) != 0)
-    hashmap_update(&controller->app->mac_index, node->data.mac_address, data.mac_address, node);
+    hashmap_update(&controller->data->mac_index, node->data.mac_address, data.mac_address, node);
   
   equipment_update(&node->data, data);
 
@@ -118,7 +118,7 @@ void equipment_controller_edit(equipment_controller_t *controller, equipment_t d
 
 void equipment_controller_remove(equipment_controller_t *controller)
 {
-  equipment_list_t *list = &controller->app->equipments;
+  equipment_list_t *list = &controller->data->equipments;
   
   equipment_node_t *node = controller->selected_node;
   if (node == NULL) return;
@@ -126,9 +126,9 @@ void equipment_controller_remove(equipment_controller_t *controller)
   char id[ID_MAX];
   equipment_format_id(node->data.id, id);
 
-  hashmap_remove(&controller->app->id_index, id);
-  hashmap_remove(&controller->app->ip_index, node->data.ip_address);
-  hashmap_remove(&controller->app->mac_index, node->data.mac_address);
+  hashmap_remove(&controller->data->id_index, id);
+  hashmap_remove(&controller->data->ip_index, node->data.ip_address);
+  hashmap_remove(&controller->data->mac_index, node->data.mac_address);
 
   equipment_list_remove(list, node);
 
@@ -152,13 +152,13 @@ void equipment_controller_search(equipment_controller_t *controller, const char 
   switch (detect_search_type(buffer)) 
   {
     case SEARCH_EQUIPMENT_ID:
-      node = (equipment_node_t *) hashmap_get(&controller->app->id_index, buffer);
+      node = (equipment_node_t *) hashmap_get(&controller->data->id_index, buffer);
       break;
     case SEARCH_IP:
-      node = (equipment_node_t *) hashmap_get(&controller->app->ip_index, buffer);
+      node = (equipment_node_t *) hashmap_get(&controller->data->ip_index, buffer);
       break;
     case SEARCH_MAC:
-      node = (equipment_node_t *) hashmap_get(&controller->app->mac_index, buffer);
+      node = (equipment_node_t *) hashmap_get(&controller->data->mac_index, buffer);
       break;
     default:
       break;
@@ -183,7 +183,7 @@ void equipment_controller_search(equipment_controller_t *controller, const char 
 
 void equipment_controller_handle_toggled(equipment_controller_t *controller, int id, bool is_active)
 {
-  hashmap_t *id_index = &controller->app->id_index;
+  hashmap_t *id_index = &controller->data->id_index;
 
   char buffer[ID_MAX];
   equipment_format_id(id, buffer);
@@ -215,8 +215,8 @@ bool equipment_controller_can_remove(equipment_controller_t *controller)
   char id[ID_MAX];
   equipment_format_id(node->data.id, id);
 
-  incident_queue_t *queue = &controller->app->incidents_pending;
-  incident_list_t *list = &controller->app->incidents_history;
+  incident_queue_t *queue = &controller->data->incidents_pending;
+  incident_list_t *list = &controller->data->incidents_history;
 
   if (incident_has_active_for_source_id(queue, list, id)) return false;
   else return true;
@@ -224,8 +224,8 @@ bool equipment_controller_can_remove(equipment_controller_t *controller)
 
 equipment_validation_t equipment_controller_validate(equipment_controller_t *controller, equipment_t equipment)
 {
-  hashmap_t *ip_index = &controller->app->ip_index;
-  hashmap_t *mac_index = &controller->app->mac_index;
+  hashmap_t *ip_index = &controller->data->ip_index;
+  hashmap_t *mac_index = &controller->data->mac_index;
 
   if (strlen(equipment.name) <= 1) return EQUIPMENT_INVALID_NAME;
   
@@ -246,10 +246,10 @@ equipment_validation_t equipment_controller_validate(equipment_controller_t *con
 
 void equipment_controller_get_stats(equipment_controller_t *controller, equipment_stats_t *stats)
 {
-  stats->total = equipment_get_count(&controller->app->equipments);
-  stats->operational = equipment_get_number_status(&controller->app->equipments, STATUS_OPERATIONAL);
-  stats->failed = equipment_get_number_status(&controller->app->equipments, STATUS_FAILED);
-  stats->maintenance = equipment_get_number_status(&controller->app->equipments, STATUS_MAINTENANCE);
+  stats->total = equipment_get_count(&controller->data->equipments);
+  stats->operational = equipment_get_number_status(&controller->data->equipments, STATUS_OPERATIONAL);
+  stats->failed = equipment_get_number_status(&controller->data->equipments, STATUS_FAILED);
+  stats->maintenance = equipment_get_number_status(&controller->data->equipments, STATUS_MAINTENANCE);
 }
 
 gboolean on_equipment_finish(gpointer data)

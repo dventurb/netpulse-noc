@@ -3,7 +3,7 @@
 
 #include <glib.h>
 
-#include "application.h"
+#include "app_data.h"
 #include "equipment.h"
 #include "macros.h"
 #include "pagination.h"
@@ -22,7 +22,7 @@ typedef enum {
 } equipment_validation_t;
 
 typedef struct {
-  application_t *app;
+  app_data_t *data;
 
   equipment_view_t *view;
 
@@ -59,7 +59,7 @@ typedef struct {
   int maintenance;
 } equipment_stats_t;
 
-void equipment_controller_init(equipment_controller_t *controller, equipment_view_t *view, void *data);
+void equipment_controller_init(equipment_controller_t *controller, equipment_view_t *view, app_data_t *data);
 
 void equipment_controller_refresh_page(equipment_controller_t *controller);
 void equipment_controller_update_table(equipment_controller_t *controller);

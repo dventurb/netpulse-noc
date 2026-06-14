@@ -14,10 +14,10 @@
 static const char *SENSOR_API_URL = "https://sensorlab.innominatum.pt/v1/sensors/export/txt";
 
 
-void sensor_controller_init(sensor_controller_t *controller, sensor_view_t *view, void *data)
+void sensor_controller_init(sensor_controller_t *controller, sensor_view_t *view, app_data_t *data)
 {
   controller->view = view;
-  controller->app = (application_t *)data;
+  controller->data = data;
 
   controller->status_filter = 0;
   
@@ -25,13 +25,13 @@ void sensor_controller_init(sensor_controller_t *controller, sensor_view_t *view
   format_current_date(controller->search_date);
   printf("current: %s\n\n", controller->search_date);
 
-  int total = sensor_get_count(controller->app->sensors);
+  int total = sensor_get_count(controller->data->sensors);
   pagination_init(&controller->pagination, total);
 }
 
 static void sensor_controller_execute_filters(sensor_controller_t *controller, sensor_task_t *task, sensor_array_t *filtered)
 {
-  sensor_array_t *array = &controller->app->sensors;
+  sensor_array_t *array = &controller->data->sensors;
 
   sensor_array_t temp;
   sensor_array_init(&temp);
@@ -78,7 +78,7 @@ void sensor_controller_reset_query(sensor_controller_t *controller)
   
   controller->search_text[0] = '\0';
 
-  int total = sensor_get_count(controller->app->sensors);
+  int total = sensor_get_count(controller->data->sensors);
   pagination_init(&controller->pagination, total);
 
   sensor_worker_start_query(controller); // Create new thread so the UI doesnt freeze
@@ -122,7 +122,7 @@ void sensor_controller_set_search(sensor_controller_t *controller, const char *t
 
 void sensor_controller_execute_search_date(sensor_controller_t *controller, sensor_task_t *task)
 {
-  sensor_array_t *array = &controller->app->sensors;
+  sensor_array_t *array = &controller->data->sensors;
 
   time_t datetime = parse_date_to_timestamp(controller->search_date);
   sensor_search_by_date(array, datetime);
@@ -231,8 +231,8 @@ void sensor_controller_execute_api_import(sensor_controller_t *controller, senso
 
 void sensor_controller_create_incident(sensor_controller_t *controller, const sensor_t *sensor)
 {
-  incident_queue_t *queue = &controller->app->incidents_pending;
-  incident_list_t *list = &controller->app->incidents_history;
+  incident_queue_t *queue = &controller->data->incidents_pending;
+  incident_list_t *list = &controller->data->incidents_history;
 
   incident_t new;
 
@@ -276,7 +276,7 @@ bool sensor_controller_validate_date(const char *text)
 
 void sensor_controller_get_stats(sensor_controller_t *controller, sensor_stats_t *stats)
 {
-  sensor_array_t array = controller->app->sensors;
+  sensor_array_t array = controller->data->sensors;
 
   stats->total = sensor_get_count(array);
   stats->ok = sensor_get_number_status(array, SENSOR_OK);

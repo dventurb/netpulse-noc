@@ -15,8 +15,8 @@ static void *incident_task_thread(void *data)
   incident_queue_init(&queue_filtered);
   incident_list_init(&list_filtered);
 
-  incident_queue_t *queue = &task->controller->app->incidents_pending;
-  incident_list_t *list = &task->controller->app->incidents_history;
+  incident_queue_t *queue = &task->controller->data->incidents_pending;
+  incident_list_t *list = &task->controller->data->incidents_history;
 
   if (strlen(task->params->search_text) >= 1)
   {

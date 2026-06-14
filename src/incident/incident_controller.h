@@ -3,7 +3,7 @@
 
 #include <glib.h>
 
-#include "application.h"
+#include "app_data.h"
 #include "incident.h"
 #include "macros.h"
 #include "pagination.h"
@@ -12,7 +12,7 @@
 typedef struct incident_view_t incident_view_t;
 
 typedef struct {
-  application_t *app;
+  app_data_t *data;
 
   incident_view_t *view;
 
@@ -44,7 +44,7 @@ typedef struct {
   int concluded;
 } incident_stats_t;
 
-void incident_controller_init(incident_controller_t *controller, incident_view_t *view, void *data);
+void incident_controller_init(incident_controller_t *controller, incident_view_t *view, app_data_t *data);
 
 void incident_controller_refresh_page(incident_controller_t *controller);
 void incident_controller_update_table(incident_controller_t *controller);

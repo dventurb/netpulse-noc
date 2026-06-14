@@ -3,7 +3,7 @@
 
 #include <glib.h>
 
-#include "application.h"
+#include "app_data.h"
 #include "connectivity.h"
 
 #include "macros.h"
@@ -37,7 +37,7 @@ typedef struct {
 } ping_params_t;
 
 typedef struct {
-  application_t *app;
+  app_data_t *data;
 
   connectivity_view_t *view;
 
@@ -49,7 +49,7 @@ typedef struct {
 } connectivity_controller_t;
 
 
-void connectivity_controller_init(connectivity_controller_t *controller, connectivity_view_t *view, void *data);
+void connectivity_controller_init(connectivity_controller_t *controller, connectivity_view_t *view, app_data_t *data);
 
 void connectivity_controller_ping(connectivity_controller_t *controller, const char *count, const char *timeout, const char *packet_size);
 void connectivity_controller_ping_all(connectivity_controller_t *controller);

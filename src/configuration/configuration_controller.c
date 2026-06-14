@@ -10,10 +10,10 @@
 #include <stdio.h>
 #include <string.h>
 
-void configuration_controller_init(configuration_controller_t *controller, configuration_view_t *view, void *data)
+void configuration_controller_init(configuration_controller_t *controller, configuration_view_t *view, app_data_t *data)
 {
   controller->view = view;
-  controller->app = (application_t *)data;
+  controller->data = data;
 
   controller->selected_equipment = NULL;
 
@@ -29,13 +29,13 @@ void configuration_controller_execute_equipment_query(configuration_controller_t
   switch (detect_search_type(task->search_text)) 
   {
     case SEARCH_EQUIPMENT_ID:
-      node = (equipment_node_t *) hashmap_get(&controller->app->id_index, task->search_text);
+      node = (equipment_node_t *) hashmap_get(&controller->data->id_index, task->search_text);
       break;
     case SEARCH_IP:
-      node = (equipment_node_t *) hashmap_get(&controller->app->ip_index, task->search_text);
+      node = (equipment_node_t *) hashmap_get(&controller->data->ip_index, task->search_text);
       break;
     case SEARCH_MAC:
-      node = (equipment_node_t *) hashmap_get(&controller->app->mac_index, task->search_text);
+      node = (equipment_node_t *) hashmap_get(&controller->data->mac_index, task->search_text);
       break;
     default:
       break;
@@ -53,7 +53,7 @@ void configuration_controller_execute_equipment_query(configuration_controller_t
 
   else 
   {
-    equipment_list_t *list = &controller->app->equipments;
+    equipment_list_t *list = &controller->data->equipments;
     task->total = equipment_get_count(list);
     task->result = equipment_list_in_range(list, task->start, task->end, &task->count);
   }
@@ -106,7 +106,7 @@ void configuration_controller_add(configuration_controller_t *controller, config
   if (!configuration_controller_has_selected_equipment(controller)) return;
 
   configuration_stack_t *stack = &controller->selected_equipment->data.configs;
-  equipment_list_t *list = &controller->app->equipments;
+  equipment_list_t *list = &controller->data->equipments;
 
   configuration_stack_push(stack, new); // O(1) - There is no problem insert in the main thread
 
@@ -118,7 +118,7 @@ void configuration_controller_add(configuration_controller_t *controller, config
 void configuration_controller_execute_clear(configuration_controller_t *controller, configuration_task_t *task)
 {
   configuration_stack_t *stack = &controller->selected_equipment->data.configs;
-  equipment_list_t *list = &controller->app->equipments;
+  equipment_list_t *list = &controller->data->equipments;
 
   configuration_stack_destroy(stack);
   configuration_stack_init(stack);
@@ -142,7 +142,7 @@ void configuration_controller_start_clear(configuration_controller_t *controller
 void configuration_controller_execute_revert(configuration_controller_t *controller, configuration_task_t *task)
 {
   configuration_stack_t *stack = &controller->selected_equipment->data.configs;
-  equipment_list_t *list = &controller->app->equipments;
+  equipment_list_t *list = &controller->data->equipments;
 
   if (stack->top != NULL) configuration_stack_pop(stack);
 
@@ -206,7 +206,7 @@ void configuration_controller_set_selected_equipment(configuration_controller_t 
 {
   if (id == NULL) return;
 
-  hashmap_t *id_index = &controller->app->id_index;
+  hashmap_t *id_index = &controller->data->id_index;
 
   equipment_node_t *node = (equipment_node_t *)hashmap_get(id_index, id);
   if (node == NULL) return;

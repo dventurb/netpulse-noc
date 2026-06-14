@@ -498,7 +498,7 @@ static void on_create_incident_clicked(GtkButton *button, gpointer data)
   
   incident_view_t *view = (incident_view_t *) data;
 
-  view->form.layout = build_form(&view->controller->app->incidents_pending);
+  view->form.layout = build_form(&view->controller->data->incidents_pending);
 
   GtkWindow *window = GTK_WINDOW(gtk_widget_get_root(GTK_WIDGET(view->container)));
 

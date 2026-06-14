@@ -377,7 +377,7 @@ static GtkWidget *build_form(equipment_view_t *view)
   gtk_editable_set_editable(GTK_EDITABLE(view->form.entry_id), FALSE);
 
   char id[ID_MAX];
-  equipment_format_id(view->controller->app->equipments.next_id, id);
+  equipment_format_id(view->controller->data->equipments.next_id, id);
   gtk_editable_set_text(GTK_EDITABLE(view->form.entry_id), id);
 
   view->form.entry_name = GTK_ENTRY(create_text_field(grid, "Equipment Name", "Core-Switch-01", 0, 1));

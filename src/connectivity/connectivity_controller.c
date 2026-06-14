@@ -11,10 +11,10 @@
 #include <string.h>
 
 
-void connectivity_controller_init(connectivity_controller_t *controller, connectivity_view_t *view, void *data)
+void connectivity_controller_init(connectivity_controller_t *controller, connectivity_view_t *view, app_data_t *data)
 {
   controller->view = view;
-  controller->app = (application_t *)data;
+  controller->data = data;
 
   controller->ip[0] = '\0';
 
@@ -37,7 +37,7 @@ void connectivity_controller_ping(connectivity_controller_t *controller, const c
 
 void connectivity_controller_ping_all(connectivity_controller_t *controller)
 {
-  int count = equipment_get_count(&controller->app->equipments);
+  int count = equipment_get_count(&controller->data->equipments);
   if (count == 0) 
   {
     ping_view_set_actions_enabled(&controller->view->ping_view, true);
@@ -67,13 +67,13 @@ void connectivity_controller_search_equipment(connectivity_controller_t *control
   switch (detect_search_type(buffer)) 
   {
     case SEARCH_EQUIPMENT_ID:
-      node = (equipment_node_t *) hashmap_get(&controller->app->id_index, buffer);
+      node = (equipment_node_t *) hashmap_get(&controller->data->id_index, buffer);
       break;
     case SEARCH_IP:
-      node = (equipment_node_t *) hashmap_get(&controller->app->ip_index, buffer);
+      node = (equipment_node_t *) hashmap_get(&controller->data->ip_index, buffer);
       break;
     case SEARCH_MAC:
-      node = (equipment_node_t *) hashmap_get(&controller->app->mac_index, buffer);
+      node = (equipment_node_t *) hashmap_get(&controller->data->mac_index, buffer);
       break;
     default:
       break;
@@ -134,8 +134,8 @@ void connectivity_controller_set_ip_from_source(connectivity_controller_t *contr
 
 void connectivity_controller_create_incident(connectivity_controller_t *controller, const equipment_t *equipment)
 {
-  incident_queue_t *queue = &controller->app->incidents_pending;
-  incident_list_t *list = &controller->app->incidents_history;
+  incident_queue_t *queue = &controller->data->incidents_pending;
+  incident_list_t *list = &controller->data->incidents_history;
 
   incident_t new;
 

@@ -13,7 +13,7 @@ static void *equipment_task_thread(void *data)
   equipment_list_t filtered;
   equipment_list_init(&filtered);
 
-  equipment_list_t *list = &task->controller->app->equipments;
+  equipment_list_t *list = &task->controller->data->equipments;
 
   if (task->params->sort != task->params->prev_sort)
   {

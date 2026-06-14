@@ -1,22 +1,17 @@
-#include "application.h"
-#include <gtk/gtk.h>
-#include "main_window.h"
+#include "app.h"
 #include "persistence.h"
 
 int main(int argc, char **argv)
 {
-  application_t app;
-  application_init(&app);
+  app_t app;
+  app_init(&app);
 
-  load_equipments(&app);
-  load_incidents(&app.incidents_pending, &app.incidents_history);
+  load_equipments(&app.data);
+  load_incidents(&app.data.incidents_pending, &app.data.incidents_history);
 
-  GtkApplication *gui = gtk_application_new("com.netpulse_noc", G_APPLICATION_DEFAULT_FLAGS);
-  g_signal_connect(gui, "activate", G_CALLBACK(main_window_create), &app);
-  int status = g_application_run(G_APPLICATION(gui), argc, argv);
-  g_object_unref(gui);
+  int status = app_launcher(&app, argc, argv);
 
-  application_destroy(&app);
+  app_destroy(&app);
 
   return status;
 }

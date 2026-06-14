@@ -10,15 +10,15 @@
 #include <stdio.h>
 #include <string.h>
 
-void incident_controller_init(incident_controller_t *controller, incident_view_t *view, void *data)
+void incident_controller_init(incident_controller_t *controller, incident_view_t *view, app_data_t *data)
 {
   controller->view = view;
-  controller->app = (application_t *)data;
+  controller->data = data;
 
   controller->selected_count = 0;
   controller->selected_node = NULL;
 
-  int total = incident_get_count(&controller->app->incidents_pending, &controller->app->incidents_history);
+  int total = incident_get_count(&controller->data->incidents_pending, &controller->data->incidents_history);
   pagination_init(&controller->pagination, total);
 
   controller->status_filter = 0;
@@ -48,7 +48,7 @@ void incident_controller_refresh_page(incident_controller_t *controller)
   controller->selected_count = 0;
   controller->selected_node = NULL;
 
-  int total = incident_get_count(&controller->app->incidents_pending, &controller->app->incidents_history);
+  int total = incident_get_count(&controller->data->incidents_pending, &controller->data->incidents_history);
   pagination_init(&controller->pagination, total);
 
   controller->status_filter = 0;
@@ -64,8 +64,8 @@ void incident_controller_update_table(incident_controller_t *controller)
 
 void incident_controller_add(incident_controller_t *controller, incident_t data)
 {
-  incident_queue_t *queue = &controller->app->incidents_pending;
-  incident_list_t *list = &controller->app->incidents_history;
+  incident_queue_t *queue = &controller->data->incidents_pending;
+  incident_list_t *list = &controller->data->incidents_history;
   
   incident_queue_enqueue(queue, data);
 
@@ -79,8 +79,8 @@ void incident_controller_add(incident_controller_t *controller, incident_t data)
 
 void incident_controller_process(incident_controller_t *controller)
 {
-  incident_queue_t *queue = &controller->app->incidents_pending;
-  incident_list_t *list = &controller->app->incidents_history;
+  incident_queue_t *queue = &controller->data->incidents_pending;
+  incident_list_t *list = &controller->data->incidents_history;
 
   incident_node_t *node = incident_queue_dequeue(queue);
   if (node == NULL) return;
@@ -96,8 +96,8 @@ void incident_controller_resolve(incident_controller_t *controller)
 {
   if (controller->selected_node == NULL) return;
 
-  incident_queue_t *queue = &controller->app->incidents_pending;
-  incident_list_t *list = &controller->app->incidents_history;
+  incident_queue_t *queue = &controller->data->incidents_pending;
+  incident_list_t *list = &controller->data->incidents_history;
 
   if (controller->selected_node->data.status == INCIDENT_IN_PROGRESS)
   {
@@ -148,8 +148,8 @@ void incident_controller_search(incident_controller_t *controller, const char *t
 
 void incident_controller_handle_toggled(incident_controller_t *controller, int id, bool is_active)
 {
-  incident_queue_t *queue = &controller->app->incidents_pending;
-  incident_list_t *list = &controller->app->incidents_history;
+  incident_queue_t *queue = &controller->data->incidents_pending;
+  incident_list_t *list = &controller->data->incidents_history;
 
   incident_node_t *node = incident_queue_get_by_id(queue, id);
   if (node == NULL)
@@ -185,10 +185,10 @@ int incident_controller_get_position(incident_controller_t *controller, incident
 
 void incident_controller_get_stats(incident_controller_t *controller, incident_stats_t *stats)
 {
-  stats->total = incident_get_count(&controller->app->incidents_pending, &controller->app->incidents_history);
-  stats->pending = incident_queue_get_count(&controller->app->incidents_pending);
-  stats->in_progress = incident_list_get_number_status(&controller->app->incidents_history, INCIDENT_IN_PROGRESS);
-  stats->concluded = incident_list_get_number_status(&controller->app->incidents_history, INCIDENT_CONCLUDED);
+  stats->total = incident_get_count(&controller->data->incidents_pending, &controller->data->incidents_history);
+  stats->pending = incident_queue_get_count(&controller->data->incidents_pending);
+  stats->in_progress = incident_list_get_number_status(&controller->data->incidents_history, INCIDENT_IN_PROGRESS);
+  stats->concluded = incident_list_get_number_status(&controller->data->incidents_history, INCIDENT_CONCLUDED);
 }
 
 gboolean on_incident_finished(gpointer data)

@@ -42,20 +42,20 @@ static void save_configurations(equipment_t *equipment, FILE *file)
   }
 }
 
-void load_equipments(application_t *application)
+void load_equipments(app_data_t *data)
 {
-  if (application == NULL) return;
+  if (data == NULL) return;
   
-  equipment_list_t *list = &application->equipments;
+  equipment_list_t *list = &data->equipments;
 
   FILE *file = fopen(equipment_filepath, "rb");
   if (file == NULL) return;
 
-  equipment_t data = {0};
+  equipment_t equipment = {0};
 
-  while (fread(&data, sizeof(equipment_t), 1, file))
+  while (fread(&equipment, sizeof(equipment_t), 1, file))
   {
-    equipment_node_t *node = equipment_list_reinsert(list, data);
+    equipment_node_t *node = equipment_list_reinsert(list, equipment);
 
     configuration_stack_init(&node->data.configs);
 
@@ -64,9 +64,9 @@ void load_equipments(application_t *application)
     char id[ID_MAX];
     equipment_format_id(node->data.id, id);
 
-    hashmap_insert(&application->id_index, id, node);
-    hashmap_insert(&application->ip_index, node->data.ip_address, node);
-    hashmap_insert(&application->mac_index, node->data.mac_address, node);
+    hashmap_insert(&data->id_index, id, node);
+    hashmap_insert(&data->ip_index, node->data.ip_address, node);
+    hashmap_insert(&data->mac_index, node->data.mac_address, node);
   }
   
   fclose(file);
@@ -79,14 +79,14 @@ void load_incidents(incident_queue_t *queue, incident_list_t *list)
   FILE *file = fopen(incident_filepath, "rb");
   if (file == NULL) return;
 
-  incident_t data;
+  incident_t incident;
 
-  while (fread(&data, sizeof(incident_t), 1, file))
+  while (fread(&incident, sizeof(incident_t), 1, file))
   {
-    if (data.status == INCIDENT_PENDING)
-      incident_queue_requeue(queue, data);
+    if (incident.status == INCIDENT_PENDING)
+      incident_queue_requeue(queue, incident);
     else 
-      incident_list_reinsert(list, data);
+      incident_list_reinsert(list, incident);
   }
 
   fclose(file);
@@ -123,8 +123,8 @@ void save_incidents(incident_queue_t *queue, incident_list_t *list)
   incident_node_t *node = queue->front;
   while (node != NULL)
   {
-    incident_t data = node->data;
-    fwrite(&data, sizeof(incident_t), 1, file);
+    incident_t incident = node->data;
+    fwrite(&incident, sizeof(incident_t), 1, file);
 
     node = node->next;
   }
@@ -132,8 +132,8 @@ void save_incidents(incident_queue_t *queue, incident_list_t *list)
   node = list->head;
   while (node != NULL)
   {
-    incident_t data = node->data;
-    fwrite(&data, sizeof(incident_t), 1, file);
+    incident_t incident = node->data;
+    fwrite(&incident, sizeof(incident_t), 1, file);
 
     node = node->next;
   }

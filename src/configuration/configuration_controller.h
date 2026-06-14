@@ -3,7 +3,7 @@
 
 #include <glib.h>
 
-#include "application.h"
+#include "app_data.h"
 #include "configuration.h"
 #include "pagination.h"
 #include "macros.h"
@@ -13,7 +13,7 @@ typedef struct configuration_view_t configuration_view_t;
 typedef struct configuration_task_t configuration_task_t;
 
 typedef struct {
-  application_t *app;
+  app_data_t *data;
 
   configuration_view_t *view;
 
@@ -31,7 +31,7 @@ typedef struct {
 } configuration_stats_t;
 
 
-void configuration_controller_init(configuration_controller_t *controller, configuration_view_t *view, void *data);
+void configuration_controller_init(configuration_controller_t *controller, configuration_view_t *view, app_data_t *data);
 
 void configuration_controller_execute_config_query(configuration_controller_t *controller, configuration_task_t *task);
 void configuration_controller_reset_config_query(configuration_controller_t *controller);

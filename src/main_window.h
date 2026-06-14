@@ -17,7 +17,12 @@
 
 #define PAGE_COUNT 6
 
+// forward declaration to resolve circular dependencies
+typedef struct app_t app_t;
+
 typedef struct {
+  app_t *app;
+
   GtkWindow             *window;
   GtkStack              *stack;
 
@@ -36,6 +41,7 @@ typedef struct {
   configuration_controller_t  config_ctrl;
 } main_window_t;
 
-void main_window_create(GtkApplication *gui, gpointer data);
+
+main_window_t *main_window_create(GtkApplication *gtk_app, app_t *app);
 
 #endif
