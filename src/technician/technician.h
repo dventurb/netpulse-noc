@@ -36,7 +36,7 @@ typedef struct {
 void technician_list_init(technician_list_t *list);
 void technician_list_destroy(technician_list_t *list);
 
-void technician_list_insert(technician_list_t *list, technician_t data);
+technician_node_t *technician_list_insert(technician_list_t *list, technician_t data);
 void technician_list_remove(technician_list_t *list, technician_node_t *node);
 
 bool technician_exists_by_username(hashmap_t *username_index, const char *username);

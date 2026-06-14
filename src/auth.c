@@ -24,6 +24,7 @@ register_validate_t auth_validate_register(app_t *app, const char *name, const c
 bool auth_register_new_technician(app_t *app, const char *name, const char *username, const char *password)
 {
   technician_list_t *list = &app->data.technicians;
+  hashmap_t *hashmap = &app->data.username_index;
 
   technician_t new = {0};
 
@@ -35,8 +36,22 @@ bool auth_register_new_technician(app_t *app, const char *name, const char *user
   snprintf(new.avatar_path, STRING_MAX, "%s", "assets/identicon.svg");  
   new.is_active = true;
 
-  technician_list_insert(list, new);
+  technician_node_t *node = technician_list_insert(list, new);
+  hashmap_insert(hashmap, username, node);
 
   return true;
 }
 
+login_validate_t auth_login(app_t *app, const char *username, const char *password)
+{
+  hashmap_t *hashmap = &app->data.username_index;
+
+  technician_node_t *node = (technician_node_t *)hashmap_get(hashmap, username);
+  if (node == NULL) return LOGIN_INVALID_USERNAME;
+
+  if (crypto_pwhash_str_verify(node->data.password_hash, password, strlen(password)) != 0) return LOGIN_INVALID_PASSWORD;
+
+  app->state = APP_STATE_MAIN;
+
+  return LOGIN_SUCCESSFUL;
+}

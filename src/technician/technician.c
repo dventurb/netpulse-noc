@@ -25,13 +25,13 @@ void technician_list_destroy(technician_list_t *list)
   list->next_id = 0;
 }
 
-void technician_list_insert(technician_list_t *list, technician_t data)
+technician_node_t *technician_list_insert(technician_list_t *list, technician_t data)
 {
   technician_node_t *new = malloc(sizeof(technician_node_t));
   if (new == NULL) 
   {
     // TODO: Implement a log system (ex.: (datatime) [ERROR] technician_list_insert : malloc failed)
-    return;
+    return NULL;
   }
 
   new->data = data;
@@ -46,7 +46,7 @@ void technician_list_insert(technician_list_t *list, technician_t data)
 
     list->count++;
 
-    return;
+    return list->head;
   }
 
   new->data.id = list->next_id++;
@@ -56,6 +56,8 @@ void technician_list_insert(technician_list_t *list, technician_t data)
   list->head = new;
 
   list->count++;
+
+  return list->head;
 }
 
 void technician_list_remove(technician_list_t *list, technician_node_t *node)
