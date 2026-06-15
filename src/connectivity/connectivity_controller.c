@@ -165,7 +165,7 @@ void connectivity_controller_create_incident(connectivity_controller_t *controll
   snprintf(new.type, STRING_MAX, "%s", "Offline");
   snprintf(new.description, DESCRIPTION_MAX, "Device [%s] did not respond to ping.", equipment->name);
 
-  snprintf(new.technician_name, STRING_MAX, "%s", "TODO: current_user");
+  snprintf(new.technician_name, STRING_MAX, "%s", controller->data->current_user->name);
 
   new.priority = incident_get_priority(SOURCE_EQUIPMENT, equipment->type);
 

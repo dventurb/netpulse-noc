@@ -12,8 +12,6 @@ void app_data_init(app_data_t *data)
   hashmap_init(&data->ip_index);
   hashmap_init(&data->mac_index);
   hashmap_init(&data->username_index);
-
-  // TODO: technician_t *current_user
 }
 
 void app_data_destroy(app_data_t *data)
@@ -28,6 +26,4 @@ void app_data_destroy(app_data_t *data)
   incident_list_destroy(&data->incidents_history);
   sensor_array_destroy(&data->sensors);
   technician_list_destroy(&data->technicians);
-  
-  // TODO: technician_t *current_user
 }

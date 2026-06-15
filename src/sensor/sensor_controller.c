@@ -263,7 +263,7 @@ void sensor_controller_create_incident(sensor_controller_t *controller, const se
     default: return;
   }
 
-  snprintf(new.technician_name, STRING_MAX, "%s", "TODO: current_user");
+  snprintf(new.technician_name, STRING_MAX, "%s", controller->data->current_user->name);
 
   new.priority = incident_get_priority(SOURCE_SENSOR, sensor->status);
 
