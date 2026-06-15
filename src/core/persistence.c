@@ -43,6 +43,12 @@ static void save_configurations(equipment_t *equipment, FILE *file)
   }
 }
 
+void load_sensors(sensor_array_t *array)
+{
+  time_t timestamp = time(NULL);
+  sensor_search_by_date(array, timestamp);
+}
+
 void load_technicians(app_data_t *data)
 {
   if (data == NULL) return;

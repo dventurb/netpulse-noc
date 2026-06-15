@@ -12,6 +12,7 @@ int main(int argc, char **argv)
   load_technicians(&app.data);
   load_equipments(&app.data);
   load_incidents(&app.data.incidents_pending, &app.data.incidents_history);
+  load_sensors(&app.data.sensors);
 
   int status = app_launcher(&app, argc, argv);
 

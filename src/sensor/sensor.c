@@ -64,8 +64,11 @@ sensor_t *sensor_array_in_range(sensor_array_t *array, int start, int end, int *
     return NULL;
   }
 
+  if (start < 0) start = 0;
+  if (end > array->count) end = array->count;
+
   int size = end - start;
-  if (size <= 0 || size > 6) return NULL;
+  if (size <= 0) return NULL;
 
   sensor_t *sensors = malloc(sizeof(sensor_t) * size);
   if (sensors == NULL) return NULL;
@@ -74,8 +77,7 @@ sensor_t *sensor_array_in_range(sensor_array_t *array, int start, int end, int *
 
   for (int j = start; j < end; j++)
   {
-    if (j < array->count)
-      sensors[i++] = array->sensors[j];
+    sensors[i++] = array->sensors[j];
   }
 
   *count = i;

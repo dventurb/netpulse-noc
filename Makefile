@@ -5,7 +5,7 @@ INCLUDES := -Isrc -Isrc/core -Isrc/equipment -Isrc/incident -Isrc/connectivity -
 CPPFLAGS := $(shell pkg-config --cflags gtk4) $(INCLUDES)
 CFLAGS := -Wall -Wextra -g -pthread
 LDLIBS := $(shell pkg-config --libs gtk4 libsodium) -pthread
-# LDFLAGS := 
+#LDFLAGS :=
 
 # OS detecting
 ifeq ($(OS),Windows_NT)
