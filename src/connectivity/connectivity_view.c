@@ -34,6 +34,7 @@ static void on_run_ping_clicked(GtkButton *button, gpointer data);
 static void on_ping_all_clicked(GtkButton *button, gpointer data);
 
 static void on_save_ping_clicked(GtkButton *button, gpointer data);
+static void on_copy_ping_clicked(GtkButton *button, gpointer data);
 static void on_save_ping_finish(GObject *self, GAsyncResult *res, gpointer data);
 
 
@@ -380,6 +381,7 @@ static GtkWidget *build_terminal(ping_view_t *view)
   GtkWidget *copy_button = create_secondary_button("Copy", "assets/icon-copy.svg", "terminal-header-button");
   gtk_widget_set_halign(copy_button, GTK_ALIGN_END);
   gtk_widget_set_hexpand(copy_button, TRUE);
+  g_signal_connect(copy_button, "clicked", G_CALLBACK(on_copy_ping_clicked), view);
 
   GtkWidget *save_button = create_secondary_button("Save", "assets/icon-save.svg", "terminal-header-button");
   gtk_widget_set_halign(save_button, GTK_ALIGN_END);
@@ -637,6 +639,22 @@ static void on_save_ping_clicked(GtkButton *button, gpointer data)
   gtk_file_dialog_save(dialog, window, NULL, on_save_ping_finish, view);
 
   g_object_unref(dialog);
+}
+
+static void on_copy_ping_clicked(GtkButton *button, gpointer data)
+{
+  (void)button;
+
+  ping_view_t *view = (ping_view_t *)data;
+
+  GdkClipboard *clipboard = gtk_widget_get_clipboard(GTK_WIDGET(view->terminal));
+
+  char *text = ping_view_get_result(view);
+  if (text == NULL) return;
+
+  gdk_clipboard_set_text(clipboard, text);
+
+  free(text);
 }
 
 static void on_save_ping_finish(GObject *self, GAsyncResult *res, gpointer data)
