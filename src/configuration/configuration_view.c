@@ -698,7 +698,7 @@ static void on_add_config_form_submit(GtkButton *button, gpointer data)
   configuration_view_t *view = (configuration_view_t *)data;
 
   configuration_t new = {0};
-  snprintf(new.technician_name, STRING_MAX, "%s", "Ana Rocha"); // TODO: current_user
+  snprintf(new.technician_name, STRING_MAX, "%s", view->controller->data->current_user->name);
 
   GtkEntry *entry = view->form.entry_command;
   const char *text = gtk_editable_get_text(GTK_EDITABLE(entry));

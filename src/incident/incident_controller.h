@@ -11,6 +11,13 @@
 // forward declaration to resolve circular dependencies
 typedef struct incident_view_t incident_view_t;
 
+typedef enum {
+  INCIDENT_INVALID_SOURCE_ID,
+  INCIDENT_INVALID_TYPE,
+  INCIDENT_INVALID_DESCRIPTION,
+  INCIDENT_VALID
+} incident_validation_t;
+
 typedef struct {
   app_data_t *data;
 
@@ -57,6 +64,8 @@ void incident_controller_resolve(incident_controller_t *controller);
 void incident_controller_search(incident_controller_t *controller, const char *text);
 void incident_controller_handle_toggled(incident_controller_t *controller, int id, bool is_active);
 int incident_controller_get_position(incident_controller_t *controller, incident_t incident, int row);
+
+incident_validation_t incident_controller_validate(incident_controller_t *controller, incident_t incident);
 
 void incident_controller_get_stats(incident_controller_t *controller, incident_stats_t *stats);
 

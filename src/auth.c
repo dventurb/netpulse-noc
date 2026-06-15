@@ -5,7 +5,7 @@
 
 #include <sodium.h>
 
-register_validate_t auth_validate_register(app_t *app, const char *name, const char *username, const char *password)
+register_validation_t auth_validate_register(app_t *app, const char *name, const char *username, const char *password)
 {
   hashmap_t *username_index = &app->data.username_index;
 
@@ -38,11 +38,12 @@ bool auth_register_new_technician(app_t *app, const char *name, const char *user
 
   technician_node_t *node = technician_list_insert(list, new);
   hashmap_insert(hashmap, username, node);
+  app->data.current_user = &node->data;
 
   return true;
 }
 
-login_validate_t auth_login(app_t *app, const char *username, const char *password)
+login_validation_t auth_login(app_t *app, const char *username, const char *password)
 {
   hashmap_t *hashmap = &app->data.username_index;
 

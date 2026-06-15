@@ -722,7 +722,6 @@ static void on_add_form_submit(GtkButton *button, gpointer data)
   }
 
   new.type = gtk_drop_down_get_selected(view->form.dropdown_type);
-
   new.status = gtk_drop_down_get_selected(view->form.dropdown_status);
 
   equipment_controller_add(view->controller, new);

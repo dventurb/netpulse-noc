@@ -30,6 +30,9 @@
 #define USERNAME_MIN 3
 #define PASSWORD_MIN 8
 
+#define TYPE_MIN 3
+#define DESCRIPTION_MIN 10
+
 #define CELL_ID_WIDTH 100
 #define CELL_NAME_WIDTH 160
 #define CELL_TYPE_WIDTH 140

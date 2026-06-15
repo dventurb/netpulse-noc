@@ -10,7 +10,18 @@
 
 typedef struct {
   GtkWindow  *dialog;
+
   GtkWidget  *layout;
+  
+  GtkEntry *entry_number;
+  GtkEntry *entry_technician;
+  GtkEntry *entry_source_id;
+  GtkEntry *entry_type;
+  GtkEntry *entry_description;
+
+  GtkDropDown *dropdown_source;
+  GtkDropDown *dropdown_priority;
+
 } incident_form_t;
 
 typedef struct incident_view_t {
@@ -30,6 +41,7 @@ typedef struct incident_view_t {
   GtkDropDown *status_filter;
 
   incident_form_t form;
+
 } incident_view_t;
 
 

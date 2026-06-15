@@ -241,7 +241,7 @@ static void on_login_submit_clicked(GtkButton *button, gpointer data)
   gtk_widget_remove_css_class(GTK_WIDGET(login_window->login_username), "login-entry-error");
   gtk_widget_remove_css_class(GTK_WIDGET(login_window->login_password), "login-entry-error");
 
-  login_validate_t error = auth_login(login_window->app, username, password);
+  login_validation_t error = auth_login(login_window->app, username, password);
 
   switch (error) 
   {
@@ -271,7 +271,7 @@ static void on_register_submit_clicked(GtkButton *button, gpointer data)
   gtk_widget_remove_css_class(GTK_WIDGET(login_window->register_username), "login-entry-error");
   gtk_widget_remove_css_class(GTK_WIDGET(login_window->register_password), "login-entry-error");
 
-  register_validate_t error = auth_validate_register(login_window->app, name, username, password);
+  register_validation_t error = auth_validate_register(login_window->app, name, username, password);
 
   switch (error) 
   {

@@ -31,7 +31,7 @@ static void build_table_row(incident_view_t *view, incident_t incident, int row)
 static GtkWidget *build_priority_cell(incident_priority_t priority);
 static GtkWidget *build_status_cell(incident_status_t status);
 
-static GtkWidget *build_form(incident_queue_t *incidents_pending);
+static GtkWidget *build_form(incident_view_t *view);
 
 static void incident_view_apply_filters(incident_view_t *view);
 
@@ -45,6 +45,7 @@ static void on_create_form_submit(GtkButton *button, gpointer data);
 static void on_search_entry_changed(GtkSearchEntry *search, gpointer data);
 static void on_filter_dropdown_changed(GObject *self, GParamSpec *pspec, gpointer data);
 static void on_row_selection_toggled(GtkCheckButton *button, gpointer data);
+static void on_source_id_entry_changed(GtkEntry *entry, gpointer data);
 
 static void on_previous_page_clicked(GtkButton *button, gpointer data);
 static void on_next_page_clicked(GtkButton *button, gpointer data);
@@ -362,7 +363,7 @@ static void build_table_row(incident_view_t *view, incident_t incident, int row)
   }
 }
 
-static GtkWidget *build_form(incident_queue_t *incidents_pending)
+static GtkWidget *build_form(incident_view_t *view)
 {
   GtkWidget *grid = gtk_grid_new();
   gtk_widget_set_size_request(grid, 672, 500);
@@ -374,37 +375,33 @@ static GtkWidget *build_form(incident_queue_t *incidents_pending)
   gtk_grid_set_row_spacing(GTK_GRID(grid), 24);
   gtk_widget_add_css_class(grid, "dialog-form");
 
-  GtkWidget *entry_id = create_text_field(grid, "Incident ID", NULL, 0, 0);
-  gtk_widget_add_css_class(entry_id, "form-entry-disabled");
-  gtk_editable_set_editable(GTK_EDITABLE(entry_id), FALSE);
-  g_object_set_data(G_OBJECT(grid), "entry-number", entry_id);
+  view->form.entry_number = GTK_ENTRY(create_text_field(grid, "Incident ID", NULL, 0, 0));
+  gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_number), "form-entry-disabled");
+  gtk_editable_set_editable(GTK_EDITABLE(view->form.entry_number), FALSE);
 
-  char id[ID_MAX];
-  incident_format_id(incidents_pending->next_number, id);
-  gtk_editable_set_text(GTK_EDITABLE(entry_id), id);
+  char number[NUMBER_MAX];
+  incident_format_id(view->controller->data->incidents_pending.next_number, number);
+  gtk_editable_set_text(GTK_EDITABLE(view->form.entry_number), number);
 
-  GtkWidget *entry_technician = create_text_field(grid, "Technician Name", NULL, 0, 1);
-  gtk_entry_set_max_length(GTK_ENTRY(entry_technician), STRING_MAX - 1);
-  g_object_set_data(G_OBJECT(grid), "entry-technician", entry_technician);
+  view->form.entry_technician = GTK_ENTRY(create_text_field(grid, "Technician Name", NULL, 0, 1));
+  gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_technician), "form-entry-disabled");
+  gtk_editable_set_editable(GTK_EDITABLE(view->form.entry_technician), FALSE);
+  gtk_editable_set_text(GTK_EDITABLE(view->form.entry_technician), view->controller->data->current_user->name);
 
-  GtkWidget *dropdown_source_type = create_dropdown_field(grid, "Type", incident_type, 1, 0);
-  gtk_widget_set_sensitive(dropdown_source_type, FALSE);
-  g_object_set_data(G_OBJECT(grid), "dropdown-type", dropdown_source_type);
+  view->form.dropdown_source = GTK_DROP_DOWN(create_dropdown_field(grid, "Type", incident_type, 1, 0));
+  gtk_widget_set_sensitive(GTK_WIDGET(view->form.dropdown_source), FALSE);
 
-  GtkWidget *entry_source_id = create_text_field(grid, "Source ID", "EQ-001", 1, 1);
-  gtk_entry_set_max_length(GTK_ENTRY(entry_source_id), STRING_MAX - 1);
-  g_object_set_data(G_OBJECT(grid), "entry-source-id", entry_source_id);
+  view->form.entry_source_id = GTK_ENTRY(create_text_field(grid, "Source ID", "EQ-001", 1, 1));
+  gtk_entry_set_max_length(view->form.entry_source_id, CODE_MAX - 1);
+  g_signal_connect(view->form.entry_source_id, "changed", G_CALLBACK(on_source_id_entry_changed), view);
 
-  GtkWidget *entry_type = create_text_field(grid, "Type", "Offline", 2, 0);
-  gtk_entry_set_max_length(GTK_ENTRY(entry_type), STRING_MAX - 1);
-  g_object_set_data(G_OBJECT(grid), "entry-type", entry_type);
+  view->form.entry_type = GTK_ENTRY(create_text_field(grid, "Type", "Offline", 2, 0));
+  gtk_entry_set_max_length(view->form.entry_type, STRING_MAX - 1);
 
-  GtkWidget *dropdown_priority = create_dropdown_field(grid, "Priority", incident_priority, 2, 1);
-  g_object_set_data(G_OBJECT(grid), "dropdown-priority", dropdown_priority);
+  view->form.dropdown_priority = GTK_DROP_DOWN(create_dropdown_field(grid, "Priority", incident_priority, 2, 1));
 
-  GtkWidget *entry_description = create_text_field(grid, "Description", "Device did not respond to ping. Possible network or device failure.", 3, 0);
-  gtk_entry_set_max_length(GTK_ENTRY(entry_description), DESCRIPTION_MAX - 1);
-  g_object_set_data(G_OBJECT(grid), "entry-description", entry_description);
+  view->form.entry_description = GTK_ENTRY(create_text_field(grid, "Description", "Device did not respond to ping. Possible network or device failure.", 3, 0));
+  gtk_entry_set_max_length(GTK_ENTRY(view->form.entry_description), DESCRIPTION_MAX - 1);
 
   return grid;
 }
@@ -498,7 +495,7 @@ static void on_create_incident_clicked(GtkButton *button, gpointer data)
   
   incident_view_t *view = (incident_view_t *) data;
 
-  view->form.layout = build_form(&view->controller->data->incidents_pending);
+  view->form.layout = build_form(view);
 
   GtkWindow *window = GTK_WINDOW(gtk_widget_get_root(GTK_WIDGET(view->container)));
 
@@ -527,31 +524,41 @@ static void on_create_form_submit(GtkButton *button, gpointer data)
   (void)button; // unused parameter
   
   incident_view_t *view = (incident_view_t *) data;
+  
+  const char *technician_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_technician));
+  const char *source_id_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_source_id));
+  const char *type_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_type));
+  const char *description_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_description));
 
-  incident_t new;
+  incident_t new = {0};
 
-  form_field_t fields[] = {
-    { "entry-technician", new.technician_name },
-    { "entry-source-id", new.source_id },
-    { "entry-type", new.type },
-    { "entry-description", new.description},
-  };
+  snprintf(new.technician_name, STRING_MAX, "%s", technician_text);
+  snprintf(new.source_id, CODE_MAX, "%s", source_id_text);
+  snprintf(new.type, STRING_MAX, "%s", type_text);
+  snprintf(new.description, DESCRIPTION_MAX, "%s", description_text);
 
-  for (int i = 0; i < 4; i++)
+  new.source_type = gtk_drop_down_get_selected(view->form.dropdown_source);
+  new.priority = gtk_drop_down_get_selected(view->form.dropdown_priority);
+
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_source_id), "form-entry-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_type), "form-entry-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_description), "form-entry-error");
+
+  incident_validation_t error = incident_controller_validate(view->controller, new);
+
+  switch (error) 
   {
-    GtkWidget *entry = g_object_get_data(G_OBJECT(view->form.layout), fields[i].key);
-    const char *text = gtk_editable_get_text(GTK_EDITABLE(entry));
-    if (i == 4) 
-      snprintf(fields[i].dest, DESCRIPTION_MAX, "%s", text);
-    else  
-      snprintf(fields[i].dest, STRING_MAX, "%s", text);
+    case INCIDENT_INVALID_SOURCE_ID:
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_source_id), "form-entry-error");
+      return;
+    case INCIDENT_INVALID_TYPE:
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_type), "form-entry-error");
+      return;
+    case INCIDENT_INVALID_DESCRIPTION:
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_type), "form-entry-error");
+      return;
+    case INCIDENT_VALID: break;
   }
-
-  GtkWidget *dropdown_source_type = g_object_get_data(G_OBJECT(view->form.layout), "dropdown-type");
-  new.source_type = gtk_drop_down_get_selected(GTK_DROP_DOWN(dropdown_source_type));
-
-  GtkWidget *dropdown_priority = g_object_get_data(G_OBJECT(view->form.layout), "dropdown-priority");
-  new.priority = gtk_drop_down_get_selected(GTK_DROP_DOWN(dropdown_priority));
 
   incident_controller_add(view->controller, new);
 
@@ -601,6 +608,20 @@ static void on_row_selection_toggled(GtkCheckButton *button, gpointer data)
   bool is_active = gtk_check_button_get_active(button);
 
   incident_controller_handle_toggled(view->controller, id, is_active);
+}
+
+static void on_source_id_entry_changed(GtkEntry *entry, gpointer data)
+{
+  incident_view_t *view = (incident_view_t *) data;
+
+  const char *text = gtk_editable_get_text(GTK_EDITABLE(entry));
+  if (strlen(text) <= 3) return;
+
+  search_type_t source_type = detect_search_type(text);
+  if (source_type == SEARCH_EQUIPMENT_ID)
+    gtk_drop_down_set_selected(view->form.dropdown_source, 0);
+  else if (source_type == SEARCH_SENSOR_CODE)
+    gtk_drop_down_set_selected(view->form.dropdown_source, 1);
 }
 
 static void on_previous_page_clicked(GtkButton *button, gpointer data)

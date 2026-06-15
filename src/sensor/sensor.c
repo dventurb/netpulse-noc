@@ -99,8 +99,6 @@ void sensor_search_by_date(sensor_array_t *array, time_t date)
 
   if (start == 0 || end == 0 || end < start) return;
 
-  printf("start: %d | end %d\n\n", start, end);
-
   int count = (end - start) + 1;
 
   if (array->sensors != NULL) free(array->sensors);
@@ -154,7 +152,6 @@ void sensor_filter_by_code(const sensor_array_t *array, const char *code, sensor
 
   for (int j = 0; j < array->count; j++) 
   {
-    printf("code: %s | sensor.code: %s\n\n", code, array->sensors[j].code);
     if (strncmp(array->sensors[j].code, code, strlen(code)) == 0)
       filtered->sensors[i++] = array->sensors[j];
   }
@@ -280,7 +277,6 @@ static void binary_search(FILE *file, time_t date, int total, int *start, int *e
     fread(&sensor, sizeof(sensor_t), 1, file);
 
     time_t sensor_date = get_day_start_timestamp(sensor.read_at);
-    printf("sensor_date start: %ld\n", sensor_date);
 
     if (sensor_date >= date_start)
     {
@@ -306,7 +302,6 @@ static void binary_search(FILE *file, time_t date, int total, int *start, int *e
     fread(&sensor, sizeof(sensor_t), 1, file);
 
     time_t sensor_date = get_day_end_timestamp(sensor.read_at);
-    printf("sensor_date end: %ld\n", sensor_date);
 
     if (sensor_date <= date_end)
     {

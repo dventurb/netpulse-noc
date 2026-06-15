@@ -183,6 +183,29 @@ int incident_controller_get_position(incident_controller_t *controller, incident
   return position;
 }
 
+incident_validation_t incident_controller_validate(incident_controller_t *controller, incident_t incident)
+{
+  hashmap_t *hashmap = &controller->data->id_index;
+
+  search_type_t source_type = detect_search_type(incident.source_id);
+
+  if (source_type != SEARCH_EQUIPMENT_ID && 
+    source_type != SEARCH_SENSOR_CODE)
+    return INCIDENT_INVALID_SOURCE_ID;
+
+  if (source_type == SEARCH_EQUIPMENT_ID && 
+      hashmap_get(hashmap, incident.source_id) == NULL)
+      return INCIDENT_INVALID_SOURCE_ID;
+  
+  if (strlen(incident.type) < TYPE_MIN) 
+    return INCIDENT_INVALID_TYPE;
+
+  if (strlen(incident.description) <= DESCRIPTION_MIN) 
+    return INCIDENT_INVALID_DESCRIPTION;
+
+  return INCIDENT_VALID;
+}
+
 void incident_controller_get_stats(incident_controller_t *controller, incident_stats_t *stats)
 {
   stats->total = incident_get_count(&controller->data->incidents_pending, &controller->data->incidents_history);
