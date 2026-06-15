@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <locale.h>
 
 ping_result_t *connectivity_run_ping(const char *ip_address, int count, int timeout, int packet_size)
 {
@@ -77,7 +78,17 @@ void connectivity_get_ping_latency(ping_result_t *result)
   #else
     char *line = strstr(result->output, "rtt min/avg/max");
     if (line != NULL)
-      sscanf(line, "rtt min/avg/max/mdev = %f/%f/%f", &result->min_latency, &result->avg_latency, &result->max_latency);
+    {
+      char *start_iter = strchr(line, '=');
+      start_iter++;
+
+      char *old = setlocale(LC_NUMERIC, NULL);
+      setlocale(LC_NUMERIC, "C");
+
+      sscanf(start_iter, " %f/%f/%f", &result->min_latency, &result->avg_latency, &result->max_latency);
+
+    setlocale(LC_NUMERIC, old);
+    }
   #endif
 }
 
@@ -91,8 +102,12 @@ void connectivity_get_ping_packets_stats(ping_result_t *result)
     result->packets_loss_percent = (lost * 100) / result->packets_sent;
 
   #else
-    char *line = strstr(result->output, "packets transmitted");
+    char *line = strstr(result->output, "ping statistics ---");
     if (line != NULL)
-      sscanf(line, "%d packets transmitted, %d received, %d%% packet loss", &result->packets_sent, &result->packets_received, &result->packets_loss_percent);
+    {
+      char *new_line = strchr(line, '\n');
+      new_line++;
+      sscanf(new_line, "%d packets transmitted, %d received, %d%% packet loss", &result->packets_sent, &result->packets_received, &result->packets_loss_percent);
+    }
   #endif
 }

@@ -316,20 +316,20 @@ void ping_view_update_stats_cards(ping_view_t *view, ping_result_t result)
 
   GtkWidget *status_card = build_card("TARGET STATUS", "assets/icon-responded.svg", stats.status, view->controller->ip);
 
-  GtkWidget *average_card = build_card("AVG LATENCY", "assets/icon-timer.svg", stats.latency, "from current execution");
+  GtkWidget *packets_card = build_card("PACKET LOSS", "assets/icon-packet.svg", stats.loss_value, stats.loss_subtitle);
 
   gtk_box_append(GTK_BOX(left_box), status_card);
-  gtk_box_append(GTK_BOX(left_box), average_card);
+  gtk_box_append(GTK_BOX(left_box), packets_card);
 
   GtkWidget *right_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 50);
   gtk_box_set_homogeneous(GTK_BOX(right_box), TRUE);
   gtk_widget_set_hexpand(right_box, TRUE);
   
-  GtkWidget *packets_card = build_card("PACKET LOSS", "assets/icon-packet.svg", stats.loss_value, stats.loss_subtitle);
+  GtkWidget *average_card = build_card("AVG LATENCY", "assets/icon-timer.svg", stats.latency, "from current execution");
 
   GtkWidget *last_execution_card = build_card("LAST EXECUTION", "assets/icon-clock.svg",stats.execution_value, stats.execution_subtitle);
 
-  gtk_box_append(GTK_BOX(right_box), packets_card);
+  gtk_box_append(GTK_BOX(right_box), average_card);
   gtk_box_append(GTK_BOX(right_box), last_execution_card);
 
   gtk_box_append(view->stats_cards, left_box);
@@ -348,7 +348,7 @@ static GtkWidget *build_stats_cards(void)
 
   GtkWidget *status_card = build_card("TARGET STATUS", "assets/icon-responded.svg", "Online", "192.168.1.1");
 
-  GtkWidget *packets_card = build_card("AVG LATENCY", "assets/icon-packet.svg", "0%", "0 transmitted, 0 received");
+  GtkWidget *packets_card = build_card("PACKET LOSS", "assets/icon-packet.svg", "0%", "0 transmitted, 0 received");
 
   gtk_box_append(GTK_BOX(left_box), status_card);
   gtk_box_append(GTK_BOX(left_box), packets_card);
@@ -357,8 +357,7 @@ static GtkWidget *build_stats_cards(void)
   gtk_box_set_homogeneous(GTK_BOX(right_box), TRUE);
   gtk_widget_set_hexpand(right_box, TRUE);
   
-  GtkWidget *average_card = build_card("PACKET LOSS", "assets/icon-timer.svg", "0.0", "0ms from baseline");
-
+  GtkWidget *average_card = build_card("AVG LATENCY", "assets/icon-timer.svg", "0.0", "0ms from baseline");
   GtkWidget *last_execution_card = build_card("LAST EXECUTION", "assets/icon-clock.svg", "01-01-01 00:00", "Duration: 0.00s");
 
   gtk_box_append(GTK_BOX(right_box), average_card);
