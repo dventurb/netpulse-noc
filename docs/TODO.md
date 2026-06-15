@@ -29,7 +29,6 @@
 - [X] Criar structs (technician_t, technician_node_t, technician_list_t)
 - [X] technician_list_insert()
 - [X] technician_list_remove()
-- [ ] technician_list_find_by_username()
 - [X] technician_filter_by_role()
 - [X] Integrar username_index (hashmap)
 - [X] technician_list_init() / technician_list_destroy()
@@ -39,7 +38,6 @@
 - [X] equipment_list_insert()
 - [X] equipment_list_remove()
 - [X] equipment_list_update_name/vendor/type/ip_address()...
-- [ ] equipment_find_by_id/ip/mac()
 - [X] equipment_filter_by_status/type()
 - [X] equipment_sort_by_status/type/location() - (Merge Sort)
 - [X] Integrar id_index, ip_index, mac_index (hashmap)
@@ -71,44 +69,39 @@
 - [X] sensor_filter_status()
 - [X] sensor_list_init() / sensor_list_destroy()
 
-### Reports - Responsável: Daniel
-- [ ] Relatório de estado da rede
-- [ ] Relatório mensal de incidentes 
-
 
 ## Persistence + Connectivity + Logger
 
 ### Persistence - Responsável: Daniel
-- [ ] Implementar save/load_technician()
-- [ ] Implementar save/load_equipment()
-- [ ] Implementar save/load_incident()
-- [ ] Implementar save/load_config()
-- [ ] Implementar save/load_sensor()
+- [X] Implementar save/load_technician()
+- [X] Implementar save/load_equipment()
+- [X] Implementar save/load_incident()
+- [X] Implementar save/load_config()
+- [X] Implementar save/load_sensor()
 
 ### Connectivity - Responsável: Daniel
-- [ ] Implementar ping()
+- [X] Implementar ping()
 - [ ] Implementar traceroute()
-- [ ] Implementar parse do ping()
+- [X] Implementar parse do ping()
 
 ### Logger - Responsável: Daniel
 - [ ] Implementar log system (audit.log e system.log)
 
 
 ## Interface Gráfica (GTK4)
-- [ ] Login
+- [X] Login
 - [ ] Dashboard
 - [ ] Módulo Technician
-- [ ] Módulo Equipment
-- [ ] Módulo Incident
-- [ ] Módulo Config
-- [ ] Módulo Sensor
-- [ ] Módulo Connectivity
-- [ ] Importar/Exportar relatórios
+- [X] Módulo Equipment
+- [X] Módulo Incident
+- [X] Módulo Config
+- [X] Módulo Sensor
+- [X] Módulo Connectivity
 
 
 ## Testes 
-- [ ] Testar manualmente cada módulo e a interface
-- [ ] Testar memory leaks com Valgrind/GDB
+- [X] Testar manualmente cada módulo e a interface
+- [X] Testar memory leaks com Valgrind/GDB
 
 
 ## Relatório (LaTeX)
