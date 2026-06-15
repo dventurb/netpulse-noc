@@ -1,5 +1,5 @@
 <div align="center">
-    <img alt="NetPulse NOC logo" src="https://raw.githubusercontent.com/dventurb/netpulse-noc/refs/heads/main/assets/logo-vertical.svg" height="128">
+    <img alt="NetPulse NOC logo" src="https://i.imgur.com/CymuZYC.png" height="128">
   <h1>NetPulse NOC - Network Operations Center</h1>
 </div>
 
@@ -12,3 +12,29 @@
 [//]: # (LINKS)
 [license]: LICENSE
 [preview_image]: https://github.com/dventurb/netpulse-noc/blob/main/assets/preview.png "Preview of NetPulse NOC"
+
+## About 
+
+O **NetPulse NOC** foi desenvolvido em contexto académico para aprofundar e colocar em prática metodologias de desenvolvimento de software, estruturas de dados dinâmicas e algoritmos de ordenação e pesquisa. O projeto permite a autenticação de técnicos, operações de gestão de equipamentos, incidentes, sensores e verificação de testes de conectividade.
+
+### Features 
+
+* **Interface Gráfica:** Desenvolvida em C com recurso à lib GTK 4 e personalização via CSS.
+* **Segurança:** Autenticação e Hashing de passwords utilizando salt, evitando assim ataques de dicionário e utilizando **Argon2id** recorrendo à biblioteca `libsodium`.
+* **Threads:** Arquitetura assíncrona suportada por Threads (`pthreads`) para operações de dados pesadas (heavy work), evitando assim o bloqueio da UI.
+* **Memory Ownership:** Gestão de memória relacionando o ciclo de vida dos widgets (`GtkWindow`) do GTK 4 com as alocações dinâmicas realizadas ao longo da execução.
+
+## Arquitetura
+
+O projeto adota uma variação do **MVC (Model-View-Controller)**, dividindo por domínios (ex: `equipment`, `incident`, `sensor`). Cada módulo contém o seu próprio modelo de dados, a apresentação visual, controllers para decisão do fluxo, e workers.
+
+### Inicialização (main)
+
+A persistência é carregada antes da execução da interface gráfica, garantindo que os dados internos estão prontos para consumo, ocorrendo ainda o `sodium_init()` para a utilização de operações criptográficas na autenticação dos técnicos.
+
+## Roadmap 
+
+Evoluções planeadas para desenvolvimento futuro:
+
+* **Refactor da Arquitetura:** Migração do atual modelo MVC + Worker para um baseado num `app_worker` único, funcionando, controlando e executando as operações necessárias por thread, com services independentes.
+* **Estatísticas Visuais:** Integração de componentes gráficos utilizando a biblioteca `GtkChart` e recorrendo ao Cairo para a apresentação de dashboards com métricas.
