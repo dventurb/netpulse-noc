@@ -174,6 +174,24 @@ void connectivity_controller_create_incident(connectivity_controller_t *controll
   save_incidents(queue, list);
 }
 
+void connectivity_controller_get_stats(connectivity_controller_t *controller, ping_stats_t *stats)
+{
+  ping_result_t *result = controller->result;
+
+  snprintf(stats->status, STRING_MAX, "%s", result->responded ? "Online" : "Offline");
+
+  snprintf(stats->loss_value, STRING_MAX, "%d%%", result->packets_loss_percent);
+  snprintf(stats->loss_subtitle, STRING_MAX, "%d transmitted, %d received", result->packets_sent, result->packets_received);
+
+  snprintf(stats->latency, STRING_MAX, "%.1f", result->avg_latency);
+
+  char datetime[DATETIME_MAX];
+  format_timestamp_to_datetime(time(NULL), datetime);
+
+  snprintf(stats->execution_value, STRING_MAX, "%s", datetime);
+  snprintf(stats->execution_subtitle, STRING_MAX, "Duration: %.2fs", result->duration);
+}
+
 gboolean on_ping_finished(gpointer data)
 {
   ping_task_t *task = (ping_task_t *)data;
@@ -181,6 +199,7 @@ gboolean on_ping_finished(gpointer data)
   ping_view_set_result(&task->controller->view->ping_view, task->result->input);
   ping_view_set_result(&task->controller->view->ping_view, task->result->output);
   ping_view_set_result(&task->controller->view->ping_view, "\n");
+  ping_view_update_stats_cards(&task->controller->view->ping_view, *task->result);
 
   free(task->params); // Controller
   free(task->result); // Model 

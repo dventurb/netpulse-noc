@@ -20,6 +20,8 @@ static void build_actions(GtkWidget *grid, ping_view_t *view);
 static GtkWidget *build_terminal(ping_view_t *view);
 static GtkWidget *build_equipment_cell(equipment_t equipment);
 static void build_list_row(GtkWidget *list, equipment_t equipment);
+static GtkWidget *build_stats_cards(void);
+static GtkWidget *build_card(const char *title, const char *icon, const char *main_value, const char *subtitle);
 
 static void synchronize_navigation(connectivity_view_t *view, GtkWidget *button);
 
@@ -228,6 +230,8 @@ static GtkBox *ping_view_create(ping_view_t *view, connectivity_controller_t *co
   gtk_widget_set_margin_start(GTK_WIDGET(view->container), 32);
   gtk_widget_set_margin_end(GTK_WIDGET(view->container), 32);
 
+  GtkWidget *top_panel = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 20);
+
   GtkWidget *config_panel = gtk_box_new(GTK_ORIENTATION_VERTICAL, 20);
   gtk_widget_set_size_request(config_panel, -1, 400);
   gtk_widget_add_css_class(config_panel, "connectivity-config-panel");
@@ -264,10 +268,15 @@ static GtkBox *ping_view_create(ping_view_t *view, connectivity_controller_t *co
   gtk_box_append(GTK_BOX(config_panel), label_target);
   gtk_box_append(GTK_BOX(config_panel), target_source_selector);
   gtk_box_append(GTK_BOX(config_panel), form_fields_grid);
+  
+  view->stats_cards = GTK_BOX(build_stats_cards());
 
   GtkWidget *terminal_panel = build_terminal(view);
 
-  gtk_box_append(view->container, config_panel);
+  gtk_box_append(GTK_BOX(top_panel), config_panel);
+  gtk_box_append(GTK_BOX(top_panel), GTK_WIDGET(view->stats_cards));
+
+  gtk_box_append(view->container, top_panel);
   gtk_box_append(view->container, terminal_panel);
 
   return view->container;
@@ -289,6 +298,122 @@ static GtkWidget *build_ping_header(void)
   gtk_box_append(GTK_BOX(header), header_title);
 
   return header;
+}
+
+void ping_view_update_stats_cards(ping_view_t *view, ping_result_t result)
+{
+  remove_all_children_from_widget(GTK_WIDGET(view->stats_cards));
+  gtk_widget_set_hexpand(GTK_WIDGET(view->stats_cards), TRUE);
+
+  ping_stats_t stats = {0};
+
+  view->controller->result = &result;
+  connectivity_controller_get_stats(view->controller, &stats);
+
+  GtkWidget *left_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 50);
+  gtk_box_set_homogeneous(GTK_BOX(left_box), TRUE);
+  gtk_widget_set_hexpand(left_box, TRUE);
+
+  GtkWidget *status_card = build_card("TARGET STATUS", "assets/icon-responded.svg", stats.status, view->controller->ip);
+
+  GtkWidget *average_card = build_card("AVG LATENCY", "assets/icon-timer.svg", stats.latency, "from current execution");
+
+  gtk_box_append(GTK_BOX(left_box), status_card);
+  gtk_box_append(GTK_BOX(left_box), average_card);
+
+  GtkWidget *right_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 50);
+  gtk_box_set_homogeneous(GTK_BOX(right_box), TRUE);
+  gtk_widget_set_hexpand(right_box, TRUE);
+  
+  GtkWidget *packets_card = build_card("PACKET LOSS", "assets/icon-packet.svg", stats.loss_value, stats.loss_subtitle);
+
+  GtkWidget *last_execution_card = build_card("LAST EXECUTION", "assets/icon-clock.svg",stats.execution_value, stats.execution_subtitle);
+
+  gtk_box_append(GTK_BOX(right_box), packets_card);
+  gtk_box_append(GTK_BOX(right_box), last_execution_card);
+
+  gtk_box_append(view->stats_cards, left_box);
+  gtk_box_append(view->stats_cards, right_box);
+}
+
+static GtkWidget *build_stats_cards(void)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 20);
+  gtk_box_set_homogeneous(GTK_BOX(box), TRUE);
+  gtk_widget_set_hexpand(box, TRUE);
+
+  GtkWidget *left_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 50);
+  gtk_box_set_homogeneous(GTK_BOX(left_box), TRUE);
+  gtk_widget_set_hexpand(left_box, TRUE);
+
+  GtkWidget *status_card = build_card("TARGET STATUS", "assets/icon-responded.svg", "Online", "192.168.1.1");
+
+  GtkWidget *packets_card = build_card("AVG LATENCY", "assets/icon-packet.svg", "0%", "0 transmitted, 0 received");
+
+  gtk_box_append(GTK_BOX(left_box), status_card);
+  gtk_box_append(GTK_BOX(left_box), packets_card);
+
+  GtkWidget *right_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 50);
+  gtk_box_set_homogeneous(GTK_BOX(right_box), TRUE);
+  gtk_widget_set_hexpand(right_box, TRUE);
+  
+  GtkWidget *average_card = build_card("PACKET LOSS", "assets/icon-timer.svg", "0.0", "0ms from baseline");
+
+  GtkWidget *last_execution_card = build_card("LAST EXECUTION", "assets/icon-clock.svg", "01-01-01 00:00", "Duration: 0.00s");
+
+  gtk_box_append(GTK_BOX(right_box), average_card);
+  gtk_box_append(GTK_BOX(right_box), last_execution_card);
+
+  gtk_box_append(GTK_BOX(box), left_box);
+  gtk_box_append(GTK_BOX(box), right_box);
+
+  return box;
+}
+
+static GtkWidget *build_card(const char *title, const char *icon, const char *main_value, const char *subtitle)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+  gtk_widget_set_vexpand(box, TRUE);
+  gtk_widget_set_hexpand(box, TRUE);
+  gtk_widget_add_css_class(box, "card-container");
+  
+  GtkWidget *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+  
+  GtkWidget *label_title = gtk_label_new(title);  
+  gtk_widget_set_halign(label_title, GTK_ALIGN_START);
+  gtk_widget_add_css_class(label_title, "card-title");
+
+  GtkWidget *spacer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_widget_set_hexpand(spacer, TRUE);
+
+  GtkWidget *image = gtk_image_new_from_file(icon);
+  gtk_widget_set_halign(image, GTK_ALIGN_END);
+
+  gtk_box_append(GTK_BOX(header), label_title);
+  gtk_box_append(GTK_BOX(header), spacer);
+  gtk_box_append(GTK_BOX(header), image);
+
+  GtkWidget *label_main_value = gtk_label_new(main_value);
+  gtk_widget_set_halign(label_main_value, GTK_ALIGN_START);
+  gtk_widget_add_css_class(label_main_value, "card-value");
+  gtk_label_set_width_chars(GTK_LABEL(label_main_value), 1);
+  gtk_label_set_ellipsize(GTK_LABEL(label_main_value), PANGO_ELLIPSIZE_END);
+
+  GtkWidget *label_subtitle = gtk_label_new(subtitle);
+  gtk_widget_set_vexpand(label_subtitle, TRUE);
+  gtk_widget_set_halign(label_subtitle, GTK_ALIGN_START);
+  gtk_widget_set_valign(label_subtitle, GTK_ALIGN_END);
+  gtk_widget_set_margin_bottom(label_subtitle, 5);
+  gtk_widget_add_css_class(label_subtitle, "card-subtitle");
+  gtk_label_set_width_chars(GTK_LABEL(label_subtitle), 1);
+  gtk_label_set_ellipsize(GTK_LABEL(label_subtitle), PANGO_ELLIPSIZE_END);
+  gtk_widget_set_tooltip_text(label_subtitle, subtitle);
+
+  gtk_box_append(GTK_BOX(box), header);
+  gtk_box_append(GTK_BOX(box), label_main_value);
+  gtk_box_append(GTK_BOX(box), label_subtitle);
+
+  return box;
 }
 
 static GtkWidget *build_source_selection(ping_view_t *view)

@@ -13,7 +13,11 @@ static void *ping_single_task_thread(void *data)
   ping_task_t *task = (ping_task_t *)data;
 
   task->result = connectivity_run_ping(task->params->ip, task->params->count, task->params->timeout, task->params->packet_size);
+  
   task->result->responded = connectivity_check_ping(task->result->output);
+
+  connectivity_get_ping_packets_stats(task->result);
+  connectivity_get_ping_latency(task->result);
 
   if (task->result->responded == false && task->controller->selected_equipment != NULL)
   {

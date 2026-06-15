@@ -49,6 +49,15 @@ typedef struct {
   equipment_t *selected_equipment;
 } connectivity_controller_t;
 
+typedef struct {
+  char status[STRING_MAX];
+  char loss_subtitle[STRING_MAX];
+  char loss_value[STRING_MAX];
+  char latency[STRING_MAX];
+  char execution_value[STRING_MAX];
+  char execution_subtitle[STRING_MAX];
+} ping_stats_t;
+
 
 void connectivity_controller_init(connectivity_controller_t *controller, connectivity_view_t *view, app_data_t *data);
 
@@ -67,6 +76,8 @@ void connectivity_controller_save_file(connectivity_controller_t *controller, co
 ping_validation_t connectivity_controller_validate_ping(const char *ip, const char *count, const char *timeout, const char *packet_size);
 
 void connectivity_controller_create_incident(connectivity_controller_t *controller, const equipment_t *equipment);
+
+void connectivity_controller_get_stats(connectivity_controller_t *controller, ping_stats_t *stats);
 
 gboolean on_ping_finished(gpointer data);
 gboolean on_ping_all_finished(gpointer data);
