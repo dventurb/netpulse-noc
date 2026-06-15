@@ -33,6 +33,10 @@ static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpoi
 static void on_run_ping_clicked(GtkButton *button, gpointer data);
 static void on_ping_all_clicked(GtkButton *button, gpointer data);
 
+static void on_save_ping_clicked(GtkButton *button, gpointer data);
+static void on_save_ping_finish(GObject *self, GAsyncResult *res, gpointer data);
+
+
 GtkBox *connectivity_view_create(connectivity_view_t *view, connectivity_controller_t *controller)
 {
   view->controller = controller;
@@ -90,6 +94,17 @@ void ping_view_set_result(ping_view_t *view, const char *output)
   gtk_text_buffer_insert(terminal_buffer, &end, utf8_char, -1);
 
   free(utf8_char);
+}
+
+char *ping_view_get_result(ping_view_t *view)
+{
+  GtkTextBuffer *terminal_buffer = gtk_text_view_get_buffer(view->terminal);
+  
+  GtkTextIter start, end;
+  gtk_text_buffer_get_start_iter(terminal_buffer, &start);
+  gtk_text_buffer_get_end_iter(terminal_buffer, &end);
+
+  return gtk_text_buffer_get_text(terminal_buffer, &start, &end, FALSE);
 }
 
 void ping_view_clear_result(ping_view_t *view)
@@ -368,6 +383,7 @@ static GtkWidget *build_terminal(ping_view_t *view)
 
   GtkWidget *save_button = create_secondary_button("Save", "assets/icon-save.svg", "terminal-header-button");
   gtk_widget_set_halign(save_button, GTK_ALIGN_END);
+  g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_ping_clicked), view);
 
   GtkWidget *label = gtk_label_new("noc-technician@netpulse: ~/tools");
   gtk_widget_add_css_class(label, "terminal-header-title");
@@ -605,4 +621,37 @@ static void on_ping_all_clicked(GtkButton *button, gpointer data)
   ping_view_clear_result(view);
   
   connectivity_controller_ping_all(view->controller);
+}
+
+static void on_save_ping_clicked(GtkButton *button, gpointer data)
+{
+  (void)button;
+
+  ping_view_t *view = (ping_view_t *)data;
+
+  GtkWindow *window = GTK_WINDOW(gtk_widget_get_root(GTK_WIDGET(view->container)));
+
+  GtkFileDialog *dialog = gtk_file_dialog_new();
+  gtk_file_dialog_set_modal(dialog, TRUE);
+
+  gtk_file_dialog_save(dialog, window, NULL, on_save_ping_finish, view);
+
+  g_object_unref(dialog);
+}
+
+static void on_save_ping_finish(GObject *self, GAsyncResult *res, gpointer data)
+{
+  ping_view_t *view = (ping_view_t *)data;
+
+  GFile *file = gtk_file_dialog_save_finish(GTK_FILE_DIALOG(self), res, NULL);
+  if (file == NULL) return;
+
+  char *filepath = g_file_get_path(file);
+
+  connectivity_controller_save_file(view->controller, filepath);
+
+  ping_view_set_actions_enabled(view, true);
+
+  free(filepath);
+  g_object_unref(file);
 }

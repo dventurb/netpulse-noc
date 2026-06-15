@@ -10,7 +10,7 @@ typedef struct hashmap_bucket_t {
 } hashmap_bucket_t;
 
 typedef struct {
-  hashmap_bucket_t *buckets[HASHMAP_SIZE];
+  hashmap_bucket_t *buckets[HASHMAP_SIZE]; // TODO: dynamic resizing
   int count;
 } hashmap_t;
 

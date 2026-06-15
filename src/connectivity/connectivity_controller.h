@@ -43,6 +43,7 @@ typedef struct {
 
   char ip[IP_MAX];
   target_source_t source;
+
   ping_result_t *result;
 
   equipment_t *selected_equipment;
@@ -60,6 +61,8 @@ void connectivity_controller_set_source_selection(connectivity_controller_t *con
 void connectivity_controller_set_equipment(connectivity_controller_t *controller, equipment_t *equipment);
 void connectivity_controller_set_ip_address(connectivity_controller_t *controller, const char *ip_address);
 void connectivity_controller_set_ip_from_source(connectivity_controller_t *controller, const char *ip_address);
+
+void connectivity_controller_save_file(connectivity_controller_t *controller, const char *filepath);
 
 ping_validation_t connectivity_controller_validate_ping(const char *ip, const char *count, const char *timeout, const char *packet_size);
 

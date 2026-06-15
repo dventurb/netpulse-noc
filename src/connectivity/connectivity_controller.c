@@ -132,6 +132,26 @@ void connectivity_controller_set_ip_from_source(connectivity_controller_t *contr
   }
 }
 
+void connectivity_controller_save_file(connectivity_controller_t *controller, const char *filepath)
+{
+  if (filepath == NULL) return;
+
+  char *text = ping_view_get_result(&controller->view->ping_view);
+  if (text == NULL) return;
+
+  FILE *file = fopen(filepath, "w");
+  if (file == NULL)
+  {
+    free(text);
+    return;
+  }
+
+  fprintf(file, "%s", text);
+  
+  fclose(file);
+  free(text);
+}
+
 void connectivity_controller_create_incident(connectivity_controller_t *controller, const equipment_t *equipment)
 {
   incident_queue_t *queue = &controller->data->incidents_pending;
