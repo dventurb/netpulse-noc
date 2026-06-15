@@ -116,34 +116,6 @@ A pesquisa linear é utilizada em operações de filtragem e em estruturas onde 
 | sensor_filter_by_status()             | O(n)       |
 
 
-## Layout
-
-.
-├── assets/                 
-├── data/       
-├── styles/         
-├── main.c       
-├── Makefile          
-└── src/  
-    ├── core/     
-    │   ├── app.c / .h
-    │   ├── app_data.c / .h
-    │   ├── app_windows.c / .h
-    │   └── persistence.c / .h
-    ├── utils/      
-    │   ├── hashmap.c / .h
-    │   ├── pagination.c / .h
-    │   └── utils.c / .h
-    ├── equipment/    
-    ├── incident/
-    ├── sensor/    
-    ├── configuration/   
-    ├── connectivity/    
-    ├── technician/    
-    ├── auth.c / .h
-    ├── login_window.c / .h 
-    └── main_window.c / .h 
-
 ## Coding Style (Boas Práticas)
 
 Para assegurar legibilidade e manutenção, adotou-se convenções utilizadas na Linguagem C.

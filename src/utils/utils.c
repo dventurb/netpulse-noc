@@ -168,7 +168,7 @@ bool validate_date(const char *string)
   int day, month, year;
   char garbage;
 
-  if (sscanf(string, "%d-%d-%4d%c", &day, &month, &year, &garbage) != 3) return false;
+  if (sscanf(string, "%2d-%2d-%4d%c", &day, &month, &year, &garbage) != 3) return false;
   else return true;
 }
 

@@ -31,6 +31,8 @@ void sensor_controller_init(sensor_controller_t *controller, sensor_view_t *view
 static void sensor_controller_execute_filters(sensor_controller_t *controller, sensor_task_t *task, sensor_array_t *filtered)
 {
   sensor_array_t *array = &controller->data->sensors;
+  
+  if (array == NULL || array->sensors == NULL) return;
 
   sensor_array_t temp;
   sensor_array_init(&temp);
@@ -57,13 +59,17 @@ static void sensor_controller_execute_pagination(sensor_task_t *task, sensor_arr
 
 void sensor_controller_execute_query(sensor_controller_t *controller, sensor_task_t *task)
 {
-  sensor_array_t filtered;
-  sensor_array_init(&filtered);
+  sensor_array_t *filtered = malloc(sizeof(sensor_array_t));
+  if (filtered == NULL) return;
 
-  sensor_controller_execute_filters(controller, task, &filtered);
-  sensor_controller_execute_pagination(task, &filtered);
+  filtered->sensors = NULL;
+  filtered->count = 0;
 
-  sensor_array_destroy(&filtered);
+  sensor_controller_execute_filters(controller, task, filtered);
+  sensor_controller_execute_pagination(task, filtered);
+
+  sensor_array_destroy(filtered);
+  free(filtered);
 
   g_idle_add(on_sensor_finish, task);
 }
@@ -113,6 +119,7 @@ void sensor_controller_set_search(sensor_controller_t *controller, const char *t
 
   controller->pagination.current_page = 0;
 
+
   sensor_controller_start_query(controller);
 }
 
@@ -123,6 +130,7 @@ void sensor_controller_execute_search_date(sensor_controller_t *controller, sens
   time_t datetime = parse_date_to_timestamp(controller->search_date);
   sensor_search_by_date(array, datetime);
 
+  printf("sensor_controller_execute_search_date: search_data %s | time_t : %ld\n\n", controller->search_date, datetime);
   sensor_controller_execute_query(controller, task);
 }
 
@@ -136,6 +144,10 @@ void sensor_controller_set_date(sensor_controller_t *controller, const char *tex
   if (text == NULL) return;
 
   controller->pagination.current_page = 0;
+
+  snprintf(controller->search_date, DATE_MAX, "%s", text);
+
+  printf("sensor_controller_set_date: search_data %s", controller->search_date);
 
   sensor_controller_start_search_date(controller);
 }
@@ -175,8 +187,9 @@ void sensor_controller_execute_file_import(sensor_controller_t *controller, sens
   }
 
   fclose(file);
-
   free(task->filepath);
+
+  sensor_persistence_sort();
 
   sensor_controller_execute_search_date(controller, task);
 }
@@ -286,12 +299,16 @@ gboolean on_sensor_finish(gpointer data)
 
   pagination_fix_current_page(&task->controller->pagination, total_pages);
 
-  sensor_view_update_table(task->controller->view, task->result, task->count);
+  if (task->count <= 0)
+    sensor_view_update_table(task->controller->view, NULL, 0);
+  else
+    sensor_view_update_table(task->controller->view, task->result, task->count);
+
   sensor_view_update_stats_cards(task->controller->view);
   sensor_view_set_actions_enabled(task->controller->view, true);
 
-  if (task->result != NULL)
-    free(task->result);
+  if (task->result != NULL) free(task->result);
+
   free(task);
 
   return false;

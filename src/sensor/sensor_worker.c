@@ -121,7 +121,10 @@ void sensor_worker_search_date(sensor_controller_t *controller)
   task->controller = controller;
 
   task->filepath = NULL;
+  
+  task->status_filter = controller->status_filter;
 
+  strcpy(task->search_text, controller->search_text);
   strcpy(task->search_date, controller->search_date);
 
   task->start = pagination_start(controller->pagination);

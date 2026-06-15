@@ -434,9 +434,12 @@ static void on_date_entry_changed(GtkEntry *entry, gpointer data)
   sensor_view_t *view = (sensor_view_t *)data;
 
   const char *text = gtk_editable_get_text(GTK_EDITABLE(entry));
+  printf("on_date_entry_changed: text %s\n\n", text);
 
   if (!sensor_controller_validate_date(text)) return;
 
+
+  printf("date validade vai chamar o set_date\n\n");
   sensor_controller_set_date(view->controller, text);
 }
 

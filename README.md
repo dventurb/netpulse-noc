@@ -4,7 +4,7 @@
 </div>
 
 <p align="center">
-  <a href="#about">About</a> • <a href="#build">Build</a> • <a href="#architecture">Arquitetura</a> • <a href="#project-structure">Estrutura</a> • <a href="#roadmap">Roadmap</a>
+  <a href="#about">About</a> • <a href="#build">Build</a> • <a href="#architecture">Architecture</a> • <a href="#roadmap">Roadmap</a>
 </p>
 
 ![Preview of NetPulse NOC][preview_image]
@@ -68,7 +68,7 @@ All dependencies are automatically installed by the install script (install.sh).
 - **libsodium** (`libsodium-dev`)
 - **Build tools**: `gcc`, `make`, `pkg-config`
 
-## Arquitetura
+## Architecture
 
 O projeto adota uma variação do **MVC (Model-View-Controller)**, dividindo por domínios (ex: `equipment`, `incident`, `sensor`). Cada módulo contém o seu próprio modelo de dados, a apresentação visual, controllers para decisão do fluxo, e workers.
 
@@ -76,31 +76,6 @@ O projeto adota uma variação do **MVC (Model-View-Controller)**, dividindo por
 
 A persistência é carregada antes da execução da interface gráfica, garantindo que os dados internos estão prontos para consumo, ocorrendo ainda o `sodium_init()` para a utilização de operações criptográficas na autenticação dos técnicos.
 
-main()
-  │
-  ├── sodium_init()
-  ├── app_init(&app)
-  │     ├── app_data_init(&app->data)
-  │     │     ├── equipment_list_init()
-  │     │     ├── hashmap_init()
-  │     │     ├── incident_queue_init()
-  │     │     ├── incident_list_init()
-  │     │     ├── sensor_array_init()
-  │     │     ├── technician_list_init()
-  │     │     └── current_user = NULL
-  │     ├── app_windows_init()
-  │     │     ├── windows->login = NULL
-  │     │     └── windows->main  = NULL
-  │     ├── app->state    = APP_STATE_LOGIN
-  │     └── app->gtk_app  = NULL
-  │
-  ├── load_technicians(&app.data)
-  ├── load_equipments(&app.data)
-  ├── load_incidents(&app.data.incidents_pending,
-  │                  &app.data.incidents_history)
-  ├── load_sensors(&app.data.sensors)
-  │
-  └── app_launcher(&app, argc, argv)
 
 ## Roadmap 
 

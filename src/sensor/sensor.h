@@ -32,6 +32,7 @@ void sensor_array_init(sensor_array_t *array);
 void sensor_array_destroy(sensor_array_t *array);
 
 void sensor_persistence_append(sensor_t *sensor);
+void sensor_persistence_sort(void);
 
 void sensor_array_clone(sensor_array_t *source, sensor_array_t *destination);
 
