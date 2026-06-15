@@ -6,11 +6,6 @@
 #include "pagination.h"
 
 typedef struct {
-  const char *key;
-  char *dest;
-} form_field_t;
-
-typedef struct {
   const char *label;
   const char *icon;
   const char *css;

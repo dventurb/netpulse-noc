@@ -2,6 +2,12 @@
   background-color: #f5f6f8;
 }
 
+.profile-name {
+  color: #171717;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .menu-bar {
   background-color: #171717;
 }

@@ -5,9 +5,10 @@
 
 static void main_window_init(main_window_t *main_window, app_t *app);
 
-static GtkWidget *build_header(void);
+static GtkWidget *build_header(main_window_t *main_window);
 static GtkWidget *build_menu_bar(main_window_t *main_window);
 static GtkWidget *build_menu_button(main_window_t *main_window, const char *text, const char *page_name);
+static GtkWidget *build_technician_profile_box(main_window_t *main_window);
 
 // Callbacks
 static void on_menu_button_clicked(GtkButton *button, gpointer data);
@@ -35,11 +36,12 @@ static void main_window_init(main_window_t *main_window, app_t *app)
   gtk_window_set_default_size(main_window->window, 1440, 900);
 
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_widget_set_hexpand(box, TRUE);
   gtk_window_set_child(main_window->window, box);
 
   main_window->stack = GTK_STACK(gtk_stack_new());
 
-  GtkWidget *header = build_header();
+  GtkWidget *header = build_header(main_window);
   GtkWidget *menu_bar = build_menu_bar(main_window);
   
   gtk_box_append(GTK_BOX(box), header);
@@ -85,21 +87,28 @@ static void main_window_init(main_window_t *main_window, app_t *app)
   g_object_unref(provider);
 }
 
-static GtkWidget *build_header(void)
+static GtkWidget *build_header(main_window_t *main_window)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   gtk_widget_set_size_request(box, -1, 52);
+  gtk_widget_set_hexpand(box, TRUE);
   gtk_widget_add_css_class(box, "header");
 
   GtkWidget *logo = gtk_picture_new_for_filename("assets/logo.svg");
-
   gtk_widget_set_halign(logo, GTK_ALIGN_START);
   gtk_widget_set_valign(logo, GTK_ALIGN_CENTER);
   gtk_widget_set_margin_start(logo, 24);
   gtk_widget_set_margin_top(logo, 4);
   gtk_widget_set_margin_bottom(logo, 4);
 
+  GtkWidget *spacer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_widget_set_hexpand(spacer, TRUE);
+
+  GtkWidget *technician_box = build_technician_profile_box(main_window);
+
   gtk_box_append(GTK_BOX(box), logo);
+  gtk_box_append(GTK_BOX(box), spacer);
+  gtk_box_append(GTK_BOX(box), technician_box);
 
   return box;
 }
@@ -108,6 +117,7 @@ static GtkWidget *build_menu_bar(main_window_t *main_window)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   gtk_widget_set_size_request(box, -1, 44);
+  gtk_widget_set_hexpand(box, TRUE);
   gtk_widget_add_css_class(box, "menu-bar");
 
   // TODO: Technicians button 
@@ -136,7 +146,7 @@ static GtkWidget *build_menu_bar(main_window_t *main_window)
   }
 
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(main_window->nav_buttons[1]), TRUE); // Inventory Button to 'pressed in' 
-
+  
   return box;
 }
 
@@ -148,6 +158,28 @@ static GtkWidget *build_menu_button(main_window_t *main_window, const char *text
   g_object_set_data(G_OBJECT(button), "target-page", (void *)page_name);
 
   return button;
+}
+
+static GtkWidget *build_technician_profile_box(main_window_t *main_window)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
+  gtk_widget_set_hexpand(box, TRUE);
+  gtk_widget_set_margin_end(box, 24);
+  gtk_widget_set_halign(box, GTK_ALIGN_END);
+  gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
+
+  technician_t *current_user = main_window->app->data.current_user;
+
+  GtkWidget *name_label = gtk_label_new(current_user->name);
+  gtk_widget_add_css_class(name_label, "profile-name");
+
+  GtkWidget *avatar = gtk_image_new_from_file(current_user->avatar_path);
+  gtk_widget_set_size_request(avatar, 32, 32);
+
+  gtk_box_append(GTK_BOX(box), name_label);
+  gtk_box_append(GTK_BOX(box), avatar);
+
+  return box;
 }
 
 static void on_menu_button_clicked(GtkButton *button, gpointer data)

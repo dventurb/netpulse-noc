@@ -34,6 +34,8 @@ static void *sensor_thread_search_date(void *data)
   sensor_task_t *task = (sensor_task_t *)data;
 
   sensor_controller_execute_search_date(task->controller, task);
+
+  return NULL;
 }
 
 void sensor_worker_start_query(sensor_controller_t *controller)
