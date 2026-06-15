@@ -93,8 +93,6 @@ void sensor_array_clone(sensor_array_t *source, sensor_array_t *destination)
   destination->sensors = malloc(sizeof(sensor_t) * source->count);
   if (destination->sensors == NULL) return;
 
-  printf("sensor_array_clone: count: %d\n\n", source->count);
-
   for (int i = 0; i < source->count; i++) 
   {
     destination->sensors[i] = source->sensors[i];
@@ -109,8 +107,6 @@ sensor_t *sensor_array_in_range(sensor_array_t *array, int start, int end, int *
     // TODO: Implement a log system (ex.: (datetime) [ERROR] sensor_array_in_range : NULL argument)
     return NULL;
   }
-
-  printf("sensor_array_in_range: start: %d | end: %d | total: %d\n\n", start, end, array->count);
 
   if (start < 0) start = 0;
   if (end > array->count) end = array->count;
@@ -131,23 +127,16 @@ sensor_t *sensor_array_in_range(sensor_array_t *array, int start, int end, int *
 
   *count = i;
 
-  printf("sensor_array_in_range: count alloc: %d\n\n", *count);
-
   return sensors;
 }
 
 void sensor_search_by_date(sensor_array_t *array, time_t date)
 {
   FILE *file = fopen(filepath, "rb");
-  if (file == NULL)
-  {
-    printf("sensor_search_by_date: error ao abri file binario: %s\n\n", filepath);
-    return;
-  }
+  if (file == NULL) return;
 
   char datime[DATETIME_MAX];
   format_timestamp_to_datetime(date, datime);
-  printf("sensor_search_by_date: time_t %ld || data %s\n\n", date, datime);
 
   fseek(file, 0, SEEK_END);
   long size = ftell(file);
@@ -162,19 +151,15 @@ void sensor_search_by_date(sensor_array_t *array, time_t date)
   int start = -1, end = -1;
   binary_search(file, date, total, &start, &end);
 
-  printf("binary_search: total: %d | start: %d | end: %d\n\n", total, start, end);
-
   if (start < 0 || end < 0 || end < start || end >= total) 
   {
     array->sensors = NULL;
     array->count = 0;
-    printf("binary_search: error return\n\n");
     fclose(file);
     return;
   }
 
   int count = (end - start) + 1;
-  printf("sensor_search_by_date: count : %d\n\n", count);
 
   if (array->sensors != NULL) 
     array->sensors = NULL;
@@ -190,7 +175,6 @@ void sensor_search_by_date(sensor_array_t *array, time_t date)
   fread(array->sensors, sizeof(sensor_t), count, file);
   
   array->count = count;
-  printf("sensor_search_by_date: sucesso : count %d\n\n", array->count);
 
   fclose(file);
 }
@@ -204,7 +188,6 @@ void sensor_filter_by_status(const sensor_array_t *array, sensor_status_t status
   }
 
   int count = sensor_get_number_status(*array, status);
-  printf("sensor_filter_by_status: count %d\n\n", count);
   if (count == 0) return;
  
   filtered->sensors = malloc(sizeof(sensor_t) * count);
@@ -229,7 +212,6 @@ void sensor_filter_by_code(const sensor_array_t *array, const char *code, sensor
   }
 
   int count = sensor_get_number_code(*array, code);
-  printf("sensor_filter_by_code: count %d\n\n", count);
   if (count == 0) return;
 
   filtered->sensors = malloc(sizeof(sensor_t) * count);

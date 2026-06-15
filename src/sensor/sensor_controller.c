@@ -130,7 +130,6 @@ void sensor_controller_execute_search_date(sensor_controller_t *controller, sens
   time_t datetime = parse_date_to_timestamp(controller->search_date);
   sensor_search_by_date(array, datetime);
 
-  printf("sensor_controller_execute_search_date: search_data %s | time_t : %ld\n\n", controller->search_date, datetime);
   sensor_controller_execute_query(controller, task);
 }
 
@@ -146,8 +145,6 @@ void sensor_controller_set_date(sensor_controller_t *controller, const char *tex
   controller->pagination.current_page = 0;
 
   snprintf(controller->search_date, DATE_MAX, "%s", text);
-
-  printf("sensor_controller_set_date: search_data %s", controller->search_date);
 
   sensor_controller_start_search_date(controller);
 }
@@ -178,7 +175,6 @@ void sensor_controller_execute_file_import(sensor_controller_t *controller, sens
 
     if (sensor_validate(sensor) == true)
     {
-      printf("sensor_validate vai append no file");
       sensor_persistence_append(&sensor);
 
       if (sensor.status != SENSOR_OK)
