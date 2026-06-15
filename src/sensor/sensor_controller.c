@@ -212,8 +212,6 @@ void sensor_controller_execute_api_import(sensor_controller_t *controller, senso
 
       if (sensor.status != SENSOR_OK)
         sensor_controller_create_incident(controller, &sensor);
-
-      printf("sensor time_t: %ld\n\n", sensor.read_at);
     }
   }
 

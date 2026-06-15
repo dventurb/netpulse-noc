@@ -4,7 +4,7 @@
 </div>
 
 <p align="center">
-  <a href="#about">About</a> • <a href="#architecture">Arquitetura</a> • <a href="#project-structure">Estrutura</a> • <a href="#build-and-run">Build & Run</a> • <a href="#roadmap">Roadmap</a>
+  <a href="#about">About</a> • <a href="#build">Build</a> • <a href="#architecture">Arquitetura</a> • <a href="#project-structure">Estrutura</a> • <a href="#roadmap">Roadmap</a>
 </p>
 
 ![Preview of NetPulse NOC][preview_image]
@@ -24,13 +24,83 @@ O **NetPulse NOC** foi desenvolvido em contexto académico para aprofundar e col
 * **Threads:** Arquitetura assíncrona suportada por Threads (`pthreads`) para operações de dados pesadas (heavy work), evitando assim o bloqueio da UI.
 * **Memory Ownership:** Gestão de memória relacionando o ciclo de vida dos widgets (`GtkWindow`) do GTK 4 com as alocações dinâmicas realizadas ao longo da execução.
 
+## Build
+
+### Linux 
+```bash 
+git clone https://github.com/dventurb/netpulse-noc.git
+cd netpulse-noc
+chmod +x install.sh
+./install.sh
+./netpulse-noc
+```
+
+### macOS
+```bash 
+git clone https://github.com/dventurb/netpulse-noc.git
+cd netpulse-noc
+chmod +x install.sh
+./install.sh
+./netpulse-noc
+```
+
+>**Note:** Requires Homebrew installed([https://brew.sh](https://brew.sh))
+
+
+### Windows (via MSYS2)
+Em Windows é recomendado utilizar o ambiente **MSYS2**, onde fornece o GCC, POSIX (`pthreads`), pacotes do GTK4 e outras ferramentas necessárias.
+
+1. Transferir e instalar o **MSYS2**:
+[https:www.msys2.org/](https:www.msys2.org/)
+
+2. Abrir o terminal **MSYS2 UCRT64**:
+```bash 
+git clone https://github.com/dventurb/netpulse-noc.git
+cd netpulse-noc/
+chmod +x install.sh
+./install.sh
+./netpulse-noc
+```
+
+### Dependencies
+All dependencies are automatically installed by the install script (install.sh).
+- **GTK 4** (`libgtk-4-dev`) 
+- **libsodium** (`libsodium-dev`)
+- **Build tools**: `gcc`, `make`, `pkg-config`
+
 ## Arquitetura
 
 O projeto adota uma variação do **MVC (Model-View-Controller)**, dividindo por domínios (ex: `equipment`, `incident`, `sensor`). Cada módulo contém o seu próprio modelo de dados, a apresentação visual, controllers para decisão do fluxo, e workers.
 
-### Inicialização (main)
+### Inicialização (main.c)
 
 A persistência é carregada antes da execução da interface gráfica, garantindo que os dados internos estão prontos para consumo, ocorrendo ainda o `sodium_init()` para a utilização de operações criptográficas na autenticação dos técnicos.
+
+main()
+  │
+  ├── sodium_init()
+  ├── app_init(&app)
+  │     ├── app_data_init(&app->data)
+  │     │     ├── equipment_list_init()
+  │     │     ├── hashmap_init()
+  │     │     ├── incident_queue_init()
+  │     │     ├── incident_list_init()
+  │     │     ├── sensor_array_init()
+  │     │     ├── technician_list_init()
+  │     │     └── current_user = NULL
+  │     ├── app_windows_init()
+  │     │     ├── windows->login = NULL
+  │     │     └── windows->main  = NULL
+  │     ├── app->state    = APP_STATE_LOGIN
+  │     └── app->gtk_app  = NULL
+  │
+  ├── load_technicians(&app.data)
+  ├── load_equipments(&app.data)
+  ├── load_incidents(&app.data.incidents_pending,
+  │                  &app.data.incidents_history)
+  ├── load_sensors(&app.data.sensors)
+  │
+  └── app_launcher(&app, argc, argv)
 
 ## Roadmap 
 

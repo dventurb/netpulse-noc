@@ -4,35 +4,35 @@
 
 ### Technician (Doubly Linked List)
 
-Utilizamos uma Doubly Linked List com um apontador (head) e uma variável 'count' para contagem do número atual de técnicos e uma variável 'next_id' que representa o próximo ID a ser utilizado.  
+Utiliza-se uma doubly linked list com um apontador para o início (`head`) e uma variável `count` para monitorizar o número atual de técnicos registados. O controlo de registo é gerido através de uma variável `next_id`, armazenado o próximo identicador único.
 
 
 ### Username do Technician (Hashmap)
 
-Trabalho extra para valorização da nota final, implementamos 1 hashmap (username) com as colisões resolvidas por linked list. Obtendo assim uma eficiência de O(1) nas autenticação dos técnicos. 
+Como elemento de valorização extra, implementou-se uma hashmap (`username_index`) com as colisões resolvidas por uma singly linked list (chaining). Esta estrutura auxiliar garante uma eficiência de **O(1)** nas autenticação dos técnicos e sua validação. 
 
 
 ### Equipment (Doubly Linked List)
 
-Utilizamos uma Doubly Linked List com dois apontadores (head e tail) e uma variável 'count' para contagem do número atual de equipamentos e uma variável 'next_id' que representa o próximo ID a ser utilizado.  
+Utiliza-se uma doubly linked list com dois apontadores (`head` e `tail`), e uma variável `count` para contagem do número atual de equipamentos e uma variável `next_id` para gerar identicador único de forma incremental.
 
-#### Funções (Algoritmos)
+#### Eficiência das Funções
 
-|                   Função                 | Eficiência |
-| :--------------------------------------- | :--------: |
-| equipment_list_insert()                  | O(1)       |
-| equipment_list_remove()                  | O(n)       |
-| equipment_find_by_id/ip/mac()            | O(1)       |
-| equipment_sort_by_status/type/location() | O(n log n) |
+|                   Função                 | Eficiência |                    Descrição                    |
+| :--------------------------------------- | :--------: | :---------------------------------------------  |
+| equipment_list_insert()                  | O(1)       | Inserção imediata utilizando o apontador `tail`.|
+| equipment_list_remove()                  | O(n)       | Remoção com pesquisa linear prévia do `node`.   |
+| equipment_find_by_id/ip/mac()            | O(1)       | Resultado instanâneo através dos hashmaps.      |
+| equipment_sort_by_status/type/location() | O(n log n) | Ordenação recorrendo ao algoritmo Merge Sort.   |
 
 
 ### ID/MAC/IP do Equipment (Hashmap)
 
-Trabalho extra para valorização da nota final, implementamos então 3 hashmaps independentes (ID, IP, MAC) com as colisões resolvidas por linked list. Obtendo assim uma eficiência de O(1) nas funções de `find_by_id()`, `find_by_ip()` e `find_by_mac()`, hash function utilizamos o algoritmo DJB2.
+Para valorização extra, foram implementadas três hashmaps independentes (`id_index`, `ip_index`, `mac_index`). As colisões são resolvidas através de linked list (chaining), a geração da `key` é  processada pelo algoritmo de hash **DJB2**.
 
-A struct `hashmap_t` retorna um apontador genérico (void *), permitindo a reutilização para o `id_index`, `mac_index`, `ip_index` e `username_index` sem duplicação do código.
+A struct `hashmap_bucket_t` foi implementada de forma polimórfica utilizando um apontador genérico (void *), permitindo a reutilização para os dados dos técnicos (`username_index`), evitando duplicação do código.
 
-#### Funções (Algoritmos)
+#### Eficiência das Funções
 
 |            Função              | Eficiência |
 | :----------------------------- | :--------: |
@@ -41,57 +41,53 @@ A struct `hashmap_t` retorna um apontador genérico (void *), permitindo a reuti
 | hashmap_remove()               | O(1)       |
 
 
-Os hashmaps funcionam como index auxiliares para pesquisa mais eficiênte por ID, IP e MAC, embora seja raro com o algoritmo DJB2 haver colisões pode acontecer e no pior caso a eficiência é O(n).
+Nota: O pior caso (O(n)) apenas occore em cenários de saturação de colisões do mesmo bucket, embora seja mitigado com a distribuição do algoritmo **DJB2**, vai sempre depender da relação do número de equipamentos e o tamanho do `hashmap_bucket_t`.
 
 
 ### Incident (Queue && Singly Linked List)
 
-Utilizamos uma Queue para representar os 'Incidents' em estado PENDING, com dois apontadores (head e tail) e uma variável 'count' para contagem do número atual de incidentes e uma variável 'next_id' que representa o próximo ID a ser utilizado. Os 'Incidents' com estado IN_PROGRESS e CONCLUDE são adicionados na linked list. 
+Os incidentes em estado `PENDING` são organizados através da queue, suportada por dois apontadores (`head` e `tail`), uma variável `count` para contagem do número atual de incidentes e uma variável `next_number` para gestão incremental. Assim que um incidente transita para os estados `IN_PROGRESS` e `CONCLUDE`, são movidos para uma singly linked list.
 
-#### Funções (Algoritmos)
+#### Eficiência das Funções
 
-|                 Função                | Eficiência |
-| :------------------------------------ | :--------: |
-| incident_queue_enqueue()              | O(1)       |
-| incident_queue_dequeue()              | O(1)       |
-| incident_list_insert()                | O(1)       |
-| incident_queue_peek_head()            | O(1)       |
-| incident_find_by_equipment_sensor()   | O(n)       |
-| incident_filter_by_priority()         | O(n)       |
-
-
-### Config (Stack)
-
-Utilizamos uma Stack com um apontador (top) e uma variável 'count' para contagem do número de configurações.
-
-#### Funções (Algoritmos)
-
-|            Função              | Eficiência |
-| :----------------------------- | :--------: |
-| config_stack_push()            | O(1)       |
-| config_stack_pop()             | O(1)       |
-| config_stack_peek()            | O(1)       |
-| config_filter_by_equipment()   | O(n)       |
+|                 Função                | Eficiência |                    Descrição                    |
+| :------------------------------------ | :--------: | :---------------------------------------------  |
+| incident_queue_enqueue()              | O(1)       | Inserção no `rear` da queue.                    |
+| incident_queue_dequeue()              | O(1)       | Remoção e processamento no `front` da queue.    |
+| incident_list_insert()                | O(1)       | Inserção na `head` da linked list.              |
+| incident_find_by_equipment_sensor()   | O(n)       | Pesquisar linear nas duas estruturas de dados.  |
+| incident_filter_by_priority()         | O(n)       | Filtragem linear nas duas estruturas de dados.  |
 
 
-### Sensor  (Singly Linked List)
+### Configuration (Stack)
 
-Utilizamos uma Singly Linked List com um apontador (head) e uma variável 'count' para contagem do número de leituras dos sensores. 
+As configurações dos equipamentos são organizados através de uma stack, gerido por um apontador `top` e contador do número `count`.
 
-#### Funções (Algoritmos)
+#### Eficiência das Funções
 
-|            Função              | Eficiência |
-| :----------------------------- | :--------: |
-| sensor_list_insert()           | O(1)       |
-| sensor_filter_by_code()          | O(n)       |
-| sensor_filter_anomalous()      | O(n)       |
+|            Função              | Eficiência |                    Descrição                    |
+| :----------------------------- | :--------: | :---------------------------------------------  |
+| config_stack_push()            | O(1)       | Inserção no `top` da stack.                     |
+| config_stack_pop()             | O(1)       | Remoção no `top` da stack.                      |
+
+
+### Sensor  (Dynamic Array)
+
+Diferente das abordagens anteriores, o armazenamento é realizado em tempo de utilização através de um array dinâmico (`sensor_t`). Esta reestrutura permite garantir eficiência devido ao uso da cache da CPU em memória contígua e permite indexação direta por índices.
+
+#### Eficiência das Funções
+
+|            Função              | Eficiência |                    Descrição                    |
+| :----------------------------- | :--------: | :---------------------------------------------  |
+| sensor_persistence_append()    | O(n)       | Inserção e realocação dos novos dados.          |
+| sensor_filter_by_code()        | O(n)       | Filtragem linear.                               |
 
 
 ## Algoritmos (Sorting, Binary e Linear Search)
 
 ### Sorting
 
-Utilizamos o Merge Sort, mostrando maior eficiência em relação aos outros algoritmos de ordenação como Bubble Sort, Selection Sort e Insertion Sort. Utilizamos o algortimo de slow/fast pointer para encontrar o node do meio, divindo a linked list em duas linked lists.
+Utiliza-se o algoritmo **Merge Sort**, mostrando maior eficiência em relação aos outros algoritmos de ordenação como **Bubble Sort**, **Selection Sort** e **Insertion Sort**. Recorrendo ao algoritmo de Slow/Fast Pointers para encontrar o node do meioda linked list, divindo assim em duas linked lists.
 
 |            Função              | Eficiência |
 | :----------------------------- | :--------: |
@@ -99,48 +95,92 @@ Utilizamos o Merge Sort, mostrando maior eficiência em relação aos outros alg
 | equipment_sort_by_type()       | O(n log n) |
 | equipment_sort_by_location()   | O(n log n) |
 
+### Linear Search
+
+Aplica-se diretamente sobre o ficheiro de persistência (`sensors.bin`) que armazenam o timestamp (`time_t`), em vez de carregar múltiplos registos de sensores para memória, utiliza-se o algoritmo de pesquisa binária em disco, recorrendo a deslocações utilizando `fseek` e `ftell`.
+
+|            Função              | Eficiência |
+| :----------------------------- | :--------: |
+| sensor_search_by_date()        |  O(log n)  |
+
 
 ### Linear Search
 
-Utilizamos Linear Search para o resto das operações de pesquisa, evitando assim excesso uso de memória.
+A pesquisa linear é utilizada em operações de filtragem e em estruturas onde não justificava a manutenção de um índice.
 
 |                 Função                | Eficiência |
 | :------------------------------------ | :--------: |
 | incident_filter_by_source_id()        | O(n)       |
 | incident_filter_by_priority()         | O(n)       |
-| config_filter_by_equipment()          | O(n)       |
 | sensor_filter_by_code()               | O(n)       |
 | sensor_filter_by_status()             | O(n)       |
 
 
 ## Layout
+.
+├── assets/                 
+├── data/       
+├── styles/         
+├── main.c       
+├── Makefile          
+└── src/  
+    ├── core/     
+    │   ├── app.c / .h
+    │   ├── app_data.c / .h
+    │   ├── app_windows.c / .h
+    │   └── persistence.c / .h
+    ├── utils/      
+    │   ├── hashmap.c / .h
+    │   ├── pagination.c / .h
+    │   └── utils.c / .h
+    ├── equipment/    
+    ├── incident/
+    ├── sensor/    
+    ├── configuration/   
+    ├── connectivity/    
+    ├── technician/    
+    ├── auth.c / .h
+    ├── login_window.c / .h 
+    └── main_window.c / .h 
 
-|     Ficheiro       |                          Descrição                            |
-| :----------------- | :------------------------------------------------------------ |
-| src/               | ficheiros .c, implementação da função.                        |
-| inc/               | ficheiros .h, implementação do prototipo da função e structs. |
-| ui/                | ficheiros .c e .h relacionados com a interface gráfica.       |
-| data/              | ficheiros .txt .dat, relacionados com os dados.               |
-| assets/            | imagens para interface gráfica da aplicação                   |
-| application.h      | encapsulamento de todos dados                                 |
-| technician.c       | singly linked list
-| equipment.c        | doubly linked list + merge sort                               |
-| hashmap.c          | username, ID, IP e MAC                                        |
-| incident.c         | queue                                                         |  
-| config.c           | stack                                                         |
-| sensor.c           | singly linked list                                            |
-| persistence.c      | ficheiros binarios e texto                                    |
-| connectivity.c     | ping + parse do resultado                                     |
-| reports.c          | gerar relatórios                                              |
 
+## Coding Style (Boas Práticas)
 
-## Convenções (Boas práticas)
+Para assegurar legibilidade e manutenção, adotou-se convenções utilizadas na Linguagem C.
 
-O código deve ser consistênte e evitar misturar estilos para seguir as boas práticas, por isso utilizamos convenções padrão utilizadas na Linguagem C.
+### Comentários 
+
+Evitou-se ao máximo o uso de comentários no projeto, o código deve ser totalmente claro e fácil de entender, priorizando a legibilidade através de escolha de nomes para variáveis, funções e estruturas. Não devem ser escritos comentários de linha única que servem apenas para descrever o óbvio ou o que a linha seguinte faz, o código deve falar por si mesmo.
+
+#### Uso Incorrento 
+
+```c 
+
+  // Obtém a data da leitura do sensor
+  char *data = sensors->read_at;
+
+  // Verifica se a data é correta
+  if (validate_date(date)) {
+      // ...
+  }
+
+```
+
+#### Uso Correto
+
+```c 
+
+  char *data = sensors->read_at;
+
+  if (validate_date(date)) {
+      // ...
+  }
+
+```
 
 ### Structs 
 
-Utilizamos o sufixo `_t` e snake_case, como no exemplo:
+Utiliza-se `snake_case` e o sufixo `_t` para definição das structures, como no exemplo:
 
 ```c 
 
@@ -154,7 +194,7 @@ typedef struct equipment_node_t {
 
 ### Enums
 
-Utilizamos o sufixo `_t` e em SCREAMING_SNAKE_CASE, como no exemplo:
+Utiliza-se `SCREAMING_SNAKE_CASE` e o sufixo `_t`, como no exemplo:
 
 ```c 
 
@@ -169,7 +209,7 @@ typedef enum {
 
 ### Funções
 
-Utilizamos o prefixo do módulo + estrutura de dados + operação e em snake_case, como no exemplo:
+Encapsulamento pelo padrão: `prefixo_módulo` + `estrutura_de_dados` + `operação`, em `snake_case`, como no exemplo:
 
 ```c 
 
@@ -184,18 +224,20 @@ incident_queue_dequeue()
 
 ### Variáveis
 
-Utilizamos snake_case, como no exemplo:
+Utiliza-se `snake_case` e bem descritivas do que representam, como no exemplo:
 
 ```c 
 
 char ip_address[16];
 char mac_address[18];
 
+technician_t *current_user;
+
 ```
 
 ### Macros
 
-Utilizamos SCREAMING_SNAKE_CASE, como no exemplo:
+Utiliza-se `SCREAMING_SNAKE_CASE`, como no exemplo:
 
 ```c 
 
@@ -207,48 +249,49 @@ Utilizamos SCREAMING_SNAKE_CASE, como no exemplo:
 ```
 
 
-## Interface Gráfica
+## Interface Gráfica (GUI)
 
-A implementação da interface gráfica (GUI) é feita com recurso ao GTK4 com personalização realizada em CSS (style.css), a interface foi inspirada em aplicações com o mesmo foco como o OpManager da ManageEngine e o N-central da N-able.
+A implementação da visualização gráfica é feita com recurso a biblioteca **GTK4**, com personalização realizada em CSS (`style.css`). A interface foi inspirada em aplicações com o mesmo foco, tais como o ManageEngine OpManager e o N-able N-central.
 
-![example](example.png)
+![example](https://i.imgur.com/En0IFrp.png)
 
-No exemplo do design da interface, podemos verificar a posição do logotipo no canto superior esquerdo, o atual utilizador em sessão no canto superior direito, logo de seguinda em baixo vemos o menu/topbar com as opções de acesso aos módulos. 
 
-O menu/topbar é utilizado o widget `GtkBox` com o modo `GTK_ORIENTATION_HORIZONTAL`, sendo inserido os botões que representam os módulos.
+* **Login Screen:** Após a validação com sucesso, a `GtkWindow` é destruída e a memória alocada dinamicamente `login_window_t` é libertada com recurso ao `g_object_set_data_full()`.
 
-É utilizado o widget `GtkStack` para controlar o acesso a esses módulos cada um inserido numa `GtkStackPage`. 
+* **Menu Principal:** Utiliza-se um container horizontal `GtkBox` (`GTK_ORIENTATION_HORIZONTAL`) para servir como barra de navegação durante o uso da aplicação.
 
-Para as listas de equipamentos e incidentes é utilizado uma forma manual de exibição, consistindo em dois loops `for`. O primeiro loop representa as linhas da lista (número total de equipamentos) e o segundo loop representa as colunas da lista (elementos de cada equipamento.), cada interação é inserido num `GtkGrid`.
+* **Navegação em Páginas:** A mudança entre as páginas de cada módulo é gerida pelo widget `GtkStack`, onde cada submódulo está isolado dentro de uma `GtkStackPage`.
+
+* **Tabela de Dados:** A representação visual dos dados (como as tabelas de equipamentos e incidentes) é efetuada através de dois loops `for`. Os elementos da tabela são inseridos de forma linear dentro de um widget `GtkGrid`.
 
 
 ### Cores
 
-Cores utilizadas no design da aplicação:
-
-* #19c37d (Verde, cor principal)
-* #171717 (Preto, utilizado no topbar e como cor secundária)
-* #f5f6f8 (Branco, utilizado como background)
-* #ff4d4f (Vermelho, utilizado como estado 'Critical')
-* #faad14 (Amarelo, utilizado como estado 'Warning')
-* #52c41a (Verde, utilizado como estado 'Operational')
+* `#19C37D`: Verde NetPulse (Cor Primária)
+* `#171717`: Grafite Escuro (Topbar e Cor Secundária)
+* `#F5F6F8`: Cinza Claro (Background)
+* `#FF4D4F`: Vermelho (Representação de Estados `CRITICAL`)
+* `#FAAD14`: Amarelo (Representação de Estados `WARNING`)
+* `#52C41A`: Verde (Representação de Estados `OPERATIONAL`)
 
 
 ## Referências
 
-https://docs.gtk.org/gtk4/
-https://theartincode.stanis.me/008-djb2/
-https://man7.org/linux/man-pages/man2/time.2.html
-https://man7.org/linux/man-pages/man3/localtime.3p.html
-https://man7.org/linux/man-pages/man3/strftime.3.html
-https://medium.com/@arifimran5/fast-and-slow-pointer-pattern-in-linked-list-43647869ac99
-https://www.baeldung.com/cs/merge-sort-linked-list
-https://stackoverflow.com/questions/840501/how-do-function-pointers-in-c-work
-https://www.cs.cmu.edu/~ab/15-123N09/lectures/Lecture%2008%20-%20Function%20Pointers.pdf
-https://stackoverflow.com/questions/714100/os-detecting-makefile
-https://linuxvox.com/blog/makefile-that-distinguishes-between-windows-and-unix-like-systems/
-https://stackoverflow.com/questions/791982/determine-if-a-string-is-a-valid-ipv4-address-in-c
-https://www.tutorialspoint.com/c_standard_library/c_function_sscanf.htm
-https://dev.to/quantumsheep/basics-of-multithreading-in-c-4pam
-https://www.geeksforgeeks.org/c/multithreading-in-c/
-https://stackoverflow.com/questions/60992843/how-to-perform-a-ping-test-programmatically-on-windows#61010544
+* **GTK 4:** https://docs.gtk.org/gtk4/
+* **DJB2 Hash Algorithm:** https://theartincode.stanis.me/008-djb2/
+* **POSIX Threads (`pthreads`):** https://man7.org/linux/man-pages/man7/pthreads.7.html
+* **Multithreading:** https://www.geeksforgeeks.org/c/multithreading-in-c/
+* **Multithreading:** https://dev.to/quantumsheep/basics-of-multithreading-in-c-4pam
+* **File I/O Operations:** https://man7.org/linux/man-pages/man3/fopen.3.html
+* **Fast and Slow Pointer:** https://medium.com/@arifimran5/fast-and-slow-pointer-pattern-in-linked-list-43647869ac99
+* **Merge Sort:** https://www.baeldung.com/cs/merge-sort-linked-list
+* **Function Pointers:** https://stackoverflow.com/questions/840501/how-do-function-pointers-in-c-work
+* **Function Pointers:** https://www.cs.cmu.edu/~ab/15-123N09/lectures/Lecture%2008%20-%20Function%20Pointers.pdf
+* **time():** https://man7.org/linux/man-pages/man2/time.2.html
+* **localtime():** https://man7.org/linux/man-pages/man3/localtime.3p.html
+* **strftime():** https://man7.org/linux/man-pages/man3/strftime.3.html
+* **Makefile OS-Decting:** https://stackoverflow.com/questions/714100/os-detecting-makefile
+* **Makefile Cross-Platform:** https://linuxvox.com/blog/makefile-that-distinguishes-between-windows-and-unix-like-systems/
+* **IP Validation:** https://stackoverflow.com/questions/791982/determine-if-a-string-is-a-valid-ipv4-address-in-c
+* **sscanf():** https://www.tutorialspoint.com/c_standard_library/c_function_sscanf.htm
+* **Ping on Windows:** https://stackoverflow.com/questions/60992843/how-to-perform-a-ping-test-programmatically-on-windows
