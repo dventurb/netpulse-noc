@@ -80,6 +80,40 @@ void technician_list_remove(technician_list_t *list, technician_node_t *node)
   list->count--;
 }
 
+technician_node_t *technician_list_reinsert(technician_list_t *list, technician_t data)
+{
+  technician_node_t *new = malloc(sizeof(technician_node_t));
+  if (new == NULL) 
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] technician_list_reinsert : malloc failed)
+    return NULL;
+  }
+
+  new->data = data;
+  new->previous = NULL;
+
+  if (data.id >= list->next_id) list->next_id = data.id + 1;
+
+  if (list->head == NULL)
+  {
+    new->next = NULL;
+
+    list->head = new;
+
+    list->count++;
+
+    return new;
+  }
+
+  new->next = list->head;
+  list->head->previous = new;
+  list->head = new;
+
+  list->count++;
+
+  return new;
+}
+
 bool technician_exists_by_username(hashmap_t *username_index, const char *username)
 {
   technician_node_t *node = (technician_node_t *) hashmap_get(username_index, username);

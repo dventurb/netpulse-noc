@@ -5,6 +5,7 @@
 
 static const char *equipment_filepath = "data/equipments.bin";
 static const char *incident_filepath = "data/incidents.bin";
+static const char *technician_filepath = "data/technicians.bin";
 
 
 static void load_configurations(equipment_t *equipment, FILE *file)
@@ -40,6 +41,26 @@ static void save_configurations(equipment_t *equipment, FILE *file)
 
     node = node->next;
   }
+}
+
+void load_technicians(app_data_t *data)
+{
+  if (data == NULL) return;
+  
+  technician_list_t *list = &data->technicians;
+
+  FILE *file = fopen(technician_filepath, "rb");
+  if (file == NULL) return;
+
+  technician_t technician = {0};
+
+  while (fread(&technician, sizeof(technician_t), 1, file))
+  {
+    technician_node_t *node = technician_list_reinsert(list, technician);
+    hashmap_insert(&data->username_index, technician.username, node);
+  }
+  
+  fclose(file);
 }
 
 void load_equipments(app_data_t *data)
@@ -87,6 +108,24 @@ void load_incidents(incident_queue_t *queue, incident_list_t *list)
       incident_queue_requeue(queue, incident);
     else 
       incident_list_reinsert(list, incident);
+  }
+
+  fclose(file);
+}
+
+void save_technicians(technician_list_t *list)
+{
+  if (list == NULL) return;
+
+  FILE *file = fopen(technician_filepath, "wb");
+  if (file == NULL) return;
+
+  technician_node_t *node = list->head;
+
+  while (node != NULL)
+  {
+    fwrite(&node->data, sizeof(technician_t), 1, file);
+    node = node->next;
   }
 
   fclose(file);

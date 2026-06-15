@@ -2,6 +2,7 @@
 
 #include "macros.h"
 #include "technician.h"
+#include "persistence.h"
 
 #include <sodium.h>
 
@@ -38,7 +39,8 @@ bool auth_register_new_technician(app_t *app, const char *name, const char *user
 
   technician_node_t *node = technician_list_insert(list, new);
   hashmap_insert(hashmap, username, node);
-  //save_technicians(list);
+  
+  save_technicians(list);
 
   app->state = APP_STATE_MAIN;
   app->data.current_user = &node->data;

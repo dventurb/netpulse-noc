@@ -9,6 +9,7 @@ int main(int argc, char **argv)
   app_t app;
   app_init(&app);
 
+  load_technicians(&app.data);
   load_equipments(&app.data);
   load_incidents(&app.data.incidents_pending, &app.data.incidents_history);
 
