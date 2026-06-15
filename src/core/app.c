@@ -35,6 +35,7 @@ int app_launcher(app_t *app, int argc, char **argv)
 
 static void on_activate(GtkApplication *gtk_app, gpointer data)
 {
+  (void)gtk_app;
   app_t *app = (app_t *)data;
 
   app_windows_switch(&app->windows, app);

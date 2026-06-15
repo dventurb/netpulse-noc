@@ -8,7 +8,6 @@ typedef struct {
   main_window_t  *main;
   login_window_t *login;
 
-  GtkWindow *window;
 } app_windows_t;
 
 

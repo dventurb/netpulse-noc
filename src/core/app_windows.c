@@ -27,6 +27,12 @@ void app_windows_switch(app_windows_t *windows, app_t *app)
     if (windows->login == NULL)
       app_windows_create_login(windows, app);
 
+    if (windows->main != NULL && windows->main->window)
+    {
+      gtk_window_destroy(windows->main->window);
+      windows->main->window = NULL;
+    }
+
     gtk_window_present(windows->login->window);
   }
 
@@ -34,6 +40,12 @@ void app_windows_switch(app_windows_t *windows, app_t *app)
   {
     if (windows->main == NULL)
       app_windows_create_main(windows, app);
+
+    if (windows->login != NULL && windows->login->window != NULL)
+    {
+      gtk_window_destroy(windows->login->window);
+      windows->login->window = NULL;
+    }
 
     gtk_window_present(windows->main->window);
   }

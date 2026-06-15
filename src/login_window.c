@@ -5,7 +5,7 @@
 
 static void login_window_init(login_window_t *login_window, app_t *app);
 
-static GtkWidget *build_header(login_window_t *login_window);
+static GtkWidget *build_header(void);
 static GtkWidget *build_login_page(login_window_t *login_window);
 static GtkWidget *build_register_page(login_window_t *login_window);
 
@@ -46,7 +46,7 @@ static void login_window_init(login_window_t *login_window, app_t *app)
   gtk_widget_set_halign(box, GTK_ALIGN_CENTER);
   gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
 
-  GtkWidget *header = build_header(login_window);
+  GtkWidget *header = build_header();
 
   login_window->stack = GTK_STACK(gtk_stack_new());
   gtk_stack_set_vhomogeneous(login_window->stack, FALSE);
@@ -69,7 +69,7 @@ static void login_window_init(login_window_t *login_window, app_t *app)
   g_object_unref(provider);
 }
 
-static GtkWidget *build_header(login_window_t *login_window)
+static GtkWidget *build_header(void)
 {
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   gtk_widget_add_css_class(box, "login-header");
