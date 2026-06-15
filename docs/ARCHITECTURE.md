@@ -117,6 +117,7 @@ A pesquisa linear é utilizada em operações de filtragem e em estruturas onde 
 
 
 ## Layout
+
 .
 ├── assets/                 
 ├── data/       
@@ -142,7 +143,6 @@ A pesquisa linear é utilizada em operações de filtragem e em estruturas onde 
     ├── auth.c / .h
     ├── login_window.c / .h 
     └── main_window.c / .h 
-
 
 ## Coding Style (Boas Práticas)
 
