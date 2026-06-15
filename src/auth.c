@@ -38,6 +38,9 @@ bool auth_register_new_technician(app_t *app, const char *name, const char *user
 
   technician_node_t *node = technician_list_insert(list, new);
   hashmap_insert(hashmap, username, node);
+  //save_technicians(list);
+
+  app->state = APP_STATE_MAIN;
   app->data.current_user = &node->data;
 
   return true;
@@ -53,6 +56,7 @@ login_validation_t auth_login(app_t *app, const char *username, const char *pass
   if (crypto_pwhash_str_verify(node->data.password_hash, password, strlen(password)) != 0) return LOGIN_INVALID_PASSWORD;
 
   app->state = APP_STATE_MAIN;
+  app->data.current_user = &node->data;
 
   return LOGIN_SUCCESSFUL;
 }

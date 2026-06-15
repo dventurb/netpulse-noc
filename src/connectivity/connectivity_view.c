@@ -223,6 +223,7 @@ static GtkBox *ping_view_create(ping_view_t *view, connectivity_controller_t *co
   gtk_widget_add_css_class(label_target, "config-panel-form-label");
 
   view->stack = GTK_STACK(gtk_stack_new());
+  gtk_stack_set_vhomogeneous(view->stack, FALSE);
 
   GtkWidget *target_source_selector = build_source_selection(view);
 

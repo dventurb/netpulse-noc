@@ -290,5 +290,5 @@ static void on_register_submit_clicked(GtkButton *button, gpointer data)
   bool is_registered = auth_register_new_technician(login_window->app, name, username, password);
 
   if (is_registered == FALSE) return;
-  else  gtk_stack_set_visible_child_name(login_window->stack, "LOGIN");
+  else app_windows_switch(&login_window->app->windows, login_window->app);
 }
