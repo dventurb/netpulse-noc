@@ -12,7 +12,7 @@ ifeq ($(OS),Windows_NT)
 	CPPFLAGS += -DWIN32
 	RM := del /f /q
 	RMDIR := rd /s /q
-	MKDIR := mkdir 
+	MKDIR := mkdir -p
 	CP := copy /y
 	EXE_EXT := .exe
 else 
