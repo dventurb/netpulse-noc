@@ -14,7 +14,7 @@ ping_result_t *connectivity_run_ping(const char *ip_address, int count, int time
   FILE *file = NULL;
 
   #ifdef WIN32
-    snprintf(result->input, sizeof(result->input) "ping -n %d -w %d -l %d %s\n", count, timeout * 1000, packet_size, ip_address);
+    snprintf(result->input, sizeof(result->input), "ping -n %d -w %d -l %d %s\n", count, timeout * 1000, packet_size, ip_address);
   #endif
 
   #ifdef LINUX
@@ -96,9 +96,10 @@ void connectivity_get_ping_packets_stats(ping_result_t *result)
 {
   #ifdef WIN32
     int lost = 0;
+
     char *line = strstr(result->output, "Packets: Sent =");
     if (line != NULL)
-      sscanf(line, "Packets: Sent = %d, Received = %d, Lost = %d", &result->packets_sent, &result->packets_received, &result->lost);
+      sscanf(line, "Packets: Sent = %d, Received = %d, Lost = %d", &result->packets_sent, &result->packets_received, &lost);
     result->packets_loss_percent = (lost * 100) / result->packets_sent;
 
   #else
