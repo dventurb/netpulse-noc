@@ -73,12 +73,16 @@ void incident_list_clone(incident_list_t *source, incident_list_t *destination);
 incident_node_t *incident_list_get_by_id(incident_list_t *list, int id);
 
 void incident_queue_filter_by_id(incident_queue_t *queue, const char *number, incident_queue_t *filtered);
+void incident_queue_filter_by_equipment_id(incident_queue_t *queue, const char *id, incident_queue_t *filtered);
+void incident_queue_filter_by_sensor_code(incident_queue_t *queue, const char *code, incident_queue_t *filtered);
 void incident_queue_filter_by_priority(const incident_queue_t *queue, incident_priority_t priority, incident_queue_t *filtered);
 void incident_queue_filter_by_status(const incident_queue_t *queue, incident_status_t status, incident_queue_t *filtered);
 void incident_queue_filter_by_source_id(const incident_queue_t *queue, const char *source_id, incident_queue_t *filtered);
 void incident_queue_filter(incident_queue_t *queue, incident_status_t status, incident_priority_t priority, incident_queue_t *filtered);
 
 void incident_list_filter_by_id(incident_list_t *list, const char *number, incident_list_t *filtered);
+void incident_list_filter_by_equipment_id(incident_list_t *list, const char *id, incident_list_t *filtered);
+void incident_list_filter_by_sensor_code(incident_list_t *list, const char *code, incident_list_t *filtered);
 void incident_list_filter_by_priority(const incident_list_t *list, incident_priority_t priority, incident_list_t *filtered);
 void incident_list_filter_by_status(const incident_list_t *list, incident_status_t status, incident_list_t *filtered);
 void incident_list_filter_by_source_id(const incident_list_t *list, const char *source_id, incident_list_t *filtered);

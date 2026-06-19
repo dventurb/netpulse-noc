@@ -314,6 +314,44 @@ void incident_queue_filter_by_id(incident_queue_t *queue, const char *number, in
   }
 }
 
+void incident_queue_filter_by_equipment_id(incident_queue_t *queue, const char *id, incident_queue_t *filtered)
+{
+  if (queue == NULL || filtered == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_filter_by_equipment_id : NULL arguments)
+    return;
+  }
+
+  incident_node_t *node = queue->front;
+
+  while (node != NULL)
+  {
+    if (strncmp(node->data.source_id, id, strlen(id)) == 0)
+      incident_queue_requeue(filtered, node->data);
+
+    node = node->next;
+  }
+}
+
+void incident_queue_filter_by_sensor_code(incident_queue_t *queue, const char *code, incident_queue_t *filtered)
+{
+  if (queue == NULL || filtered == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_queue_filter_by_sensor_code : NULL arguments)
+    return;
+  }
+
+  incident_node_t *node = queue->front;
+
+  while (node != NULL)
+  {
+    if (strncmp(node->data.source_id, code, strlen(code)) == 0)
+      incident_queue_requeue(filtered, node->data);
+
+    node = node->next;
+  }
+}
+
 void incident_queue_filter_by_priority(const incident_queue_t *queue, incident_priority_t priority, incident_queue_t *filtered)
 {
   if (queue == NULL || filtered == NULL)
@@ -396,6 +434,44 @@ void incident_list_filter_by_id(incident_list_t *list, const char *number, incid
     {
       incident_list_reinsert(filtered, node->data);
     }
+
+    node = node->next;
+  }
+}
+
+void incident_list_filter_by_equipment_id(incident_list_t *list, const char *id, incident_list_t *filtered)
+{
+  if (list == NULL || filtered == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_list_filter_by_equipment_id : NULL arguments)
+    return;
+  }
+
+  incident_node_t *node = list->head;
+
+  while (node != NULL)
+  {
+    if (strncmp(node->data.source_id, id, strlen(id)) == 0)
+      incident_list_reinsert(filtered, node->data);
+
+    node = node->next;
+  }
+}
+
+void incident_list_filter_by_sensor_code(incident_list_t *list, const char *code, incident_list_t *filtered)
+{
+  if (list == NULL || filtered == NULL)
+  {
+    // TODO: Implement a log system (ex.: (datatime) [ERROR] incident_list_filter_by_sensor_code : NULL arguments)
+    return;
+  }
+
+  incident_node_t *node = list->head;
+
+  while (node != NULL)
+  {
+    if (strncmp(node->data.source_id, code, strlen(code)) == 0)
+      incident_list_reinsert(filtered, node->data);
 
     node = node->next;
   }

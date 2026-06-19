@@ -20,9 +20,25 @@ static void *incident_task_thread(void *data)
 
   if (strlen(task->params->search_text) >= 1)
   {
-    incident_queue_filter_by_id(queue, task->params->search_text, &queue_filtered);
-    incident_list_filter_by_id(list, task->params->search_text, &list_filtered);
+    if (task->controller->search_type == SEARCH_INCIDENT_ID)
+    {
+      incident_queue_filter_by_id(queue, task->params->search_text, &queue_filtered);
+      incident_list_filter_by_id(list, task->params->search_text, &list_filtered);
+    }
+
+    else if (task->controller->search_type == SEARCH_EQUIPMENT_ID)
+    {
+      incident_queue_filter_by_equipment_id(queue, task->params->search_text, &queue_filtered);
+      incident_list_filter_by_equipment_id(list, task->params->search_text, &list_filtered);
+    }
+
+    else if (task->controller->search_type == SEARCH_SENSOR_CODE)
+    {
+      incident_queue_filter_by_sensor_code(queue, task->params->search_text, &queue_filtered);
+      incident_list_filter_by_sensor_code(list, task->params->search_text, &list_filtered);
+    }
   }
+
   else 
   {
     incident_queue_clone(queue, &queue_filtered);

@@ -7,6 +7,7 @@
 #include "incident.h"
 #include "macros.h"
 #include "pagination.h"
+#include "utils.h"
 
 // forward declaration to resolve circular dependencies
 typedef struct incident_view_t incident_view_t;
@@ -30,6 +31,7 @@ typedef struct {
   int priority_filter;
 
   char search_text[STRING_MAX];
+  search_type_t search_type;
 
   pagination_t pagination;
 } incident_controller_t;

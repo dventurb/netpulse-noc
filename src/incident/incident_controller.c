@@ -4,7 +4,6 @@
 #include "incident_view.h"
 
 #include "persistence.h"
-#include "utils.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -125,7 +124,7 @@ void incident_controller_apply_filters(incident_controller_t *controller, int st
 
 void incident_controller_search(incident_controller_t *controller, const char *text)
 {
-  if (text == NULL || strlen(text) == 0) return;
+  if (text == NULL) return;
 
   char buffer[strlen(text) + 1];
   convert_to_uppercase(text, buffer);
@@ -135,9 +134,19 @@ void incident_controller_search(incident_controller_t *controller, const char *t
   {
     case SEARCH_INCIDENT_ID:
       snprintf(controller->search_text, ID_MAX, "%s", buffer);
+      controller->search_type = SEARCH_INCIDENT_ID;
+      break;
+    case SEARCH_EQUIPMENT_ID:
+      snprintf(controller->search_text, ID_MAX, "%s", buffer);
+      controller->search_type = SEARCH_EQUIPMENT_ID;
+      break;
+    case SEARCH_SENSOR_CODE:
+      snprintf(controller->search_text, CODE_MAX, "%s", buffer);
+      controller->search_type = SEARCH_SENSOR_CODE;
       break;
     default:
       controller->search_text[0] = '\0';
+      controller->search_type = SEARCH_INVALID;
       break;
   }
 

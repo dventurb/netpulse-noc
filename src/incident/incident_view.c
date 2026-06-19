@@ -214,7 +214,7 @@ static GtkWidget *build_filter_bar(incident_view_t *view)
   gtk_widget_set_hexpand(box, TRUE);
 
   GtkWidget *search = gtk_search_entry_new();
-  gtk_search_entry_set_placeholder_text(GTK_SEARCH_ENTRY(search), "Search by ID, device or technician...");
+  gtk_search_entry_set_placeholder_text(GTK_SEARCH_ENTRY(search), "Search by ID, equipment or sensor...");
   gtk_widget_add_css_class(search, "incident-search");
   gtk_widget_set_hexpand(search, TRUE);
   g_signal_connect(search, "search-changed", G_CALLBACK(on_search_entry_changed), view);
