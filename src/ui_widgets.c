@@ -85,8 +85,8 @@ GtkWidget *create_stats_card(const char *title, int value, const char *css)
   gtk_widget_set_halign(title_label, GTK_ALIGN_START);
   gtk_widget_add_css_class(title_label, "stats-card-title");
 
-  char buffer[11];
-  snprintf(buffer, sizeof(buffer), "%d", value);
+  char buffer[STRING_MAX];
+  snprintf(buffer, STRING_MAX, "%d", value);
 
   GtkWidget *value_label = gtk_label_new(buffer);
   gtk_widget_set_halign(value_label, GTK_ALIGN_START);

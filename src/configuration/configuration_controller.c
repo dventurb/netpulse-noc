@@ -243,7 +243,11 @@ bool configuration_controller_is_top_stack(configuration_controller_t *controlle
 void configuration_controller_get_stats(configuration_controller_t *controller, configuration_stats_t *stats)
 {
   if (!configuration_controller_has_selected_equipment(controller)) return;
+  
   stats->total = configuration_get_count(&controller->selected_equipment->data.configs);
+  
+  format_timestamp_to_datetime(controller->selected_equipment->data.configs.top->data.operated_at, stats->last_updated);
+
 }
 
 gboolean on_configuration_finish(gpointer data)
@@ -262,6 +266,7 @@ gboolean on_configuration_finish(gpointer data)
     pagination_fix_current_page(&task->controller->pagination, total_pages);
 
     configuration_view_update_config_table(task->controller->view, task->result, task->count);
+    configuration_view_update_cards(task->controller->view);
   }
 
   free(task->result);

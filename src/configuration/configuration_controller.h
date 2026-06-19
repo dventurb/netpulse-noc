@@ -26,7 +26,7 @@ typedef struct {
 
 typedef struct {
   int total;
-  int last;
+  char last_updated[DATETIME_MAX];
   int technicians;
 } configuration_stats_t;
 

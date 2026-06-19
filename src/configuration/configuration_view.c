@@ -32,6 +32,7 @@ static GtkWidget *build_clear_history_form(configuration_view_t *view);
 static GtkWidget *build_equipment_cell(equipment_t equipment);
 static GtkWidget *build_summary_card(equipment_t equipment);
 static GtkWidget *build_status_cell(equipment_status_t status);
+static GtkWidget *build_last_updated_card(const char *title, const char *value, const char *css);
 
 // Callbacks
 static void on_add_config_clicked(GtkButton *button, gpointer data);
@@ -73,6 +74,7 @@ void configuration_view_refresh(configuration_view_t *view)
 void configuration_view_update(configuration_view_t *view)
 {
   configuration_controller_start_config_query(view->controller);
+  configuration_view_update_cards(view);
 }
 
 void configuration_view_update_cards(configuration_view_t *view)
@@ -84,7 +86,7 @@ void configuration_view_update_cards(configuration_view_t *view)
   configuration_controller_get_stats(view->controller, &stats);
 
   GtkWidget *total_card = create_stats_card("TOTAL COMMANDS", stats.total, "default-card");
-  GtkWidget *last_card = create_stats_card("LAST UPDATED", stats.last, "default-card");
+  GtkWidget *last_card = build_last_updated_card("LAST UPDATED", stats.last_updated, "default-card");
   GtkWidget *technicians_card = create_stats_card("TECHNICIANS", stats.technicians, "default-card");
 
   gtk_box_append(view->cards, total_card);
@@ -225,7 +227,7 @@ static GtkWidget *build_stats_cards(configuration_view_t *view)
   configuration_controller_get_stats(view->controller, &stats);
 
   GtkWidget *total_card = create_stats_card("TOTAL COMMANDS", stats.total, "default-card");
-  GtkWidget *last_card = create_stats_card("LAST UPDATED", stats.last, "default-card");
+  GtkWidget *last_card = build_last_updated_card("LAST UPDATED", stats.last_updated, "default-card");
   GtkWidget *technicians_card = create_stats_card("TECHNICIANS", stats.technicians, "default-card");
 
   gtk_box_append(GTK_BOX(box), total_card);
@@ -594,6 +596,27 @@ static GtkWidget *build_status_cell(equipment_status_t status)
   gtk_box_append(GTK_BOX(box), border);
   gtk_box_append(GTK_BOX(border), image);
   gtk_box_append(GTK_BOX(border), label);
+
+  return box;
+}
+
+static GtkWidget *build_last_updated_card(const char *title, const char *value, const char *css)
+{
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+  gtk_widget_set_hexpand(box, TRUE);
+  gtk_widget_add_css_class(box, "stats-card");
+  gtk_widget_add_css_class(box, css != NULL ? css : "");
+
+  GtkWidget *title_label = gtk_label_new(title != NULL ? title : "");
+  gtk_widget_set_halign(title_label, GTK_ALIGN_START);
+  gtk_widget_add_css_class(title_label, "stats-card-title");
+
+  GtkWidget *value_label = gtk_label_new(value);
+  gtk_widget_set_halign(value_label, GTK_ALIGN_START);
+  gtk_widget_add_css_class(value_label, "stats-card-value");
+
+  gtk_box_append(GTK_BOX(box), title_label);
+  gtk_box_append(GTK_BOX(box), value_label);
 
   return box;
 }
