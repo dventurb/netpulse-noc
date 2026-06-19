@@ -97,6 +97,8 @@ void load_equipments(app_data_t *data)
   }
   
   fclose(file);
+
+  equipment_list_generate_report(list);
 }
 
 void load_incidents(incident_queue_t *queue, incident_list_t *list)
@@ -156,6 +158,8 @@ void save_equipments(equipment_list_t *list)
   }
 
   fclose(file);
+
+  equipment_list_generate_report(list);
 }
 
 void save_incidents(incident_queue_t *queue, incident_list_t *list)

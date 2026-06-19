@@ -15,9 +15,14 @@ typedef enum {
   EQUIPMENT_INVALID_NAME,
   EQUIPMENT_INVALID_VENDOR,
   EQUIPMENT_INVALID_MODEL,
-  EQUIPMENT_INVALID_IP,
-  EQUIPMENT_INVALID_MAC,
   EQUIPMENT_INVALID_LOCATION,
+
+  EQUIPMENT_INVALID_IP,
+  EQUIPMENT_DUPLICATE_IP,
+
+  EQUIPMENT_INVALID_MAC,
+  EQUIPMENT_DUPLICATE_MAC,
+
   EQUIPMENT_VALID
 } equipment_validation_t;
 
@@ -74,7 +79,9 @@ void equipment_controller_handle_toggled(equipment_controller_t *controller, int
 
 bool equipment_controller_can_remove(equipment_controller_t *controller);
 
-equipment_validation_t equipment_controller_validate(equipment_controller_t *controller, equipment_t equipment);
+equipment_validation_t equipment_controller_validate_add(equipment_controller_t *controller, equipment_t equipment);
+
+equipment_validation_t equipment_controller_validate_edit(equipment_controller_t *controller, equipment_t equipment);
 
 void equipment_controller_get_stats(equipment_controller_t *controller, equipment_stats_t *stats);
 

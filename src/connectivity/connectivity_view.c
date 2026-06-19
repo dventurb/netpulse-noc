@@ -310,7 +310,7 @@ void ping_view_update_stats_cards(ping_view_t *view, ping_result_t result)
   view->controller->result = &result;
   connectivity_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *left_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 50);
+  GtkWidget *left_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 40);
   gtk_box_set_homogeneous(GTK_BOX(left_box), TRUE);
   gtk_widget_set_hexpand(left_box, TRUE);
 
@@ -321,7 +321,7 @@ void ping_view_update_stats_cards(ping_view_t *view, ping_result_t result)
   gtk_box_append(GTK_BOX(left_box), status_card);
   gtk_box_append(GTK_BOX(left_box), packets_card);
 
-  GtkWidget *right_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 50);
+  GtkWidget *right_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 40);
   gtk_box_set_homogeneous(GTK_BOX(right_box), TRUE);
   gtk_widget_set_hexpand(right_box, TRUE);
   
@@ -342,7 +342,7 @@ static GtkWidget *build_stats_cards(void)
   gtk_box_set_homogeneous(GTK_BOX(box), TRUE);
   gtk_widget_set_hexpand(box, TRUE);
 
-  GtkWidget *left_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 50);
+  GtkWidget *left_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 40);
   gtk_box_set_homogeneous(GTK_BOX(left_box), TRUE);
   gtk_widget_set_hexpand(left_box, TRUE);
 
@@ -353,7 +353,7 @@ static GtkWidget *build_stats_cards(void)
   gtk_box_append(GTK_BOX(left_box), status_card);
   gtk_box_append(GTK_BOX(left_box), packets_card);
 
-  GtkWidget *right_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 50);
+  GtkWidget *right_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 40);
   gtk_box_set_homogeneous(GTK_BOX(right_box), TRUE);
   gtk_widget_set_hexpand(right_box, TRUE);
   

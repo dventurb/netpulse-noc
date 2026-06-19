@@ -37,6 +37,8 @@ static void sensor_controller_execute_filters(sensor_controller_t *controller, s
   sensor_array_t temp;
   sensor_array_init(&temp);
 
+  printf("sensor_controller_execute_filters: array->count: %d\n\n", array->count);
+
   if (strlen(task->search_text) >= 1)
     sensor_filter_by_code(array, task->search_text, &temp);
 
@@ -55,6 +57,8 @@ static void sensor_controller_execute_pagination(sensor_task_t *task, sensor_arr
 {
   task->total = sensor_get_count(*filtered);
   task->result = sensor_array_in_range(filtered, task->start, task->end, &task->count);
+
+  printf("sensor_controller_execute_pagination: task->total: %d\n\n", task->total);
 }
 
 void sensor_controller_execute_query(sensor_controller_t *controller, sensor_task_t *task)
@@ -129,6 +133,7 @@ void sensor_controller_execute_search_date(sensor_controller_t *controller, sens
 
   time_t datetime = parse_date_to_timestamp(controller->search_date);
   sensor_search_by_date(array, datetime);
+  printf("sensor_controller_execute_search_date: datetime: %s\n\n", controller->search_date);
 
   sensor_controller_execute_query(controller, task);
 }

@@ -26,5 +26,6 @@ bool connectivity_check_ping(const char *string);
 void connectivity_get_ping_packets_stats(ping_result_t *result);
 void connectivity_get_ping_latency(ping_result_t *result);
 
+void connectivity_generate_log(const char *ip_address, float latency, bool responded);
 
 #endif

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "utils.h"
 
 // Private function
 static equipment_node_t *get_middle(equipment_node_t *node);
@@ -13,6 +14,9 @@ static int compare_by_status(const equipment_node_t *left, const equipment_node_
 static int compare_by_location(const equipment_node_t *left, const equipment_node_t *right);
 
 static int compare_by_type(const equipment_node_t *left, const equipment_node_t *right);
+
+
+static const char *filepath = "data/report.txt";
 
 
 void equipment_list_init(equipment_list_t *list)
@@ -389,6 +393,54 @@ int equipment_get_number_status(equipment_list_t *list, equipment_status_t statu
   }
 
   return i;
+}
+
+void equipment_list_generate_report(equipment_list_t *list)
+{
+  FILE *file = fopen(filepath, "w");
+  if (file == NULL) return;
+
+  char date[DATE_MAX];
+  format_current_date(date);
+
+  fprintf(file, "==================================================\n");
+  fprintf(file, "         NETPULSE NOC - NETWORK REPORT            \n");
+  fprintf(file, "==================================================\n");
+  fprintf(file, "Criado em: %s\n", date);
+  fprintf(file, "Total de Equipamentos: %d\n", list->count);
+  fprintf(file, "--------------------------------------------------\n\n");
+
+  fprintf(file, "%s | %s | %s | %s\n", "ID", "NOME", "IP ADDRESS", "STATUS");
+  fprintf(file, "--------------------------------------------------\n");
+
+  equipment_node_t *node = list->head;
+
+  while (node != NULL)
+  {
+    char id[ID_MAX];
+    equipment_format_id(node->data.id, id);
+
+    fprintf(file, "[%s] | %s | %s | %s\n", id, node->data.name, node->data.ip_address, equipment_status_to_string(node->data.status));
+
+    node = node->next;
+  }
+
+  int operational = 0, failed = 0, maintenance = 0, disabled = 0;
+
+  operational = equipment_get_number_status(list, STATUS_OPERATIONAL);
+  failed = equipment_get_number_status(list, STATUS_FAILED);
+  maintenance = equipment_get_number_status(list, STATUS_MAINTENANCE);
+  disabled = equipment_get_number_status(list, STATUS_DISABLED);
+
+  fprintf(file, "\n--------------------------------------------------\n");
+  fprintf(file, "STATISTICS:\n");
+  fprintf(file, "  [+] Operational: %d\n", operational);
+  fprintf(file, "  [-] Failed: %d\n", failed);
+  fprintf(file, "  [!] Maintenance:: %d\n", maintenance);
+  fprintf(file, "  [*] Disabled:: %d\n", disabled);
+  fprintf(file, "==================================================\n");
+
+  fclose(file);
 }
 
 void equipment_format_id(int id, char *buffer)

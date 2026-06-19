@@ -533,10 +533,10 @@ static void on_create_form_submit(GtkButton *button, gpointer data)
   incident_t new = {0};
 
   snprintf(new.technician_name, STRING_MAX, "%s", technician_text);
-  snprintf(new.source_id, CODE_MAX, "%s", source_id_text);
   snprintf(new.type, STRING_MAX, "%s", type_text);
   snprintf(new.description, DESCRIPTION_MAX, "%s", description_text);
 
+  convert_to_uppercase(source_id_text, new.source_id);
   new.source_type = gtk_drop_down_get_selected(view->form.dropdown_source);
   new.priority = gtk_drop_down_get_selected(view->form.dropdown_priority);
 

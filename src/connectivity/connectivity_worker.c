@@ -37,6 +37,8 @@ static void *ping_single_task_thread(void *data)
     save_equipments(&task->controller->data->equipments);
   }
 
+  connectivity_generate_log(task->params->ip, task->result->avg_latency, task->result->responded);
+
   g_idle_add(task->callback, task); //  on_ping_finished()
 
   return NULL;
@@ -70,10 +72,11 @@ static void *ping_all_task_thread(void *data)
       equipment_update_last_check(&node->data);
     }
 
+    connectivity_generate_log(node->data.ip_address, task->controller->result->avg_latency, task->controller->result->responded);
+
     g_idle_add(on_ping_all_finished, task->controller); //  on_ping_finished()
 
     node = node->next;
-
   }
 
   free(task->params);

@@ -5,6 +5,11 @@
 #include <string.h>
 #include <time.h>
 #include <locale.h>
+#include "macros.h"
+#include "utils.h"
+
+static const char *filepath = "data/connectivity_logger.txt";
+
 
 ping_result_t *connectivity_run_ping(const char *ip_address, int count, int timeout, int packet_size)
 {
@@ -111,4 +116,25 @@ void connectivity_get_ping_packets_stats(ping_result_t *result)
       sscanf(new_line, "%d packets transmitted, %d received, %d%% packet loss", &result->packets_sent, &result->packets_received, &result->packets_loss_percent);
     }
   #endif
+}
+
+void connectivity_generate_log(const char *ip_address, float latency, bool responded)
+{
+  FILE *file = fopen(filepath, "a");
+  if (file == NULL) return;
+
+  char datetime[DATETIME_MAX];
+  format_timestamp_to_datetime(time(NULL), datetime);
+
+  if (responded)
+  {
+    fprintf(file, "[%s] PING TO %s: SUCCESS | Latency: %.2fms\n", datetime, ip_address, latency);
+  }
+
+  else 
+  {
+    fprintf(file, "[%s] PING TO %s: FAILED | Host Unreachable\n", datetime, ip_address);
+  }
+
+  fclose(file);
 }

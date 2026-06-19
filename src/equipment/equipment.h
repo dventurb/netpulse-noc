@@ -85,6 +85,8 @@ bool equipment_exists_by_mac(hashmap_t *mac_index, const char *mac_address);
 int equipment_get_count(equipment_list_t *list);
 int equipment_get_number_status(equipment_list_t *list, equipment_status_t status);
 
+void equipment_list_generate_report(equipment_list_t *list);
+
 void equipment_format_id(int id, char *buffer);
 
 const char *equipment_status_to_string(equipment_status_t status);

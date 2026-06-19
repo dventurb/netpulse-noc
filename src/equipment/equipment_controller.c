@@ -142,7 +142,10 @@ void equipment_controller_remove(equipment_controller_t *controller)
 
 void equipment_controller_search(equipment_controller_t *controller, const char *text)
 {
-  if (text == NULL || strlen(text) == 0) return;
+  if (text == NULL) return;
+
+  if (strlen(text) == 0)
+    equipment_controller_update_table(controller);
 
   equipment_node_t *node = NULL;
 
@@ -175,9 +178,9 @@ void equipment_controller_search(equipment_controller_t *controller, const char 
   else 
   {
     controller->pagination.current_page = 0;
-    controller->pagination.total_items = 0;
+    controller->pagination.total_items = 1;
 
-    equipment_view_update_table(controller->view, NULL, 0);
+    equipment_view_update_table(controller->view, &node->data, 1);
   }
 }
 
@@ -222,7 +225,7 @@ bool equipment_controller_can_remove(equipment_controller_t *controller)
   else return true;
 }
 
-equipment_validation_t equipment_controller_validate(equipment_controller_t *controller, equipment_t equipment)
+equipment_validation_t equipment_controller_validate_add(equipment_controller_t *controller, equipment_t equipment)
 {
   hashmap_t *ip_index = &controller->data->ip_index;
   hashmap_t *mac_index = &controller->data->mac_index;
@@ -233,15 +236,51 @@ equipment_validation_t equipment_controller_validate(equipment_controller_t *con
 
   if (strlen(equipment.model) <= 1) return EQUIPMENT_INVALID_MODEL;
 
-  if (!validate_ip_address(equipment.ip_address) || 
-    equipment_exists_by_ip(ip_index, equipment.ip_address)) return EQUIPMENT_INVALID_IP;
+  if (!validate_ip_address(equipment.ip_address)) return EQUIPMENT_INVALID_IP;
 
-  if (!validate_mac_address(equipment.mac_address) || 
-    equipment_exists_by_mac(mac_index, equipment.mac_address)) return EQUIPMENT_INVALID_MAC;
+  if (equipment_exists_by_ip(ip_index, equipment.ip_address)) return EQUIPMENT_DUPLICATE_IP;
+
+  if (!validate_mac_address(equipment.mac_address)) return EQUIPMENT_INVALID_MAC;
+
+  if (equipment_exists_by_mac(mac_index, equipment.mac_address)) return EQUIPMENT_DUPLICATE_MAC;
 
   if (strlen(equipment.location) <= 1) return EQUIPMENT_INVALID_LOCATION;
 
-  return EQUIPMENT_VALID;
+  else return EQUIPMENT_VALID;
+}
+
+equipment_validation_t equipment_controller_validate_edit(equipment_controller_t *controller, equipment_t equipment)
+{
+  hashmap_t *ip_index = &controller->data->ip_index;
+  hashmap_t *mac_index = &controller->data->mac_index;
+
+  equipment_node_t *node = controller->selected_node;
+
+  if (strlen(equipment.name) <= 1) return EQUIPMENT_INVALID_NAME;
+  
+  if (strlen(equipment.vendor) <= 1) return EQUIPMENT_INVALID_VENDOR;
+
+  if (strlen(equipment.model) <= 1) return EQUIPMENT_INVALID_MODEL;
+
+  if (!validate_ip_address(equipment.ip_address)) return EQUIPMENT_INVALID_IP;
+
+  if (strcmp(node->data.ip_address, equipment.ip_address) != 0)
+  {
+    if (equipment_exists_by_ip(ip_index, equipment.ip_address)) 
+      return EQUIPMENT_DUPLICATE_IP;
+  }
+
+  if (!validate_mac_address(equipment.mac_address)) return EQUIPMENT_INVALID_MAC;
+
+  if (strcmp(node->data.mac_address, equipment.mac_address) != 0)
+  {
+    if (equipment_exists_by_mac(mac_index, equipment.mac_address)) 
+      return EQUIPMENT_DUPLICATE_MAC;
+  }
+
+  if (strlen(equipment.location) <= 1) return EQUIPMENT_INVALID_LOCATION;
+
+  else return EQUIPMENT_VALID;
 }
 
 void equipment_controller_get_stats(equipment_controller_t *controller, equipment_stats_t *stats)

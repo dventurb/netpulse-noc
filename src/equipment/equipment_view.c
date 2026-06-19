@@ -690,7 +690,7 @@ static void on_add_form_submit(GtkButton *button, gpointer data)
   gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_mac), "form-entry-error");
   gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_location), "form-entry-error");
 
-  equipment_validation_t error = equipment_controller_validate(view->controller, new);
+  equipment_validation_t error = equipment_controller_validate_add(view->controller, new);
 
   switch (error) 
   {
@@ -707,10 +707,12 @@ static void on_add_form_submit(GtkButton *button, gpointer data)
       return;
 
     case EQUIPMENT_INVALID_IP:
+    case EQUIPMENT_DUPLICATE_IP:
       gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_ip), "form-entry-error");
       return;
 
     case EQUIPMENT_INVALID_MAC:
+    case EQUIPMENT_DUPLICATE_MAC:
       gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_mac), "form-entry-error");
       return;
 
@@ -758,7 +760,7 @@ static void on_edit_form_submit(GtkButton *button, gpointer data)
   gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_mac), "form-entry-error");
   gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_location), "form-entry-error");
 
-  equipment_validation_t error = equipment_controller_validate(view->controller, equipment);
+  equipment_validation_t error = equipment_controller_validate_edit(view->controller, equipment);
 
   switch (error) 
   {
@@ -775,10 +777,12 @@ static void on_edit_form_submit(GtkButton *button, gpointer data)
       return;
 
     case EQUIPMENT_INVALID_IP:
+    case EQUIPMENT_DUPLICATE_IP:
       gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_ip), "form-entry-error");
       return;
 
     case EQUIPMENT_INVALID_MAC:
+    case EQUIPMENT_DUPLICATE_MAC:
       gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_mac), "form-entry-error");
       return;
 
