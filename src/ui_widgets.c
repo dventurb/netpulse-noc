@@ -98,93 +98,101 @@ GtkWidget *create_stats_card(const char *title, int value, const char *css)
   return box;
 }
 
-GtkWidget *create_text_field(GtkWidget *grid, const char *text, const char *placeholder, int row, int column)
+input_field_t create_input_field(const char *text, const char *placeholder, const char *icon_file)
 {
-  GtkWidget *box, *label, *entry;
+  input_field_t field;
 
-  box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+  field.container = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 8));
 
   if (text != NULL)
   {
-    label = gtk_label_new(text);
+    GtkWidget *label = gtk_label_new(text);
     gtk_widget_set_halign(label, GTK_ALIGN_START);
-    gtk_widget_add_css_class(label, "form-label");
-    gtk_box_append(GTK_BOX(box), label);
+    gtk_widget_add_css_class(label, "input-field-label");
+    gtk_box_append(field.container, label);
   }
 
-  entry = gtk_entry_new();
-  gtk_widget_set_hexpand(entry, TRUE);
-  gtk_widget_add_css_class(entry, "form-entry");
-  gtk_box_append(GTK_BOX(box), entry);
+  GtkWidget *input_container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+  gtk_widget_add_css_class(input_container, "input-field-container");
+  gtk_widget_set_size_request(input_container, 336, 40);
+  gtk_box_append(field.container, input_container);
 
-  if (placeholder != NULL) gtk_entry_set_placeholder_text(GTK_ENTRY(entry), placeholder);
+  if (icon_file != NULL)
+  {
+    GtkWidget *icon = gtk_image_new_from_file(icon_file);
+    gtk_box_append(GTK_BOX(input_container), icon);
+  }
 
-  gtk_grid_attach(GTK_GRID(grid), box, column, row, 1, 1);
+  field.entry = GTK_ENTRY(gtk_entry_new());
+  gtk_widget_set_hexpand(GTK_WIDGET(field.entry), TRUE);
+  gtk_widget_add_css_class(GTK_WIDGET(field.entry), "input-field-entry");
 
-  return entry;
+  if (placeholder != NULL)
+    gtk_entry_set_placeholder_text(field.entry, placeholder);
+
+  gtk_box_append(GTK_BOX(input_container), GTK_WIDGET(field.entry));
+
+  return field;
 }
 
-GtkWidget *create_unit_field(const char *text, const char *placeholder, const char *unit)
+unit_field_t create_unit_field(const char *text, const char *placeholder, const char *unit)
 {
-  GtkWidget *box, *container, *label, *entry, *unit_label;
+  unit_field_t field;
 
-  box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+  field.container = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 8));
 
   if (text != NULL)
   {
-    label = gtk_label_new(text);
+    GtkWidget *label = gtk_label_new(text);
     gtk_widget_set_halign(label, GTK_ALIGN_START);
-    gtk_widget_add_css_class(label, "field-unit-label");
-    gtk_box_append(GTK_BOX(box), label);
+    gtk_widget_add_css_class(label, "unit-field-label");
+    gtk_box_append(field.container, label);
   }
 
-  container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  gtk_widget_add_css_class(container, "field-unit-container");
-  gtk_box_append(GTK_BOX(box), container);
+  GtkWidget *input_container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+  gtk_widget_add_css_class(input_container, "unit-field-container");
+  gtk_widget_set_size_request(input_container, 336, 40);
+  gtk_box_append(field.container, input_container);
 
-  entry = gtk_entry_new();
-  gtk_widget_set_hexpand(entry, TRUE);
-  gtk_widget_add_css_class(entry, "field-unit-entry");
-  gtk_entry_set_max_length(GTK_ENTRY(entry), STRING_MAX - 1);
-  g_object_set_data(G_OBJECT(box), "entry", entry);
-  gtk_box_append(GTK_BOX(container), entry);
+  field.entry = GTK_ENTRY(gtk_entry_new());
+  gtk_widget_set_hexpand(GTK_WIDGET(field.entry), TRUE);
+  gtk_widget_add_css_class(GTK_WIDGET(field.entry), "unit-field-entry");
+  gtk_box_append(GTK_BOX(input_container), GTK_WIDGET(field.entry));
 
-  if (placeholder != NULL) gtk_entry_set_placeholder_text(GTK_ENTRY(entry), placeholder);
+  if (placeholder != NULL) 
+    gtk_entry_set_placeholder_text(field.entry, placeholder);
 
   if (unit != NULL)
   {
-    unit_label = gtk_label_new(unit);
-    gtk_widget_add_css_class(unit_label, "field-unit");
-    gtk_box_append(GTK_BOX(container), unit_label);
+    field.unit_label = GTK_LABEL(gtk_label_new(unit));
+    gtk_widget_add_css_class(GTK_WIDGET(field.unit_label), "unit-field-unit");
+    gtk_box_append(GTK_BOX(input_container), GTK_WIDGET(field.unit_label));
   }
 
-  return box;
+  return field;
 }
 
-GtkWidget *create_dropdown_field(GtkWidget *grid, const char *text, const char* const* strings, int row, int column)
+dropdown_field_t create_dropdown_field(const char *text, const char* const* strings)
 {
-  GtkWidget *box, *label, *dropdown;
+  dropdown_field_t field;
 
-  box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+  field.container = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 8));
 
   if (text != NULL)
   {
-    label = gtk_label_new(text);
+    GtkWidget *label = gtk_label_new(text);
     gtk_widget_set_halign(label, GTK_ALIGN_START);
-    gtk_widget_add_css_class(label, "form-label");
-    gtk_box_append(GTK_BOX(box), label);
-  }
-  
-  if (strings != NULL) {
-    dropdown = gtk_drop_down_new_from_strings(strings);
-    gtk_widget_set_hexpand(dropdown, TRUE);
-    gtk_widget_add_css_class(dropdown, "form-dropdown");
-    gtk_box_append(GTK_BOX(box), dropdown);
+    gtk_widget_add_css_class(label, "input-field-label");
+    gtk_box_append(field.container, label);
   }
 
-  gtk_grid_attach(GTK_GRID(grid), box, column, row, 1, 1);
+  field.dropdown = GTK_DROP_DOWN(gtk_drop_down_new_from_strings(strings));
+  gtk_widget_set_hexpand(GTK_WIDGET(field.dropdown), TRUE);
+  gtk_widget_add_css_class(GTK_WIDGET(field.dropdown), "dropdown-field");
+  gtk_widget_set_size_request(GTK_WIDGET(field.dropdown), 336, 40);
+  gtk_box_append(field.container, GTK_WIDGET(field.dropdown));
 
-  return dropdown;
+  return field;
 }
 
 GtkWidget *create_dialog_window(dialog_config_t dialog_config)

@@ -246,8 +246,8 @@ void configuration_controller_get_stats(configuration_controller_t *controller, 
   
   stats->total = configuration_get_count(&controller->selected_equipment->data.configs);
   
-  format_timestamp_to_datetime(controller->selected_equipment->data.configs.top->data.operated_at, stats->last_updated);
-
+  if (controller->selected_equipment->data.configs.count != 0)
+    format_timestamp_to_datetime(controller->selected_equipment->data.configs.top->data.operated_at, stats->last_updated);
 }
 
 gboolean on_configuration_finish(gpointer data)

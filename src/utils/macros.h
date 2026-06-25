@@ -26,6 +26,10 @@
 #define DATE_MAX 11   // "14-06-2026" + '\0'
 #define DATETIME_MAX 17 // "16-05-2026 00:25" + '\0'
 
+#define PING_COUNT_MAX 3 // "20" + '\0'
+#define PING_TIMEOUT_MAX 3  // "10" + '\0'
+#define PING_PACKET_SIZE_MAX 5 // "1472" + '\0'
+
 #define NAME_MIN 2
 #define USERNAME_MIN 3
 #define PASSWORD_MIN 8

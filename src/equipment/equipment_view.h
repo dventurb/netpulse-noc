@@ -3,6 +3,8 @@
 
 #include <gtk/gtk.h>
 
+#include "ui_widgets.h"
+
 #include "equipment.h"
 #include "equipment_controller.h"
 
@@ -17,16 +19,16 @@ typedef struct {
 
   GtkWidget   *layout;
 
-  GtkEntry *entry_id;
-  GtkEntry *entry_name;
-  GtkEntry *entry_vendor;
-  GtkEntry *entry_model;
-  GtkEntry *entry_ip;
-  GtkEntry *entry_mac;
-  GtkEntry *entry_location;
+  input_field_t  id_field;
+  input_field_t  name_field;
+  input_field_t  vendor_field;
+  input_field_t  model_field;
+  input_field_t  ip_field;
+  input_field_t  mac_field;
+  input_field_t  location_field;
 
-  GtkDropDown *dropdown_type;
-  GtkDropDown *dropdown_status;
+  dropdown_field_t  type_field;
+  dropdown_field_t  status_field;
 
   equipment_form_mode_t mode;
 } equipment_form_t;

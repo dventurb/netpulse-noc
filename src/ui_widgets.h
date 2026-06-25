@@ -24,15 +24,32 @@ typedef struct {
   dialog_action_t dialog_action;
 } dialog_config_t;
 
+typedef struct {
+  GtkBox   *container;
+  GtkEntry *entry;
+} input_field_t;
+
+typedef struct {
+  GtkBox   *container;
+  GtkEntry *entry;
+  GtkLabel *unit_label;
+} unit_field_t;
+
+typedef struct {
+  GtkBox      *container;
+  GtkDropDown *dropdown;
+} dropdown_field_t;
+
+
 GtkWidget *create_primary_button(const char *text, const char *icon, const char *css);
 GtkWidget *create_secondary_button(const char *text, const char *icon, const char *css);
 GtkWidget *create_pagination_button(pagination_t pagination, char *text, int page_number);
 
 GtkWidget *create_stats_card(const char *title, int value, const char *css);
 
-GtkWidget *create_text_field(GtkWidget *grid, const char *text, const char *placeholder, int row, int column);
-GtkWidget *create_unit_field(const char *text, const char *placeholder, const char *unit);
-GtkWidget *create_dropdown_field(GtkWidget *grid, const char *text, const char* const *strings, int row, int column);
+input_field_t create_input_field(const char *text, const char *placeholder, const char *icon_file);
+unit_field_t create_unit_field(const char *text, const char *placeholder, const char *unit);
+dropdown_field_t create_dropdown_field(const char *text, const char* const *strings);
 
 GtkWidget *create_dialog_window(dialog_config_t dialog_config);
 GtkWidget *create_dialog_header(GtkWidget *dialog, const char *title);

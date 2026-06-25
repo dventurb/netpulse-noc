@@ -256,8 +256,9 @@ static GtkBox *ping_view_create(ping_view_t *view, connectivity_controller_t *co
 
   gtk_stack_set_visible_child_name(view->stack, "REGISTERED");
  
-  view->manual_ip = create_unit_field("TARGET (IP ADDRESS)", "192.168.1.1", NULL);
-  gtk_stack_add_named(view->stack, view->manual_ip, "MANUAL");
+  view->manual_ip_field = create_input_field("TARGET (IP ADDRESS)", "192.168.1.1", NULL);
+  gtk_widget_add_css_class(GTK_WIDGET(view->manual_ip_field.container), "target-field-label");
+  gtk_stack_add_named(view->stack, GTK_WIDGET(view->manual_ip_field.container), "MANUAL");
 
   gtk_grid_attach(GTK_GRID(form_fields_grid), GTK_WIDGET(view->stack), 0, 1, 2, 1);
 
@@ -442,9 +443,11 @@ static GtkWidget *build_search(ping_view_t *view)
 
   GtkWidget *label_equipment = gtk_label_new("TARGET (ID / IP / MAC)");
   gtk_widget_set_halign(label_equipment, GTK_ALIGN_START);
-  gtk_widget_add_css_class(label_equipment, "field-unit-label");
+  gtk_widget_add_css_class(label_equipment, "unit-field-label");
 
   GtkWidget *equipment_search = gtk_search_entry_new();
+  gtk_search_entry_set_placeholder_text(GTK_SEARCH_ENTRY(equipment_search), "Search equipments...");
+  gtk_widget_set_size_request(equipment_search, 336, 40);
   gtk_widget_add_css_class(equipment_search, "search-target");
   g_signal_connect(equipment_search, "search-changed", G_CALLBACK(on_search_equipment_activated), view);
 
@@ -461,13 +464,18 @@ static GtkWidget *build_search(ping_view_t *view)
 
 static void build_parameters_section(GtkWidget *grid, ping_view_t *view)
 {
-  view->count = create_unit_field("COUNT", "5", "pkts");
-  view->timeout = create_unit_field("TIMEOUT", "2", "sec");
-  view->packet_size = create_unit_field("PACKET SIZE", "56 bytes (Standard)", NULL);
+  view->count_field = create_unit_field("COUNT", "5", "pkts");
+  gtk_entry_set_max_length(view->count_field.entry, PING_COUNT_MAX - 1);
 
-  gtk_grid_attach(GTK_GRID(grid), view->count, 0, 2, 1, 1);
-  gtk_grid_attach(GTK_GRID(grid), view->timeout, 1, 2, 1, 1);
-  gtk_grid_attach(GTK_GRID(grid), view->packet_size, 0, 3, 2, 1);
+  view->timeout_field = create_unit_field("TIMEOUT", "2", "sec");
+  gtk_entry_set_max_length(view->timeout_field.entry, PING_TIMEOUT_MAX - 1);
+
+  view->packet_size_field = create_unit_field("PACKET SIZE", "56 bytes (Standard)", NULL);
+  gtk_entry_set_max_length(view->packet_size_field.entry, PING_PACKET_SIZE_MAX - 1);
+
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->count_field.container), 0, 2, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->timeout_field.container), 1, 2, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->packet_size_field.container), 0, 3, 2, 1);
 }
 
 static void build_actions(GtkWidget *grid, ping_view_t *view)
@@ -699,33 +707,33 @@ static void on_run_ping_clicked(GtkButton *button, gpointer data)
   
   ping_view_set_actions_enabled(view, false);
 
-  GtkWidget *ip_entry = g_object_get_data(G_OBJECT(view->manual_ip), "entry");
-  GtkWidget *count_entry = g_object_get_data(G_OBJECT(view->count), "entry");
-  GtkWidget *timeout_entry = g_object_get_data(G_OBJECT(view->timeout), "entry");
-  GtkWidget *packet_size_entry = g_object_get_data(G_OBJECT(view->packet_size), "entry");
-
-  const char *ip_text = gtk_editable_get_text(GTK_EDITABLE(ip_entry));
-  const char *count = gtk_editable_get_text(GTK_EDITABLE(count_entry));
-  const char *timeout = gtk_editable_get_text(GTK_EDITABLE(timeout_entry));
-  const char *packet_size = gtk_editable_get_text(GTK_EDITABLE(packet_size_entry));
+  const char *ip_text = gtk_editable_get_text(GTK_EDITABLE(view->manual_ip_field.entry));
+  const char *count = gtk_editable_get_text(GTK_EDITABLE(view->count_field.entry));
+  const char *timeout = gtk_editable_get_text(GTK_EDITABLE(view->timeout_field.entry));
+  const char *packet_size = gtk_editable_get_text(GTK_EDITABLE(view->packet_size_field.entry));
 
   connectivity_controller_set_ip_from_source(view->controller, ip_text);
+
+  gtk_widget_remove_css_class(GTK_WIDGET(view->manual_ip_field.container), "field-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->count_field.container), "field-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->timeout_field.container), "field-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->packet_size_field.container), "field-error");
  
   ping_validation_t error = connectivity_controller_validate_ping(view->controller->ip, count, timeout, packet_size);
 
   switch (error) 
   {
     case PING_INVALID_IP_ADDRESS:
-      gtk_widget_add_css_class(view->manual_ip, "field-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->manual_ip_field.container), "field-error");
       break;
     case PING_INVALID_COUNT:
-      gtk_widget_add_css_class(view->count, "field-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->count_field.container), "field-error");
       break;
     case PING_INVALID_TIMEOUT:
-      gtk_widget_add_css_class(view->timeout, "field-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->timeout_field.container), "field-error");
       break;
     case PING_INVALID_PACKET_SIZE:
-      gtk_widget_add_css_class(view->packet_size, "field-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->packet_size_field.container), "field-error");
       break;
     case PING_OK:
       connectivity_controller_ping(view->controller, count, timeout, packet_size);

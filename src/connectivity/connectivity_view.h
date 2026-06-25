@@ -5,6 +5,8 @@
 
 #include <gtk/gtk.h>
 
+#include "ui_widgets.h"
+
 #include "connectivity.h"
 #include "connectivity_controller.h"
 
@@ -15,14 +17,14 @@ typedef struct ping_view_t {
   GtkStack       *stack;
   GtkListBox     *list;
   
-  GtkWidget      *count;
-  GtkWidget      *timeout;
-  GtkWidget      *packet_size;
+  unit_field_t   count_field;
+  unit_field_t   timeout_field;
+  unit_field_t   packet_size_field;
 
-  GtkWidget      *manual_ip;
+  input_field_t   manual_ip_field;
 
-  GtkCheckButton *registered_button;
-  GtkCheckButton *manual_button;
+  GtkCheckButton  *registered_button;
+  GtkCheckButton  *manual_button;
 
   GtkButton      *run_button;
   GtkButton      *ping_all_button;

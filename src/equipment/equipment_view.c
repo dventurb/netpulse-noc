@@ -372,35 +372,45 @@ static GtkWidget *build_form(equipment_view_t *view)
   gtk_grid_set_row_spacing(GTK_GRID(grid), 24);
   gtk_widget_add_css_class(grid, "dialog-form");
 
-  view->form.entry_id = GTK_ENTRY(create_text_field(grid, "Equipment ID", NULL, 0, 0));
-  gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_id), "form-entry-disabled");
-  gtk_editable_set_editable(GTK_EDITABLE(view->form.entry_id), FALSE);
-
   char id[ID_MAX];
   equipment_format_id(view->controller->data->equipments.next_id, id);
-  gtk_editable_set_text(GTK_EDITABLE(view->form.entry_id), id);
+  //gtk_editable_set_text(GTK_EDITABLE(view->form.id_field.entry), id);
 
-  view->form.entry_name = GTK_ENTRY(create_text_field(grid, "Equipment Name", "Core-Switch-01", 0, 1));
-  gtk_entry_set_max_length(view->form.entry_name, STRING_MAX - 1);
+  view->form.id_field = create_input_field("Equipment ID", id, NULL);
+  gtk_widget_add_css_class(GTK_WIDGET(view->form.id_field.container), "field-entry-disabled");
+  gtk_editable_set_editable(GTK_EDITABLE(view->form.id_field.entry), FALSE);
 
-  view->form.dropdown_type = GTK_DROP_DOWN(create_dropdown_field(grid, "Type", equipment_types, 1, 0));
+  view->form.name_field = create_input_field("Equipment Name", "Core-Switch-01", NULL);
+  gtk_entry_set_max_length(view->form.name_field.entry, STRING_MAX - 1);
 
-  view->form.entry_vendor = GTK_ENTRY(create_text_field(grid, "Vendor", "Cisco", 1, 1));
-  gtk_entry_set_max_length(view->form.entry_vendor, STRING_MAX - 1);
+  view->form.type_field = create_dropdown_field("Type", equipment_types);
 
-  view->form.entry_model = GTK_ENTRY(create_text_field(grid, "Model", "Catalyst 9300", 2, 0));
-  gtk_entry_set_max_length(view->form.entry_model, STRING_MAX - 1);
+  view->form.vendor_field = create_input_field("Vendor", "Cisco", NULL);
+  gtk_entry_set_max_length(view->form.vendor_field.entry, STRING_MAX - 1);
 
-  view->form.entry_ip = GTK_ENTRY(create_text_field(grid, "IP Address", "192.168.1.1", 2, 1));
-  gtk_entry_set_max_length(view->form.entry_ip, IP_MAX - 1);
+  view->form.model_field = create_input_field("Model", "Catalyst 9300", NULL);
+  gtk_entry_set_max_length(view->form.model_field.entry, STRING_MAX - 1);
 
-  view->form.entry_mac = GTK_ENTRY(create_text_field(grid, "MAC Address", "00:1A:2B:3C:4D:5E", 3, 0));
-  gtk_entry_set_max_length(view->form.entry_mac, MAC_MAX - 1);
+  view->form.ip_field = create_input_field("IP Address", "192.168.1.1", NULL);
+  gtk_entry_set_max_length(view->form.ip_field.entry, IP_MAX - 1);
 
-  view->form.entry_location = GTK_ENTRY(create_text_field(grid, "Location", "Data Center Rack A4", 3, 1));
-  gtk_entry_set_max_length(view->form.entry_location, STRING_MAX - 1);
+  view->form.mac_field = create_input_field("MAC Address", "00:1A:2B:3C:4D:5E", NULL);
+  gtk_entry_set_max_length(view->form.mac_field.entry, MAC_MAX - 1);
 
-  view->form.dropdown_status = GTK_DROP_DOWN(create_dropdown_field(grid, "Status", equipment_status, 4, 0));
+  view->form.location_field = create_input_field("Location", "Data Center Rack A4", NULL);
+  gtk_entry_set_max_length(view->form.location_field.entry, STRING_MAX - 1);
+
+  view->form.status_field = create_dropdown_field("Status", equipment_status);
+
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.id_field.container), 0, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.name_field.container), 1, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.type_field.container), 0, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.vendor_field.container), 1, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.model_field.container), 0, 2, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.ip_field.container), 1, 2, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.mac_field.container), 0, 3, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.location_field.container), 1, 3, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.status_field.container), 0, 4, 1, 1);
 
   return grid;
 }
@@ -463,15 +473,15 @@ static void update_form_field(equipment_form_t *form, equipment_t equipment)
   char id[ID_MAX];
   equipment_format_id(equipment.id, id);
 
-  gtk_editable_set_text(GTK_EDITABLE(form->entry_id), id);
-  gtk_editable_set_text(GTK_EDITABLE(form->entry_name), equipment.name);
-  gtk_editable_set_text(GTK_EDITABLE(form->entry_vendor), equipment.vendor);
-  gtk_editable_set_text(GTK_EDITABLE(form->entry_model), equipment.model);
-  gtk_editable_set_text(GTK_EDITABLE(form->entry_ip), equipment.ip_address);
-  gtk_editable_set_text(GTK_EDITABLE(form->entry_mac), equipment.mac_address);
-  gtk_editable_set_text(GTK_EDITABLE(form->entry_location), equipment.location);
-  gtk_drop_down_set_selected(form->dropdown_type, equipment.type);
-  gtk_drop_down_set_selected(form->dropdown_status, equipment.status);
+  gtk_editable_set_text(GTK_EDITABLE(form->id_field.entry), id);
+  gtk_editable_set_text(GTK_EDITABLE(form->name_field.entry), equipment.name);
+  gtk_editable_set_text(GTK_EDITABLE(form->vendor_field.entry), equipment.vendor);
+  gtk_editable_set_text(GTK_EDITABLE(form->model_field.entry), equipment.model);
+  gtk_editable_set_text(GTK_EDITABLE(form->ip_field.entry), equipment.ip_address);
+  gtk_editable_set_text(GTK_EDITABLE(form->mac_field.entry), equipment.mac_address);
+  gtk_editable_set_text(GTK_EDITABLE(form->location_field.entry), equipment.location);
+  gtk_drop_down_set_selected(form->type_field.dropdown, equipment.type);
+  gtk_drop_down_set_selected(form->status_field.dropdown, equipment.status);
 }
 
 static GtkWidget *build_remove_dialog(equipment_t equipment)
@@ -667,12 +677,12 @@ static void on_add_form_submit(GtkButton *button, gpointer data)
   
   equipment_view_t *view = (equipment_view_t *) data;
 
-  const char *name_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_name));
-  const char *vendor_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_vendor));
-  const char *model_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_model));
-  const char *ip_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_ip));
-  const char *mac_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_mac));
-  const char *location_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_location));
+  const char *name_text = gtk_editable_get_text(GTK_EDITABLE(view->form.name_field.entry));
+  const char *vendor_text = gtk_editable_get_text(GTK_EDITABLE(view->form.vendor_field.entry));
+  const char *model_text = gtk_editable_get_text(GTK_EDITABLE(view->form.model_field.entry));
+  const char *ip_text = gtk_editable_get_text(GTK_EDITABLE(view->form.ip_field.entry));
+  const char *mac_text = gtk_editable_get_text(GTK_EDITABLE(view->form.mac_field.entry));
+  const char *location_text = gtk_editable_get_text(GTK_EDITABLE(view->form.location_field.entry));
   
   equipment_t new = {0};
 
@@ -683,48 +693,48 @@ static void on_add_form_submit(GtkButton *button, gpointer data)
   snprintf(new.mac_address, MAC_MAX, "%s", mac_text);
   snprintf(new.location, STRING_MAX, "%s", location_text);
 
-  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_name), "form-entry-error");
-  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_vendor), "form-entry-error");
-  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_model), "form-entry-error");
-  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_ip), "form-entry-error");
-  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_mac), "form-entry-error");
-  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_location), "form-entry-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.name_field.container), "field-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.vendor_field.container), "field-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.model_field.container), "field-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.ip_field.container), "field-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.mac_field.container), "field-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.location_field.container), "field-error");
 
   equipment_validation_t error = equipment_controller_validate_add(view->controller, new);
 
   switch (error) 
   {
     case EQUIPMENT_INVALID_NAME:
-      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_name), "form-entry-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.name_field.container), "field-error");
       return;
 
     case EQUIPMENT_INVALID_VENDOR:
-      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_vendor), "form-entry-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.vendor_field.container), "field-error");
       return;
 
     case EQUIPMENT_INVALID_MODEL:
-      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_model), "form-entry-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.model_field.container), "field-error");
       return;
 
     case EQUIPMENT_INVALID_IP:
     case EQUIPMENT_DUPLICATE_IP:
-      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_ip), "form-entry-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.ip_field.container), "field-error");
       return;
 
     case EQUIPMENT_INVALID_MAC:
     case EQUIPMENT_DUPLICATE_MAC:
-      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_mac), "form-entry-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.mac_field.container), "field-error");
       return;
 
     case EQUIPMENT_INVALID_LOCATION:
-      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_location), "form-entry-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.location_field.container), "field-error");
       return;
 
     case EQUIPMENT_VALID: break;
   }
 
-  new.type = gtk_drop_down_get_selected(view->form.dropdown_type);
-  new.status = gtk_drop_down_get_selected(view->form.dropdown_status);
+  new.type = gtk_drop_down_get_selected(view->form.type_field.dropdown);
+  new.status = gtk_drop_down_get_selected(view->form.status_field.dropdown);
 
   equipment_controller_add(view->controller, new);
 
@@ -737,12 +747,12 @@ static void on_edit_form_submit(GtkButton *button, gpointer data)
   
   equipment_view_t *view = (equipment_view_t *) data;
 
-  const char *name_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_name));
-  const char *vendor_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_vendor));
-  const char *model_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_model));
-  const char *ip_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_ip));
-  const char *mac_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_mac));
-  const char *location_text = gtk_editable_get_text(GTK_EDITABLE(view->form.entry_location));
+  const char *name_text = gtk_editable_get_text(GTK_EDITABLE(view->form.name_field.entry));
+  const char *vendor_text = gtk_editable_get_text(GTK_EDITABLE(view->form.vendor_field.entry));
+  const char *model_text = gtk_editable_get_text(GTK_EDITABLE(view->form.model_field.entry));
+  const char *ip_text = gtk_editable_get_text(GTK_EDITABLE(view->form.ip_field.entry));
+  const char *mac_text = gtk_editable_get_text(GTK_EDITABLE(view->form.mac_field.entry));
+  const char *location_text = gtk_editable_get_text(GTK_EDITABLE(view->form.location_field.entry));
   
   equipment_t equipment = {0};
 
@@ -753,49 +763,48 @@ static void on_edit_form_submit(GtkButton *button, gpointer data)
   snprintf(equipment.mac_address, MAC_MAX, "%s", mac_text);
   snprintf(equipment.location, STRING_MAX, "%s", location_text);
 
-  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_name), "form-entry-error");
-  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_vendor), "form-entry-error");
-  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_model), "form-entry-error");
-  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_ip), "form-entry-error");
-  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_mac), "form-entry-error");
-  gtk_widget_remove_css_class(GTK_WIDGET(view->form.entry_location), "form-entry-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.name_field.container), "field-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.vendor_field.container), "field-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.model_field.container), "field-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.ip_field.container), "field-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.mac_field.container), "field-error");
+  gtk_widget_remove_css_class(GTK_WIDGET(view->form.location_field.container), "field-error");
 
   equipment_validation_t error = equipment_controller_validate_edit(view->controller, equipment);
 
   switch (error) 
   {
     case EQUIPMENT_INVALID_NAME:
-      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_name), "form-entry-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.name_field.container), "field-error");
       return;
 
     case EQUIPMENT_INVALID_VENDOR:
-      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_vendor), "form-entry-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.vendor_field.container), "field-error");
       return;
 
     case EQUIPMENT_INVALID_MODEL:
-      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_model), "form-entry-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.model_field.container), "field-error");
       return;
 
     case EQUIPMENT_INVALID_IP:
     case EQUIPMENT_DUPLICATE_IP:
-      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_ip), "form-entry-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.ip_field.container), "field-error");
       return;
 
     case EQUIPMENT_INVALID_MAC:
     case EQUIPMENT_DUPLICATE_MAC:
-      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_mac), "form-entry-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.mac_field.container), "field-error");
       return;
 
     case EQUIPMENT_INVALID_LOCATION:
-      gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_location), "form-entry-error");
+      gtk_widget_add_css_class(GTK_WIDGET(view->form.location_field.container), "field-error");
       return;
 
     case EQUIPMENT_VALID: break;
   }
 
-  equipment.type = gtk_drop_down_get_selected(view->form.dropdown_type);
-
-  equipment.status = gtk_drop_down_get_selected(view->form.dropdown_status);
+  equipment.type = gtk_drop_down_get_selected(view->form.type_field.dropdown);
+  equipment.status = gtk_drop_down_get_selected(view->form.status_field.dropdown);
 
   equipment_controller_edit(view->controller, equipment);
 

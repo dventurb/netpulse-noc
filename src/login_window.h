@@ -2,6 +2,7 @@
 #define LOGIN_WINDOW_H
 
 #include <gtk/gtk.h>
+#include <ui_widgets.h>
 
 // forward declaration to resolve circular dependencies
 typedef struct app_t app_t;
@@ -12,12 +13,12 @@ typedef struct login_window_t {
   GtkWindow             *window;
   GtkStack              *stack;
 
-  GtkEntry *login_username;
-  GtkEntry *login_password;
+  input_field_t   login_username;
+  input_field_t   login_password;
 
-  GtkEntry *register_name;
-  GtkEntry *register_username;
-  GtkEntry *register_password;
+  input_field_t   register_name;
+  input_field_t   register_username;
+  input_field_t   register_password;
 } login_window_t;
 
 login_window_t *login_window_create(GtkApplication *gtk_app, app_t *app);

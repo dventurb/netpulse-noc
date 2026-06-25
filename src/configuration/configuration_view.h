@@ -3,18 +3,19 @@
 
 #include <gtk/gtk.h>
 
+#include "ui_widgets.h"
+
 #include "configuration.h"
 #include "configuration_controller.h"
 
-#include "ui_widgets.h"
 
 typedef struct {
   GtkWindow  *dialog;
 
   GtkWidget  *layout;
 
-  GtkEntry   *entry_equipment;
-  GtkEntry   *entry_command;
+  input_field_t   equipment_field;
+  input_field_t   command_field;
 } configuration_form_t;
 
 typedef struct configuration_view_t {

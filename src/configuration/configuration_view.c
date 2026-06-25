@@ -452,12 +452,15 @@ static GtkWidget *build_add_config_form(configuration_view_t *view)
 
   equipment_t *equipment = configuration_controller_get_selected_equipment(view->controller);
 
-  view->form.entry_equipment = GTK_ENTRY(create_text_field(grid, "EQUIPMENT", equipment->name, 0, 0));
-  gtk_widget_add_css_class(GTK_WIDGET(view->form.entry_equipment), "form-entry-disabled");
-  gtk_editable_set_editable(GTK_EDITABLE(view->form.entry_equipment), FALSE);
+  view->form.equipment_field = create_input_field("EQUIPMENT", equipment->name, NULL);
+  gtk_widget_add_css_class(GTK_WIDGET(view->form.equipment_field.container), "field-entry-disabled");
+  gtk_editable_set_editable(GTK_EDITABLE(view->form.equipment_field.entry), FALSE);
 
-  view->form.entry_command = GTK_ENTRY(create_text_field(grid, "CONFIGURATION COMMAND", "e.g. interface gigabitethernet 0/1",  1, 0));
-  gtk_entry_set_max_length(view->form.entry_command, COMMAND_MAX - 1);
+  view->form.command_field = create_input_field("CONFIGURATION COMMAND", "e.g. interface gigabitethernet 0/1", NULL);
+  gtk_entry_set_max_length(view->form.command_field.entry, COMMAND_MAX - 1);
+
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.equipment_field.container), 0, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.command_field.container), 0, 1, 1, 1);
 
   return grid;
 }
@@ -723,13 +726,12 @@ static void on_add_config_form_submit(GtkButton *button, gpointer data)
   configuration_t new = {0};
   snprintf(new.technician_name, STRING_MAX, "%s", view->controller->data->current_user->name);
 
-  GtkEntry *entry = view->form.entry_command;
-  const char *text = gtk_editable_get_text(GTK_EDITABLE(entry));
+  const char *text = gtk_editable_get_text(GTK_EDITABLE(view->form.command_field.entry));
   snprintf(new.command, COMMAND_MAX, "%s", text);
 
   if (!configuration_controller_validate(new))
   {
-    gtk_widget_add_css_class(GTK_WIDGET(entry), "form-entry-error");
+    gtk_widget_add_css_class(GTK_WIDGET(view->form.command_field.container), "field-error");
     return;
   }
 

@@ -3,24 +3,25 @@
 
 #include <gtk/gtk.h>
 
+#include "ui_widgets.h"
+
 #include "incident.h"
 #include "incident_controller.h"
 
-#include "ui_widgets.h"
 
 typedef struct {
   GtkWindow  *dialog;
 
   GtkWidget  *layout;
   
-  GtkEntry *entry_number;
-  GtkEntry *entry_technician;
-  GtkEntry *entry_source_id;
-  GtkEntry *entry_type;
-  GtkEntry *entry_description;
+  input_field_t  number_field;
+  input_field_t  technician_field;
+  input_field_t  source_id_field;
+  input_field_t  type_field;
+  input_field_t  description_field;
 
-  GtkDropDown *dropdown_source;
-  GtkDropDown *dropdown_priority;
+  dropdown_field_t  source_field;
+  dropdown_field_t  priority_field;
 
 } incident_form_t;
 
