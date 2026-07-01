@@ -42,6 +42,25 @@ typedef struct {
 } main_window_t;
 
 
+typedef void (*refresh_fn)(main_window_t *); // Function Pointer
+
+typedef enum {
+  PAGE_DASHBOARD,
+  PAGE_EQUIPMENT,
+  PAGE_CONNECTIVITY,
+  PAGE_SENSOR,
+  PAGE_INCIDENT,
+  PAGE_CONFIGURATION,
+} page_number_t;
+
+typedef struct {
+  page_number_t number;
+  const char *text;
+  const char *stack_name;
+  refresh_fn refresh;
+} page_config_t;
+
+
 main_window_t *main_window_create(GtkApplication *gtk_app, app_t *app);
 
 #endif

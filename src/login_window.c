@@ -1,7 +1,9 @@
 #include "login_window.h"
 
-#include "auth.h"
 #include "app.h"
+#include "auth.h"
+#include "style.h"
+
 #include "action_button.h"
 #include "input_field.h"
 
@@ -64,11 +66,7 @@ static void login_window_init(login_window_t *login_window, app_t *app)
   gtk_box_append(GTK_BOX(box), header);
   gtk_box_append(GTK_BOX(box), GTK_WIDGET(login_window->stack));
 
-  GtkCssProvider *provider = gtk_css_provider_new();
-  gtk_css_provider_load_from_path(provider, "styles/style.css");
-  gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(provider), 800);
-
-  g_object_unref(provider);
+  load_styles();
 }
 
 static GtkWidget *build_header(void)
