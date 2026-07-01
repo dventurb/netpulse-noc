@@ -36,3 +36,11 @@ input_field_t input_field_new(const char *text, const char *placeholder, const c
 
   return field;
 }
+
+void input_field_set_error(input_field_t *field, bool error)
+{
+  if (error)
+    gtk_widget_add_css_class(GTK_WIDGET(field->container), "field-error");
+  else 
+    gtk_widget_remove_css_class(GTK_WIDGET(field->container), "field-error");
+}

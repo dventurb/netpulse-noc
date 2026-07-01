@@ -64,8 +64,6 @@ static void main_window_init(main_window_t *main_win, app_t *app)
   build_layout(main_win);
   setup_pages(main_win);
   load_styles();
-
-  gtk_stack_set_visible_child_name(main_win->stack, "EQUIPMENT");
 }
 
 static void build_window(main_window_t *main_win)
@@ -98,6 +96,8 @@ static void setup_pages(main_window_t *main_win)
   add_connectivity_page(main_win);
   add_sensor_page(main_win);
   add_configuration_page(main_win);
+
+  gtk_stack_set_visible_child_name(main_win->stack, "EQUIPMENT");
 }
 
 static GtkWidget *build_header(main_window_t *main_win)
