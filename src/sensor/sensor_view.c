@@ -1,9 +1,16 @@
 #include "sensor_view.h"
 
 #include "utils.h"
-#include "ui_widgets.h"
 #include "macros.h"
 #include "pagination.h"
+
+#include "action_button.h"
+#include "pagination_bar.h"
+#include "stats_card.h"
+#include "table_header.h"
+#include "table_cell.h"
+#include "status_badge.h"
+#include "widget_utils.h"
 
 static const char* const filter_status[] = { "All", "OK", "Warning", "Critical", "Network Failure", NULL };
 static const char* const headers[] = { "CODE", "TYPE", "VALUE", "STATUS", "READ AT" };
@@ -66,16 +73,16 @@ void sensor_view_update(sensor_view_t *view)
 
 void sensor_view_update_stats_cards(sensor_view_t *view)
 {
-  remove_all_children_from_widget(GTK_WIDGET(view->cards));
+  widget_remove_children(GTK_WIDGET(view->cards));
 
   sensor_stats_t stats = {0};
 
   sensor_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *total_card = create_stats_card("Total Sensors", stats.total, "default-card");
-  GtkWidget *ok_card = create_stats_card("OK", stats.ok, "operational-card");
-  GtkWidget *warning_card = create_stats_card("Warning + Critical", stats.warning + stats.critical, "maintenance-card");
-  GtkWidget *failure_card = create_stats_card("Network Failures", stats.failure, "failed-card");
+  GtkWidget *total_card = stats_card_new("Total Sensors", stats.total, "default-card");
+  GtkWidget *ok_card = stats_card_new("OK", stats.ok, "operational-card");
+  GtkWidget *warning_card = stats_card_new("Warning + Critical", stats.warning + stats.critical, "maintenance-card");
+  GtkWidget *failure_card = stats_card_new("Network Failures", stats.failure, "failed-card");
 
   gtk_box_append(view->cards, total_card);
   gtk_box_append(view->cards, ok_card);
@@ -85,7 +92,7 @@ void sensor_view_update_stats_cards(sensor_view_t *view)
 
 void sensor_view_update_table(sensor_view_t *view, const sensor_t *sensors, int count)
 {
-  remove_table_rows(GTK_WIDGET(view->table));
+  table_remove_rows(GTK_WIDGET(view->table));
 
   if (sensors == NULL || count == 0) return;
 
@@ -153,10 +160,10 @@ static GtkWidget *build_header(sensor_view_t *view)
   gtk_widget_set_hexpand(title, TRUE);
   gtk_widget_set_halign(title, GTK_ALIGN_START);
 
-  view->import_button = GTK_BUTTON(create_secondary_button("Import Sensors", "assets/icon-import.svg", "import-button"));
+  view->import_button = GTK_BUTTON(action_button_new("Import Sensors", "assets/icon-import.svg", "import-button"));
   g_signal_connect(GTK_WIDGET(view->import_button), "clicked", G_CALLBACK(on_import_sensors_clicked), view);
 
-  view->fetch_button = GTK_BUTTON(create_secondary_button("Fetch API", "assets/icon-fetch.svg", "fetch-button"));
+  view->fetch_button = GTK_BUTTON(action_button_new("Fetch API", "assets/icon-fetch.svg", "fetch-button"));
   g_signal_connect(GTK_WIDGET(view->fetch_button), "clicked", G_CALLBACK(on_fetch_api_clicked), view);
 
   gtk_box_append(GTK_BOX(box), title);
@@ -175,10 +182,10 @@ static GtkWidget *build_stats_cards(sensor_view_t *view)
 
   sensor_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *total_card = create_stats_card("Total Sensors", stats.total, "default-card");
-  GtkWidget *ok_card = create_stats_card("OK", stats.ok, "operational-card");
-  GtkWidget *warning_card = create_stats_card("Warning + Critical", stats.warning + stats.critical, "maintenance-card");
-  GtkWidget *failure_card = create_stats_card("Network Failures", stats.failure, "failed-card");
+  GtkWidget *total_card = stats_card_new("Total Sensors", stats.total, "default-card");
+  GtkWidget *ok_card = stats_card_new("OK", stats.ok, "operational-card");
+  GtkWidget *warning_card = stats_card_new("Warning + Critical", stats.warning + stats.critical, "maintenance-card");
+  GtkWidget *failure_card = stats_card_new("Network Failures", stats.failure, "failed-card");
 
   gtk_box_append(GTK_BOX(box), total_card);
   gtk_box_append(GTK_BOX(box), ok_card);
@@ -256,7 +263,7 @@ static GtkWidget *build_pagination_bar(sensor_view_t *view)
   gtk_widget_set_hexpand(box, TRUE);
   gtk_widget_set_halign(box, GTK_ALIGN_END);
 
-  GtkWidget *previous_button = create_secondary_button(NULL, "assets/left-arrow.svg", "arrow-page");
+  GtkWidget *previous_button = action_button_new(NULL, "assets/left-arrow.svg", "arrow-page");
   gtk_widget_set_margin_top(previous_button, 16);
   gtk_widget_set_margin_bottom(previous_button, 16);
   gtk_widget_set_size_request(previous_button, 32, 32);
@@ -273,13 +280,13 @@ static GtkWidget *build_pagination_bar(sensor_view_t *view)
     char buffer[12];
     snprintf(buffer, sizeof(buffer), "%d", i + 1);
 
-    GtkWidget *button = create_pagination_button(view->controller->pagination, buffer, i);
+    GtkWidget *button = pagination_button_new(view->controller->pagination, buffer, i);
     g_signal_connect(button, "clicked", G_CALLBACK(on_page_clicked), view);
 
     gtk_box_append(GTK_BOX(box), button);
   }
 
-  GtkWidget *next_button = create_secondary_button(NULL, "assets/right-arrow.svg", "arrow-page");
+  GtkWidget *next_button = action_button_new(NULL, "assets/right-arrow.svg", "arrow-page");
   gtk_widget_set_margin_top(next_button, 16);
   gtk_widget_set_margin_bottom(next_button, 16);
   gtk_widget_set_margin_end(next_button, 24);
@@ -294,7 +301,7 @@ static GtkWidget *build_pagination_bar(sensor_view_t *view)
 static void build_table_header(GtkWidget *table)
 {
   for (int i = 0; i < SENSOR_HEADER_COLUMN_COUNT; i++) {
-    GtkWidget *header_col = create_table_header(headers[i], widths[i]);
+    GtkWidget *header_col = table_header_new(headers[i], widths[i]);
     gtk_widget_set_hexpand(header_col, TRUE);
     gtk_grid_attach(GTK_GRID(table), header_col, i, 0, 1, 1);
   }
@@ -310,11 +317,11 @@ static void build_table_row(sensor_view_t *view, sensor_t sensor, int row)
   char datetime[DATETIME_MAX];
   format_timestamp_to_datetime(sensor.read_at, datetime);
   GtkWidget *columns[] = {
-    create_table_cell(sensor.code, CELL_CODE_WIDTH),
-    create_table_cell(sensor.type, CELL_TYPE_WIDTH),
-    create_table_cell(value, CELL_VALUE_WIDTH),
+    table_cell_new(sensor.code, CELL_CODE_WIDTH),
+    table_cell_new(sensor.type, CELL_TYPE_WIDTH),
+    table_cell_new(value, CELL_VALUE_WIDTH),
     build_status_cell(sensor.status),
-    create_table_cell(datetime, CELL_READ_AT_WIDTH)
+    table_cell_new(datetime, CELL_READ_AT_WIDTH)
   };
 
   for (int i = 0; i < SENSOR_TABLE_COLUMN_COUNT; i++) {
@@ -328,45 +335,23 @@ static void build_table_row(sensor_view_t *view, sensor_t sensor, int row)
 
 static GtkWidget *build_status_cell(sensor_status_t status)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  gtk_widget_add_css_class(box, "table-cell");
-  gtk_widget_add_css_class(box, "status-cell");
-
-  GtkWidget *border, *label, *image;
-
-  border = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-  gtk_widget_add_css_class(border, "status-badge");
-
-  label = gtk_label_new(sensor_status_to_string(status));
-  gtk_widget_add_css_class(label, "status-label");
-
   switch (status) 
   {
-    case SENSOR_OK:
-      image = gtk_image_new_from_file("assets/status-operational.svg");
-      gtk_widget_add_css_class(border, "status-operational");
-      break;
-    case SENSOR_WARNING:
-      image = gtk_image_new_from_file("assets/status-maintenance.svg");
-      gtk_widget_add_css_class(border, "status-maintenance");
-      break;
     case SENSOR_CRITICAL:
-      image = gtk_image_new_from_file("assets/status-failed.svg");
-      gtk_widget_add_css_class(border, "status-failed");
-      break;
+      return status_badge_new(sensor_status_to_string(status), "assets/status-failed.svg", "status-failed");
+
+    case SENSOR_WARNING:
+      return status_badge_new(sensor_status_to_string(status), "assets/status-maintenance.svg", "status-maintenance");
+
+    case SENSOR_OK:
+      return status_badge_new(sensor_status_to_string(status), "assets/status-operational.svg", "status-operational");
+
     case SENSOR_NET_FAILURE:
-      image = gtk_image_new_from_file("assets/status-disabled.svg");
-      gtk_widget_add_css_class(border, "status-disabled");
-      break;
+      return status_badge_new(sensor_status_to_string(status), "assets/status-disabled.svg", "status-disabled");
+
+    default:
+      return NULL;
   }
-
-  gtk_image_set_pixel_size(GTK_IMAGE(image), 6);
-
-  gtk_box_append(GTK_BOX(box), border);
-  gtk_box_append(GTK_BOX(border), image);
-  gtk_box_append(GTK_BOX(border), label);
-
-  return box;
 }
 
 static void sensor_view_apply_filters(sensor_view_t *view)

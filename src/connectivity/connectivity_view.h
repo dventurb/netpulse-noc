@@ -5,7 +5,8 @@
 
 #include <gtk/gtk.h>
 
-#include "ui_widgets.h"
+#include "unit_field.h"
+#include "input_field.h"
 
 #include "connectivity.h"
 #include "connectivity_controller.h"

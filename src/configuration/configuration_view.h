@@ -3,7 +3,7 @@
 
 #include <gtk/gtk.h>
 
-#include "ui_widgets.h"
+#include "input_field.h"
 
 #include "configuration.h"
 #include "configuration_controller.h"

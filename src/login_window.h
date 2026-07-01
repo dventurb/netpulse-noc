@@ -2,7 +2,7 @@
 #define LOGIN_WINDOW_H
 
 #include <gtk/gtk.h>
-#include <ui_widgets.h>
+#include "input_field.h"
 
 // forward declaration to resolve circular dependencies
 typedef struct app_t app_t;

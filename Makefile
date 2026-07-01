@@ -1,6 +1,6 @@
 CC := gcc 
 
-INCLUDES := -Isrc -Isrc/core -Isrc/equipment -Isrc/incident -Isrc/connectivity -Isrc/sensor -Isrc/configuration -Isrc/technician -Isrc/utils
+INCLUDES := $(addprefix -I, $(shell find src -type d))
 
 CPPFLAGS := $(shell pkg-config --cflags gtk4) $(INCLUDES)
 CFLAGS := -Wall -Wextra -g -pthread
@@ -30,9 +30,10 @@ else
 	EXE_EXT := 
 endif
 
-HDRS := $(wildcard src/*.h) $(wildcard src/*/*.h)
-SRCS := $(wildcard *.c) $(wildcard src/*.c) $(wildcard src/*/*.c)
-OBJS := $(SRCS:%.c=build/%.o)
+HDRS := $(shell find src -name "*.h")
+SRCS := $(shell find src -name "*.c")
+
+OBJS := $(patsubst src/%.c, build/%.o, $(SRCS))
 
 TARGET := netpulse-noc$(EXE_EXT) # ex.: netpulse-noc.exe (Windows) or netpulse-noc (Unix)
 
@@ -41,10 +42,10 @@ TARGET := netpulse-noc$(EXE_EXT) # ex.: netpulse-noc.exe (Windows) or netpulse-n
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $^ -o $@ $(LDLIBS)
+	$(CC) $(OBJS) -o $@ $(LDLIBS)
 
-build/%.o: %.c $(HDRS)
-	$(MKDIR) $(dir $@)
+build/%.o: src/%.c
+	@$(MKDIR) $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 clean:

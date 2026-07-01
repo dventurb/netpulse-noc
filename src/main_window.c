@@ -1,7 +1,7 @@
 #include "main_window.h"
 
 #include "app.h"
-#include "ui_widgets.h"
+#include "toggle_button.h"
 
 static void main_window_init(main_window_t *main_window, app_t *app);
 
@@ -152,7 +152,7 @@ static GtkWidget *build_menu_bar(main_window_t *main_window)
 
 static GtkWidget *build_menu_button(main_window_t *main_window, const char *text, const char *page_name) 
 {
-  GtkWidget *button = create_primary_button(text, NULL, "menu-button");
+  GtkWidget *button = toggle_button_new(text, NULL, "menu-button");
   g_signal_connect(button, "clicked", G_CALLBACK(on_menu_button_clicked), main_window);
 
   g_object_set_data(G_OBJECT(button), "target-page", (void *)page_name);

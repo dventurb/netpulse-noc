@@ -1,9 +1,22 @@
 #include "configuration_view.h"
 
 #include "utils.h"
-#include "ui_widgets.h"
 #include "macros.h"
 #include "pagination.h"
+
+#include "action_button.h"
+#include "pagination_bar.h"
+#include "stats_card.h"
+#include "status_badge.h"
+#include "summary_item.h"
+#include "input_field.h"
+#include "dialog.h"
+#include "alert_icon.h"
+#include "table_header.h"
+#include "table_cell.h"
+#include "text_label.h"
+#include "list_item.h"
+#include "widget_utils.h"
 
 static const char* const headers[] = { "#", "COMMAND", "TECHNICIAN", "DATE/TIME" };
 static const int widths[] = { CELL_NUMBER_WIDTH, CELL_TYPE_WIDTH, CELL_VALUE_WIDTH, CELL_STATUS_WIDTH };
@@ -79,15 +92,15 @@ void configuration_view_update(configuration_view_t *view)
 
 void configuration_view_update_cards(configuration_view_t *view)
 {
-  remove_all_children_from_widget(GTK_WIDGET(view->cards));
+  widget_remove_children(GTK_WIDGET(view->cards));
 
   configuration_stats_t stats = {0};
 
   configuration_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *total_card = create_stats_card("TOTAL COMMANDS", stats.total, "default-card");
+  GtkWidget *total_card = stats_card_new("TOTAL COMMANDS", stats.total, "default-card");
   GtkWidget *last_card = build_last_updated_card("LAST UPDATED", stats.last_updated, "default-card");
-  GtkWidget *technicians_card = create_stats_card("TECHNICIANS", stats.technicians, "default-card");
+  GtkWidget *technicians_card = stats_card_new("TECHNICIANS", stats.technicians, "default-card");
 
   gtk_box_append(view->cards, total_card);
   gtk_box_append(view->cards, last_card);
@@ -96,7 +109,7 @@ void configuration_view_update_cards(configuration_view_t *view)
 
 void configuration_view_update_config_table(configuration_view_t *view, const void *result, int count)
 {
-  remove_table_rows(GTK_WIDGET(view->table));
+  table_remove_rows(GTK_WIDGET(view->table));
 
   if (result == NULL || count == 0) return;
 
@@ -120,7 +133,7 @@ void configuration_view_update_config_table(configuration_view_t *view, const vo
 
 void configuration_view_update_equipment_list(configuration_view_t *view, const void *result, int count)
 {
-  remove_list_rows(GTK_WIDGET(view->list));
+  list_remove_rows(GTK_WIDGET(view->list));
 
   if (result == NULL || count == 0) return;
 
@@ -200,13 +213,13 @@ static GtkWidget *build_header(configuration_view_t *view)
   gtk_widget_set_hexpand(title, TRUE);
   gtk_widget_set_halign(title, GTK_ALIGN_START);
 
-  view->revert_button = GTK_BUTTON(create_secondary_button("Revert Last", "assets/icon-revert.svg", "revert-button"));
+  view->revert_button = GTK_BUTTON(action_button_new("Revert Last", "assets/icon-revert.svg", "revert-button"));
   g_signal_connect(GTK_WIDGET(view->revert_button), "clicked", G_CALLBACK(on_revert_last_clicked), view);
 
-  view->clear_button = GTK_BUTTON(create_secondary_button("Clear History", "assets/icon-clear.svg", "clear-button"));
+  view->clear_button = GTK_BUTTON(action_button_new("Clear History", "assets/icon-clear.svg", "clear-button"));
   g_signal_connect(GTK_WIDGET(view->clear_button), "clicked", G_CALLBACK(on_clear_history_clicked), view);
 
-  view->add_button = GTK_BUTTON(create_secondary_button("Add Configuration", "assets/icon-add.svg", "secondary-button"));
+  view->add_button = GTK_BUTTON(action_button_new("Add Configuration", "assets/icon-add.svg", "secondary-button"));
   g_signal_connect(GTK_WIDGET(view->add_button), "clicked", G_CALLBACK(on_add_config_clicked), view);
 
   gtk_box_append(GTK_BOX(box), title);
@@ -226,9 +239,9 @@ static GtkWidget *build_stats_cards(configuration_view_t *view)
 
   configuration_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *total_card = create_stats_card("TOTAL COMMANDS", stats.total, "default-card");
+  GtkWidget *total_card = stats_card_new("TOTAL COMMANDS", stats.total, "default-card");
   GtkWidget *last_card = build_last_updated_card("LAST UPDATED", stats.last_updated, "default-card");
-  GtkWidget *technicians_card = create_stats_card("TECHNICIANS", stats.technicians, "default-card");
+  GtkWidget *technicians_card = stats_card_new("TECHNICIANS", stats.technicians, "default-card");
 
   gtk_box_append(GTK_BOX(box), total_card);
   gtk_box_append(GTK_BOX(box), last_card);
@@ -313,7 +326,7 @@ static GtkWidget *build_pagination_bar(configuration_view_t *view)
   gtk_widget_set_hexpand(box, TRUE);
   gtk_widget_set_halign(box, GTK_ALIGN_END);
 
-  GtkWidget *previous_button = create_secondary_button(NULL, "assets/left-arrow.svg", "arrow-page");
+  GtkWidget *previous_button = action_button_new(NULL, "assets/left-arrow.svg", "arrow-page");
   gtk_widget_set_margin_top(previous_button, 16);
   gtk_widget_set_margin_bottom(previous_button, 16);
   gtk_widget_set_size_request(previous_button, 32, 32);
@@ -330,13 +343,13 @@ static GtkWidget *build_pagination_bar(configuration_view_t *view)
     char buffer[12];
     snprintf(buffer, sizeof(buffer), "%d", i + 1);
 
-    GtkWidget *button = create_pagination_button(view->controller->pagination, buffer, i);
+    GtkWidget *button = pagination_button_new(view->controller->pagination, buffer, i);
     g_signal_connect(button, "clicked", G_CALLBACK(on_page_clicked), view);
 
     gtk_box_append(GTK_BOX(box), button);
   }
 
-  GtkWidget *next_button = create_secondary_button(NULL, "assets/right-arrow.svg", "arrow-page");
+  GtkWidget *next_button = action_button_new(NULL, "assets/right-arrow.svg", "arrow-page");
   gtk_widget_set_margin_top(next_button, 16);
   gtk_widget_set_margin_bottom(next_button, 16);
   gtk_widget_set_margin_end(next_button, 24);
@@ -351,7 +364,7 @@ static GtkWidget *build_pagination_bar(configuration_view_t *view)
 static void build_config_table_header(GtkWidget *table)
 {
   for (int i = 0; i < CONFIG_HEADER_COLUMN_COUNT; i++) {
-    GtkWidget *header_col = create_table_header(headers[i], widths[i]);
+    GtkWidget *header_col = table_header_new(headers[i], widths[i]);
     gtk_widget_set_hexpand(header_col, TRUE);
     gtk_grid_attach(GTK_GRID(table), header_col, i, 0, 1, 1);
   }
@@ -375,10 +388,10 @@ static void build_config_table_row(configuration_view_t *view, configuration_t c
   snprintf(name, STRING_MAX, "%s", config.technician_name);
 
   GtkWidget *columns[] = {
-    create_table_cell(number, CELL_CODE_WIDTH),
-    create_table_cell(config.command, CELL_TYPE_WIDTH),
-    create_table_cell(name, CELL_VALUE_WIDTH),
-    create_table_cell(datetime, CELL_READ_AT_WIDTH)
+    table_cell_new(number, CELL_CODE_WIDTH),
+    table_cell_new(config.command, CELL_TYPE_WIDTH),
+    table_cell_new(name, CELL_VALUE_WIDTH),
+    table_cell_new(datetime, CELL_READ_AT_WIDTH)
   };
 
   for (int i = 0; i < CONFIG_TABLE_COLUMN_COUNT; i++) {
@@ -393,49 +406,26 @@ static void build_config_table_row(configuration_view_t *view, configuration_t c
 
 static GtkWidget *build_equipment_cell(equipment_t equipment) 
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
-
-  GtkWidget *image = NULL;
+  char buffer[ID_MAX];
+  equipment_format_id(equipment.id, buffer);
 
   switch (equipment.status) 
   {
     case STATUS_FAILED:
-      image = gtk_image_new_from_file("assets/status-failed.svg");
-      break;
+      return list_item_new(equipment.name, buffer, "assets/status-failed.svg");
+
     case STATUS_MAINTENANCE:
-      image = gtk_image_new_from_file("assets/status-maintenance.svg");
-      break;
+      return list_item_new(equipment.name, buffer, "assets/status-maintenance.svg");
+
     case STATUS_OPERATIONAL:
-      image = gtk_image_new_from_file("assets/status-operational.svg");
-      break;
+      return list_item_new(equipment.name, buffer, "assets/status-operational.svg");
+
     case STATUS_DISABLED:
-      image = gtk_image_new_from_file("assets/status-disabled.svg");
-      break;
+      return list_item_new(equipment.name, buffer, "assets/status-disabled.svg");
+
+    default:
+      return list_item_new(equipment.name, buffer, "assets/status-disabled.svg");
   }
-
-  gtk_image_set_pixel_size(GTK_IMAGE(image), 8);
-
-  GtkWidget *text_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
-  gtk_widget_set_hexpand(text_box, TRUE);
-
-  GtkWidget *name = gtk_label_new(equipment.name);
-  gtk_widget_set_halign(name, GTK_ALIGN_START);
-  gtk_widget_add_css_class(name, "list-equipment-name");
-
-  char buffer[ID_MAX];
-  equipment_format_id(equipment.id, buffer);
-
-  GtkWidget *id = gtk_label_new(buffer);
-  gtk_widget_set_halign(id, GTK_ALIGN_START);
-  gtk_widget_add_css_class(id, "list-equipment-id");
-
-  gtk_box_append(GTK_BOX(text_box), name);
-  gtk_box_append(GTK_BOX(text_box), id);
-
-  gtk_box_append(GTK_BOX(box), text_box);
-  gtk_box_append(GTK_BOX(box), image);
-
-  return box;
 }
 
 static GtkWidget *build_add_config_form(configuration_view_t *view)
@@ -452,11 +442,11 @@ static GtkWidget *build_add_config_form(configuration_view_t *view)
 
   equipment_t *equipment = configuration_controller_get_selected_equipment(view->controller);
 
-  view->form.equipment_field = create_input_field("EQUIPMENT", equipment->name, NULL);
+  view->form.equipment_field = input_field_new("EQUIPMENT", equipment->name, NULL);
   gtk_widget_add_css_class(GTK_WIDGET(view->form.equipment_field.container), "field-entry-disabled");
   gtk_editable_set_editable(GTK_EDITABLE(view->form.equipment_field.entry), FALSE);
 
-  view->form.command_field = create_input_field("CONFIGURATION COMMAND", "e.g. interface gigabitethernet 0/1", NULL);
+  view->form.command_field = input_field_new("CONFIGURATION COMMAND", "e.g. interface gigabitethernet 0/1", NULL);
   gtk_entry_set_max_length(view->form.command_field.entry, COMMAND_MAX - 1);
 
   gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.equipment_field.container), 0, 0, 1, 1);
@@ -475,9 +465,9 @@ static GtkWidget *build_clear_history_form(configuration_view_t *view)
   gtk_widget_set_margin_end(box, 24);
   gtk_widget_add_css_class(box, "dialog-form");
 
-  GtkWidget *image = create_alert_icon();
+  GtkWidget *image = alert_icon_new();
 
-  GtkWidget *primary_label = create_remove_primary_label("Are you sure you want to clear all configuration history?");
+  GtkWidget *primary_label = text_label_new("Are you sure you want to clear all configuration history?", TEXT_LABEL_TITLE);
 
   int count = configuration_get_count(&view->controller->selected_equipment->data.configs);
   char name[STRING_MAX];
@@ -486,7 +476,7 @@ static GtkWidget *build_clear_history_form(configuration_view_t *view)
   char warning[DESCRIPTION_MAX];
   snprintf(warning, DESCRIPTION_MAX, "This will permanently remove all %d commands from %s.\n This cannot be undone.", count, name);
 
-  GtkWidget *secundary_label = create_remove_secundary_label(warning);
+  GtkWidget *secundary_label = text_label_new(warning, TEXT_LABEL_DESCRIPTION);
 
   GtkWidget *summary_box = build_summary_card(view->controller->selected_equipment->data);
 
@@ -537,17 +527,17 @@ static GtkWidget *build_summary_card(equipment_t equipment)
   char type[STRING_MAX];
   snprintf(type, STRING_MAX, "%s", equipment_type_to_string(equipment.type));
 
-  GtkWidget *type_box = create_summary_detail("Type:", type);
+  GtkWidget *type_box = summary_item_new("Type:", type);
   gtk_widget_set_hexpand(type_box, TRUE);
   gtk_widget_set_halign(type_box, GTK_ALIGN_START);
 
-  GtkWidget *ip_box = create_summary_detail("IP:", equipment.ip_address);
+  GtkWidget *ip_box = summary_item_new("IP:", equipment.ip_address);
 
-  GtkWidget *location_box = create_summary_detail("Location:", equipment.location);
+  GtkWidget *location_box = summary_item_new("Location:", equipment.location);
   gtk_widget_set_hexpand(location_box, TRUE);
   gtk_widget_set_halign(location_box, GTK_ALIGN_START);
  
-  GtkWidget *mac_box = create_summary_detail("MAC:", equipment.mac_address);
+  GtkWidget *mac_box = summary_item_new("MAC:", equipment.mac_address);
 
   gtk_grid_attach(GTK_GRID(grid), type_box, 0, 0, 1, 1);
   gtk_grid_attach(GTK_GRID(grid), ip_box, 1, 0, 1, 1);
@@ -562,45 +552,23 @@ static GtkWidget *build_summary_card(equipment_t equipment)
 
 static GtkWidget *build_status_cell(equipment_status_t status)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  gtk_widget_add_css_class(box, "table-cell");
-  gtk_widget_add_css_class(box, "status-cell");
-
-  GtkWidget *border, *label, *image;
-
-  border = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-  gtk_widget_add_css_class(border, "status-badge");
-
-  label = gtk_label_new(equipment_status_to_string(status));
-  gtk_widget_add_css_class(label, "status-label");
-
   switch (status) 
   {
     case STATUS_FAILED:
-      image = gtk_image_new_from_file("assets/status-failed.svg");
-      gtk_widget_add_css_class(border, "status-failed");
-      break;
+      return status_badge_new(equipment_status_to_string(status), "assets/status-failed.svg", "status-failed");
+
     case STATUS_MAINTENANCE:
-      image = gtk_image_new_from_file("assets/status-maintenance.svg");
-      gtk_widget_add_css_class(border, "status-maintenance");
-      break;
+      return status_badge_new(equipment_status_to_string(status), "assets/status-maintenance.svg", "status-maintenance");
+
     case STATUS_OPERATIONAL:
-      image = gtk_image_new_from_file("assets/status-operational.svg");
-      gtk_widget_add_css_class(border, "status-operational");
-      break;
+      return status_badge_new(equipment_status_to_string(status), "assets/status-operational.svg", "status-operational");
+
     case STATUS_DISABLED:
-      image = gtk_image_new_from_file("assets/status-disabled.svg");
-      gtk_widget_add_css_class(border, "status-disabled");
-      break;
+      return status_badge_new(equipment_status_to_string(status), "assets/status-disabled.svg", "status-disabled");
+
+    default:
+      return NULL;
   }
-
-  gtk_image_set_pixel_size(GTK_IMAGE(image), 6);
-
-  gtk_box_append(GTK_BOX(box), border);
-  gtk_box_append(GTK_BOX(border), image);
-  gtk_box_append(GTK_BOX(border), label);
-
-  return box;
 }
 
 static GtkWidget *build_last_updated_card(const char *title, const char *value, const char *css)
@@ -641,7 +609,7 @@ static void on_add_config_clicked(GtkButton *button, gpointer data)
     .window = GTK_WIDGET(window),
     .form = view->form.layout,
     .title = "Add Configuration",
-    .dialog_action = 
+    .action = 
     {
       .label = "Apply Configuration",
       .icon = "assets/icon-add.svg",
@@ -651,7 +619,7 @@ static void on_add_config_clicked(GtkButton *button, gpointer data)
     }
   };
 
-  view->form.dialog = GTK_WINDOW(create_dialog_window(config));
+  view->form.dialog = GTK_WINDOW(dialog_new(config));
 
   gtk_window_present(view->form.dialog);
 }
@@ -677,7 +645,7 @@ static void on_clear_history_clicked(GtkButton *button, gpointer data)
     .window = GTK_WIDGET(window),
     .form = view->form.layout,
     .title = "Clear Configuration History",
-    .dialog_action = 
+    .action = 
     {
       .label = "Clear History",
       .icon = "assets/icon-clear.svg",
@@ -687,7 +655,7 @@ static void on_clear_history_clicked(GtkButton *button, gpointer data)
     }
   };
 
-  view->form.dialog = GTK_WINDOW(create_dialog_window(config));
+  view->form.dialog = GTK_WINDOW(dialog_new(config));
 
   gtk_window_present(view->form.dialog);
 

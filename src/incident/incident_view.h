@@ -3,7 +3,8 @@
 
 #include <gtk/gtk.h>
 
-#include "ui_widgets.h"
+#include "input_field.h"
+#include "dropdown_field.h"
 
 #include "incident.h"
 #include "incident_controller.h"

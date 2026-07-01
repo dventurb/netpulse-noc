@@ -2,6 +2,8 @@
 
 #include "auth.h"
 #include "app.h"
+#include "action_button.h"
+#include "input_field.h"
 
 static void login_window_init(login_window_t *login_window, app_t *app);
 
@@ -96,16 +98,16 @@ static GtkWidget *build_login_page(login_window_t *login_window)
   gtk_grid_set_row_spacing(GTK_GRID(grid), 24);
   gtk_widget_add_css_class(grid, "login-page");
 
-  login_window->login_username = create_input_field("Username", "Enter your username", "assets/icon-username.svg");
+  login_window->login_username = input_field_new("Username", "Enter your username", "assets/icon-username.svg");
   gtk_entry_set_max_length(login_window->login_username.entry, USERNAME_MAX - 1);
   gtk_widget_add_css_class(GTK_WIDGET(login_window->login_username.container), "login-field-container");
 
-  login_window->login_password = create_input_field("Password", "••••••••", "assets/icon-password.svg");
+  login_window->login_password = input_field_new("Password", "••••••••", "assets/icon-password.svg");
   gtk_entry_set_max_length(login_window->login_password.entry, STRING_MAX - 1);
   gtk_entry_set_visibility(login_window->login_password.entry, FALSE);
   gtk_widget_add_css_class(GTK_WIDGET(login_window->login_password.container), "login-field-container");
 
-  GtkWidget *login_button = create_secondary_button("Sign In", NULL, "secondary-button");
+  GtkWidget *login_button = action_button_new("Sign In", NULL, "secondary-button");
   gtk_widget_set_hexpand(login_button, TRUE);
   g_signal_connect(login_button, "clicked", G_CALLBACK(on_login_submit_clicked), login_window);
 
@@ -117,7 +119,7 @@ static GtkWidget *build_login_page(login_window_t *login_window)
   GtkWidget *label_technician = gtk_label_new("Don't have an account? ");
   gtk_widget_add_css_class(label_technician, "login-footer-label");
 
-  GtkWidget *register_button = create_secondary_button("Sing up", NULL, "register-button");
+  GtkWidget *register_button = action_button_new("Sing up", NULL, "register-button");
   g_signal_connect(register_button, "clicked", G_CALLBACK(on_switch_to_register_clicked), login_window);
 
   gtk_box_append(GTK_BOX(box), label_technician);
@@ -138,20 +140,20 @@ static GtkWidget *build_register_page(login_window_t *login_window)
   gtk_grid_set_row_spacing(GTK_GRID(grid), 24);
   gtk_widget_add_css_class(grid, "login-page");
 
-  login_window->register_name = create_input_field("Full Name", "Enter your full name", NULL);
+  login_window->register_name = input_field_new("Full Name", "Enter your full name", NULL);
   gtk_entry_set_max_length(login_window->register_name.entry, STRING_MAX - 1);
   gtk_widget_add_css_class(GTK_WIDGET(login_window->register_name.container), "login-field-container");
 
-  login_window->register_username = create_input_field("Username", "Enter your username", "assets/icon-username.svg");
+  login_window->register_username = input_field_new("Username", "Enter your username", "assets/icon-username.svg");
   gtk_entry_set_max_length(login_window->register_username.entry, USERNAME_MAX - 1);
   gtk_widget_add_css_class(GTK_WIDGET(login_window->register_username.container), "login-field-container");
 
-  login_window->register_password = create_input_field("Password", "••••••••", "assets/icon-password.svg");
+  login_window->register_password = input_field_new("Password", "••••••••", "assets/icon-password.svg");
   gtk_entry_set_max_length(login_window->register_password.entry, STRING_MAX - 1);
   gtk_entry_set_visibility(login_window->register_password.entry, FALSE);
   gtk_widget_add_css_class(GTK_WIDGET(login_window->register_password.container), "login-field-container");
 
-  GtkWidget *register_button = create_secondary_button("Sign Up", NULL, "secondary-button");
+  GtkWidget *register_button = action_button_new("Sign Up", NULL, "secondary-button");
   gtk_widget_set_hexpand(register_button, TRUE);
   g_signal_connect(register_button, "clicked", G_CALLBACK(on_register_submit_clicked), login_window);
 
@@ -163,7 +165,7 @@ static GtkWidget *build_register_page(login_window_t *login_window)
   GtkWidget *label_technician = gtk_label_new("Already have an account? ");
   gtk_widget_add_css_class(label_technician, "login-footer-label");
 
-  GtkWidget *login_button = create_secondary_button("Log In", NULL, "register-button");
+  GtkWidget *login_button = action_button_new("Log In", NULL, "register-button");
   g_signal_connect(login_button, "clicked", G_CALLBACK(on_switch_to_login_clicked), login_window);
 
   gtk_box_append(GTK_BOX(box), label_technician);
