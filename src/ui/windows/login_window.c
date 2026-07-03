@@ -6,7 +6,14 @@
 
 #include "action_button.h"
 
+static const char *auth_view_names[AUTH_VIEW_COUNT] = {
+  [AUTH_VIEW_LOGIN]    = "LOGIN",
+  [AUTH_VIEW_REGISTER] = "REGISTER",
+};
+
+static void login_window_destroy(void *data);
 static void login_window_init(login_window_t *login_win, app_t *app);
+static void login_window_show(login_window_t *login_win, auth_view_t view);
 
 static void build_window(login_window_t *login_win);
 static void build_layout(login_window_t *login_win);
@@ -37,9 +44,17 @@ login_window_t *login_window_create(GtkApplication *gtk_app, app_t *app)
 
   gtk_application_add_window(gtk_app, login_win->window);
 
-  g_object_set_data_full(G_OBJECT(login_win->window), "user-interface", login_win, free); // ownership + destroy  
+  g_object_set_data_full(G_OBJECT(login_win->window), "USER-INTERFACE", login_win, login_window_destroy); // ownership + destroy  
 
   return login_win;
+}
+
+static void login_window_destroy(void *data)
+{
+  login_window_t *login_win = (login_window_t *)data;
+  if (login_win == NULL) return;
+
+  free(login_win);
 }
 
 static void login_window_init(login_window_t *login_win, app_t *app)
@@ -49,6 +64,26 @@ static void login_window_init(login_window_t *login_win, app_t *app)
   build_window(login_win);
   build_layout(login_win);
   load_styles();
+}
+
+static void login_window_show(login_window_t *login_win, auth_view_t view)
+{
+  switch (view) 
+  {
+    case AUTH_VIEW_LOGIN:
+      register_clear_errors(login_win);
+      gtk_editable_set_text(GTK_EDITABLE(login_win->register_password.entry), "");
+      break;
+
+    case AUTH_VIEW_REGISTER:
+      login_clear_errors(login_win);
+      gtk_editable_set_text(GTK_EDITABLE(login_win->login_password.entry), "");
+      break;
+
+    default: return;
+  }
+
+  gtk_stack_set_visible_child_name(login_win->stack, auth_view_names[view]);
 }
 
 static void build_window(login_window_t *login_win)
@@ -71,14 +106,16 @@ static void build_layout(login_window_t *login_win)
 
   login_win->stack = GTK_STACK(gtk_stack_new());
   gtk_stack_set_vhomogeneous(login_win->stack, FALSE);
+  gtk_stack_set_transition_type(login_win->stack, GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
+  gtk_stack_set_transition_duration(login_win->stack, 180);
 
   GtkWidget *login_page = build_login_page(login_win);
   GtkWidget *register_page = build_register_page(login_win);
 
-  gtk_stack_add_named(login_win->stack, login_page, "LOGIN");
-  gtk_stack_add_named(login_win->stack, register_page, "REGISTER");
+  gtk_stack_add_named(login_win->stack, login_page, auth_view_names[AUTH_VIEW_LOGIN]);
+  gtk_stack_add_named(login_win->stack, register_page, auth_view_names[AUTH_VIEW_REGISTER]);
 
-  gtk_stack_set_visible_child_name(login_win->stack, "LOGIN");
+  login_window_show(login_win, AUTH_VIEW_LOGIN);
 
   gtk_box_append(GTK_BOX(container), header);
   gtk_box_append(GTK_BOX(container), GTK_WIDGET(login_win->stack));
@@ -247,7 +284,7 @@ static void on_switch_to_register_clicked(GtkButton *button, gpointer data)
 
   login_window_t *login_win = (login_window_t *)data;
 
-  gtk_stack_set_visible_child_name(login_win->stack, "REGISTER");
+  login_window_show(login_win, AUTH_VIEW_REGISTER);
 }
 
 static void on_switch_to_login_clicked(GtkButton *button, gpointer data)
@@ -256,7 +293,7 @@ static void on_switch_to_login_clicked(GtkButton *button, gpointer data)
 
   login_window_t *login_win = (login_window_t *)data;
 
-  gtk_stack_set_visible_child_name(login_win->stack, "LOGIN");
+  login_window_show(login_win, AUTH_VIEW_LOGIN);
 }
 
 static void on_login_submit_clicked(GtkButton *button, gpointer data)
