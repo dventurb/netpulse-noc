@@ -4,7 +4,7 @@
 #include "app_screens.h"
 #include "style.h"
 
-#include "profile_box.h"
+#include "header_bar.h"
 
 static void main_window_destroy(void *data);
 static void main_window_init(main_window_t *main_win, app_t *app);
@@ -15,7 +15,6 @@ static void setup_screens(main_window_t *main_win);
 
 static GtkWidget *build_header(main_window_t *main_win);
 static GtkWidget *build_navigation_bar(main_window_t *main_win);
-static GtkWidget *build_technician_profile_box(main_window_t *main_win);
 
 // Callbacks
 static void on_screen_selected(int index, void *data);
@@ -92,28 +91,11 @@ static void setup_screens(main_window_t *main_win)
 
 static GtkWidget *build_header(main_window_t *main_win)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  gtk_widget_set_size_request(box, -1, 52);
-  gtk_widget_set_hexpand(box, TRUE);
-  gtk_widget_add_css_class(box, "header");
+  technician_t *current_user = main_win->app->data.current_user;
 
-  GtkWidget *logo = gtk_picture_new_for_filename("assets/logo.svg");
-  gtk_widget_set_halign(logo, GTK_ALIGN_START);
-  gtk_widget_set_valign(logo, GTK_ALIGN_CENTER);
-  gtk_widget_set_margin_start(logo, 24);
-  gtk_widget_set_margin_top(logo, 4);
-  gtk_widget_set_margin_bottom(logo, 4);
+  header_bar_t header = header_bar_new("assets/logo.svg", current_user->name, current_user->avatar_path);
 
-  GtkWidget *spacer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  gtk_widget_set_hexpand(spacer, TRUE);
-
-  GtkWidget *technician_box = build_technician_profile_box(main_win);
-
-  gtk_box_append(GTK_BOX(box), logo);
-  gtk_box_append(GTK_BOX(box), spacer);
-  gtk_box_append(GTK_BOX(box), technician_box);
-
-  return box;
+  return GTK_WIDGET(header.container);
 }
 
 static GtkWidget *build_navigation_bar(main_window_t *main_win)
@@ -136,13 +118,6 @@ static GtkWidget *build_navigation_bar(main_window_t *main_win)
   gtk_widget_add_css_class(GTK_WIDGET(main_win->navigation_bar.container), "menu-bar");
 
   return GTK_WIDGET(main_win->navigation_bar.container);
-}
-
-static GtkWidget *build_technician_profile_box(main_window_t *main_win)
-{
-  technician_t *current_user = main_win->app->data.current_user;
-
-  return profile_box_new(current_user->name, current_user->avatar_path);
 }
 
 static void on_screen_selected(int index, void *data)

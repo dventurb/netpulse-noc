@@ -3,6 +3,16 @@
 
 #include <gtk/gtk.h>
 
-GtkWidget *profile_box_new(const char *text, const char *icon_file);
+typedef struct {
+
+  GtkBox   *container;
+  GtkLabel *name;
+  GtkImage *avatar;
+
+} profile_box_t;
+
+profile_box_t profile_box_new(const char *name, const char *icon_file);
+// TODO: profile_box_set_name
+// TODO: profile_box_set_avatar
 
 #endif

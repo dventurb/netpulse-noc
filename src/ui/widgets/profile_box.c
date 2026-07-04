@@ -1,21 +1,23 @@
 #include "profile_box.h"
 
-GtkWidget *profile_box_new(const char *text, const char *icon_file)
+profile_box_t profile_box_new(const char *name, const char *icon_file)
 {
-  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
-  gtk_widget_set_hexpand(container, TRUE);
-  gtk_widget_set_margin_end(container, 24);
-  gtk_widget_set_halign(container, GTK_ALIGN_END);
-  gtk_widget_set_valign(container, GTK_ALIGN_CENTER);
+  profile_box_t profile_box = {0};
 
-  GtkWidget *label = gtk_label_new(text ? text : "");
-  gtk_widget_add_css_class(label, "profile-name");
+  profile_box.container = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12));
+  gtk_widget_set_hexpand(GTK_WIDGET(profile_box.container), TRUE);
+  gtk_widget_set_margin_end(GTK_WIDGET(profile_box.container), 24);
+  gtk_widget_set_halign(GTK_WIDGET(profile_box.container), GTK_ALIGN_END);
+  gtk_widget_set_valign(GTK_WIDGET(profile_box.container), GTK_ALIGN_CENTER);
 
-  GtkWidget *avatar = gtk_image_new_from_file(icon_file);
-  gtk_widget_set_size_request(avatar, 32, 32);
+  profile_box.name = GTK_LABEL(gtk_label_new(name ? name : ""));
+  gtk_widget_add_css_class(GTK_WIDGET(profile_box.name), "profile-name");
 
-  gtk_box_append(GTK_BOX(container), label);
-  gtk_box_append(GTK_BOX(container), avatar);
+  profile_box.avatar = GTK_IMAGE(gtk_image_new_from_file(icon_file));
+  gtk_widget_set_size_request(GTK_WIDGET(profile_box.avatar), 32, 32);
 
-  return container;
+  gtk_box_append(profile_box.container, GTK_WIDGET(profile_box.name));
+  gtk_box_append(profile_box.container, GTK_WIDGET(profile_box.avatar));
+
+  return profile_box;
 }
