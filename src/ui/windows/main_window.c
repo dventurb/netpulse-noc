@@ -4,7 +4,6 @@
 #include "app_screens.h"
 #include "style.h"
 
-#include "toggle_button.h"
 #include "profile_box.h"
 
 static void main_window_destroy(void *data);
@@ -15,12 +14,11 @@ static void build_layout(main_window_t *main_win);
 static void setup_screens(main_window_t *main_win);
 
 static GtkWidget *build_header(main_window_t *main_win);
-static GtkWidget *build_menu_bar(main_window_t *main_win);
-static GtkWidget *build_menu_button(main_window_t *main_win, const screen_descriptor_t *descriptor);
+static GtkWidget *build_navigation_bar(main_window_t *main_win);
 static GtkWidget *build_technician_profile_box(main_window_t *main_win);
 
 // Callbacks
-static void on_menu_button_clicked(GtkButton *button, gpointer data);
+static void on_screen_selected(int index, void *data);
 
 
 main_window_t *main_window_create(GtkApplication *gtk_app, app_t *app)
@@ -41,6 +39,8 @@ static void main_window_destroy(void *data)
 {
   main_window_t *main_win = (main_window_t *)data;
   if (main_win == NULL) return;
+
+  tab_bar_destroy(&main_win->navigation_bar);
 
   if (main_win->screen_manager != NULL)
     screen_manager_destroy(main_win->screen_manager);
@@ -72,12 +72,14 @@ static void build_layout(main_window_t *main_win)
   gtk_window_set_child(main_win->window, container);
 
   main_win->stack = GTK_STACK(gtk_stack_new());
+  gtk_stack_set_transition_type(main_win->stack, GTK_STACK_TRANSITION_TYPE_CROSSFADE);
+  gtk_stack_set_transition_duration(main_win->stack, 150);
 
   GtkWidget *header = build_header(main_win);
-  GtkWidget *menu_bar = build_menu_bar(main_win);
+  GtkWidget *bar = build_navigation_bar(main_win);
   
   gtk_box_append(GTK_BOX(container), header);
-  gtk_box_append(GTK_BOX(container), menu_bar);
+  gtk_box_append(GTK_BOX(container), bar);
   gtk_box_append(GTK_BOX(container), GTK_WIDGET(main_win->stack));
 }
 
@@ -114,36 +116,26 @@ static GtkWidget *build_header(main_window_t *main_win)
   return box;
 }
 
-static GtkWidget *build_menu_bar(main_window_t *main_win)
+static GtkWidget *build_navigation_bar(main_window_t *main_win)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  gtk_widget_set_size_request(box, -1, 44);
-  gtk_widget_set_hexpand(box, TRUE);
-  gtk_widget_add_css_class(box, "menu-bar");
+  main_win->navigation_bar = tab_bar_new(SCREEN_COUNT, GTK_ORIENTATION_HORIZONTAL, on_screen_selected, main_win);
+
+  const char *labels[SCREEN_COUNT];
 
   for (int i = 0; i < SCREEN_COUNT; i++)
   {
     const screen_descriptor_t *descriptor = app_screens_get_descriptor(i);
-
-    main_win->nav_buttons[i] = GTK_TOGGLE_BUTTON(build_menu_button(main_win, descriptor));
-
-    gtk_box_append(GTK_BOX(box), GTK_WIDGET(main_win->nav_buttons[i]));
+    labels[i] = descriptor->text;
   }
 
-  gtk_toggle_button_set_active(main_win->nav_buttons[SCREEN_EQUIPMENT], TRUE);
-  
-  return box;
-}
+  tab_bar_create_buttons(&main_win->navigation_bar, labels, NULL, "menu-button");
+  tab_bar_set_selected(&main_win->navigation_bar, SCREEN_EQUIPMENT);
 
-static GtkWidget *build_menu_button(main_window_t *main_win, const screen_descriptor_t *descriptor) 
-{
-  GtkWidget *button = toggle_button_new(descriptor->text, NULL, "menu-button");
-  g_signal_connect(button, "clicked", G_CALLBACK(on_menu_button_clicked), main_win);
+  gtk_widget_set_hexpand(GTK_WIDGET(main_win->navigation_bar.container), TRUE);
+  gtk_widget_set_size_request(GTK_WIDGET(main_win->navigation_bar.container), -1, 44);
+  gtk_widget_add_css_class(GTK_WIDGET(main_win->navigation_bar.container), "menu-bar");
 
-  if (descriptor)
-    g_object_set_data(G_OBJECT(button), "SCREEN-DESCRIPTOR", (void *)descriptor);
-
-  return button;
+  return GTK_WIDGET(main_win->navigation_bar.container);
 }
 
 static GtkWidget *build_technician_profile_box(main_window_t *main_win)
@@ -153,18 +145,14 @@ static GtkWidget *build_technician_profile_box(main_window_t *main_win)
   return profile_box_new(current_user->name, current_user->avatar_path);
 }
 
-static void on_menu_button_clicked(GtkButton *button, gpointer data)
+static void on_screen_selected(int index, void *data)
 {
   main_window_t *main_win = (main_window_t *) data;
 
-  for (int i = 0; i < SCREEN_COUNT; i++) 
+  // TODO: Dashboard
+  if(screen_manager_show(main_win->screen_manager, index) == FALSE)
   {
-    if (GTK_WIDGET(main_win->nav_buttons[i]) != GTK_WIDGET(button))
-      gtk_toggle_button_set_active(main_win->nav_buttons[i], FALSE);
-    else 
-       gtk_toggle_button_set_active(main_win->nav_buttons[i], TRUE);
+    screen_number_t previous = screen_manager_get_current(main_win->screen_manager);
+    tab_bar_set_selected(&main_win->navigation_bar, previous);
   }
-
-  screen_descriptor_t *descriptor = g_object_get_data(G_OBJECT(button), "SCREEN-DESCRIPTOR");
-  screen_manager_show(main_win->screen_manager, descriptor->number);
 }

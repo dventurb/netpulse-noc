@@ -63,3 +63,8 @@ bool screen_manager_show(screen_manager_t *manager, screen_number_t number)
 
   return true;
 }
+
+screen_number_t screen_manager_get_current(screen_manager_t *manager)
+{
+  return manager->current_screen;
+}

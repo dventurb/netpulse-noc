@@ -1,15 +1,23 @@
 #ifndef CONNECTIVITY_VIEW_H
 #define CONNECTIVITY_VIEW_H
 
-#define CONNECTIVITY_PAGE_COUNT 4
-
 #include <gtk/gtk.h>
 
 #include "unit_field.h"
 #include "input_field.h"
+#include "tab_bar.h"
 
 #include "connectivity.h"
 #include "connectivity_controller.h"
+
+typedef enum {
+  CONNECTIVITY_TOOL_PING,
+  CONNECTIVITY_TOOL_TRACEROUTE,
+  CONNECTIVITY_TOOL_DNS_LOCKUP,
+  CONNECTIVITY_TOOL_ARP,
+
+  CONNECTIVITY_TOOL_COUNT
+} connectivity_tools_t;
 
 typedef struct ping_view_t {
   connectivity_controller_t *controller;
@@ -33,7 +41,9 @@ typedef struct ping_view_t {
   GtkBox         *stats_cards;
 
   GtkTextView    *terminal;
+
 } ping_view_t;
+
 
 typedef struct connectivity_view_t{
   connectivity_controller_t *controller;
@@ -41,14 +51,16 @@ typedef struct connectivity_view_t{
   GtkBox            *container;
   GtkStack          *stack;
 
-  GtkToggleButton   *buttons[CONNECTIVITY_PAGE_COUNT];
-  GtkToggleButton   *sidebar_buttons[CONNECTIVITY_PAGE_COUNT];
+  tab_bar_t   topbar_tools;
+  tab_bar_t   sidebar_tools;
 
   ping_view_t ping_view;
 
 } connectivity_view_t;
 
+
 GtkBox *connectivity_view_create(connectivity_view_t *view, connectivity_controller_t *controller);
+void connectivity_view_destroy(connectivity_view_t *view);
 
 void ping_view_set_result(ping_view_t *view, const char *output);
 char *ping_view_get_result(ping_view_t *view);

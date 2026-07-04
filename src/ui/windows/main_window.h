@@ -3,6 +3,7 @@
 
 #include <gtk/gtk.h>
 
+#include "tab_bar.h"
 #include "screen_manager.h"
 
 // forward declaration to resolve circular dependencies
@@ -14,9 +15,9 @@ typedef struct {
   GtkWindow             *window;
   GtkStack              *stack;
 
-  GtkToggleButton       *nav_buttons[SCREEN_COUNT];
+  tab_bar_t             navigation_bar;
 
-  screen_manager_t        *screen_manager;
+  screen_manager_t      *screen_manager;
 
 } main_window_t;
 

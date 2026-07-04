@@ -4,17 +4,44 @@
 #include "macros.h"
 
 #include "action_button.h"
-#include "toggle_button.h"
 #include "input_field.h"
 #include "unit_field.h"
 #include "list_item.h"
 #include "widget_utils.h"
 
-static const char* DATA_IP_ADDRESS = "equipment-ip";
+static const char* DATA_IP_ADDRESS = "EQUIPMENT-IP";
 
-static GtkWidget *build_sidebar(connectivity_view_t *view);
+static const char *tools_names[CONNECTIVITY_TOOL_COUNT] = {
+  "PING",
+  "TRACEROUTE",
+  "DNS-LOOKUP",
+  "ARP"
+};
+
+static const char *tool_labels[CONNECTIVITY_TOOL_COUNT] = {
+  "Ping",
+  "TraceRoute",
+  "DNS Lookup",
+  "ARP"
+};
+
+static const char *icons_default[CONNECTIVITY_TOOL_COUNT] = {
+  "assets/icon-ping-default.svg",
+  "assets/icon-traceroute-default.svg",
+  "assets/icon-dns-lookup-default.svg",
+  "assets/icon-arp-table-default.svg"
+};
+
+static const char *icons_active[CONNECTIVITY_TOOL_COUNT] = {
+  "assets/icon-ping-active.svg",
+  "assets/icon-traceroute-active.svg",
+  "assets/icon-dns-lookup-active.svg",
+  "assets/icon-arp-table-active.svg"
+};
+
 static GtkWidget *build_header(connectivity_view_t *view);
-static GtkWidget *build_menu_bar(connectivity_view_t *view);
+static GtkWidget *build_sidebar(connectivity_view_t *view);
+static GtkWidget *build_topbar(connectivity_view_t *view);
 
 static GtkBox *ping_view_create(ping_view_t *view, connectivity_controller_t *controller);
 
@@ -29,11 +56,10 @@ static void build_list_row(GtkWidget *list, equipment_t equipment);
 static GtkWidget *build_stats_cards(void);
 static GtkWidget *build_card(const char *title, const char *icon, const char *main_value, const char *subtitle);
 
-static void synchronize_navigation(connectivity_view_t *view, GtkWidget *button);
+static void sync_sidebar_icons(connectivity_view_t *view, int index);
 
 // Callbacks
-static void on_menu_button_clicked(GtkButton *button, gpointer data);
-static void on_sidebar_button_clicked(GtkButton *button, gpointer data);
+static void on_tool_selected(int index, void *data);
 
 static void on_search_equipment_activated(GtkSearchEntry *search, gpointer data);
 static void on_target_source_selection_clicked(GtkButton *button, gpointer data);
@@ -53,24 +79,30 @@ GtkBox *connectivity_view_create(connectivity_view_t *view, connectivity_control
   view->container = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
   view->stack = GTK_STACK(gtk_stack_new());
 
-  GtkWidget *side_bar = build_sidebar(view);
+  GtkWidget *sidebar = build_sidebar(view);
 
   GtkWidget *right_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
   GtkWidget *header = build_header(view);
 
   GtkWidget *ping_container = GTK_WIDGET(ping_view_create(&view->ping_view, view->controller));
-  gtk_stack_add_named(view->stack, ping_container, "PING");
+  gtk_stack_add_named(view->stack, ping_container, tools_names[CONNECTIVITY_TOOL_PING]);
  
-  gtk_stack_set_visible_child_name(view->stack, "PING");
-  
   gtk_box_append(GTK_BOX(right_box), header);
   gtk_box_append(GTK_BOX(right_box), GTK_WIDGET(view->stack));
 
-  gtk_box_append(view->container, side_bar);
+  gtk_box_append(view->container, sidebar);
   gtk_box_append(view->container, right_box);
 
+  on_tool_selected(CONNECTIVITY_TOOL_PING, view);
+
   return view->container;
+}
+
+void connectivity_view_destroy(connectivity_view_t *view)
+{
+  tab_bar_destroy(&view->sidebar_tools);
+  tab_bar_destroy(&view->topbar_tools);
 }
 
 void ping_view_update_list(ping_view_t *view, equipment_t *equipments, int count)
@@ -128,53 +160,11 @@ void ping_view_set_actions_enabled(ping_view_t *view, bool is_active)
   gtk_widget_set_sensitive(GTK_WIDGET(view->ping_all_button), is_active);
 }
 
-static GtkWidget *build_sidebar(connectivity_view_t *view)
-{
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-  gtk_widget_set_size_request(box, 256, -1);
-  gtk_widget_set_vexpand(box, TRUE);
-  gtk_widget_add_css_class(box, "connectivity-sidebar");
-
-  GtkWidget *label = gtk_label_new("NETWORK TOOLS");
-  gtk_label_set_xalign(GTK_LABEL(label), 0.0);
-  gtk_widget_add_css_class(label, "connectivity-sidebar-label");
-  gtk_box_append(GTK_BOX(box), label);
-
-  const char *tools[CONNECTIVITY_PAGE_COUNT] = {
-    "Ping",
-    "TraceRoute",
-    "DNS Lookup",
-    "ARP"
-  };
-
-  const char *icons[CONNECTIVITY_PAGE_COUNT] = {
-    "assets/icon-ping-active.svg",
-    "assets/icon-traceroute-default.svg",
-    "assets/icon-dns-lookup-default.svg",
-    "assets/icon-arp-table-default.svg"
-  };
-
-  for (int i = 0; i < CONNECTIVITY_PAGE_COUNT; i++)
-  {
-    view->sidebar_buttons[i] = GTK_TOGGLE_BUTTON(toggle_button_new(tools[i], icons[i],"connectivity-sidebar-button"));
-
-    g_object_set_data(G_OBJECT(view->sidebar_buttons[i]), "target-page", (void *)tools[i]);
-
-    g_signal_connect(GTK_WIDGET(view->sidebar_buttons[i]), "clicked", G_CALLBACK(on_sidebar_button_clicked), view);
-
-    gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->sidebar_buttons[i]));
-  }
-
-  gtk_toggle_button_set_active(view->sidebar_buttons[0], TRUE);
-
-  return box;
-}
-
 static GtkWidget *build_header(connectivity_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
-  gtk_widget_set_size_request(box, -1, 112);
-  gtk_widget_add_css_class(box, "connectivity-header");
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
+  gtk_widget_set_size_request(container, -1, 112);
+  gtk_widget_add_css_class(container, "connectivity-header");
 
   GtkWidget *title_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
   gtk_widget_set_margin_top(title_box, 24);
@@ -191,40 +181,47 @@ static GtkWidget *build_header(connectivity_view_t *view)
   gtk_box_append(GTK_BOX(title_box), logo);
   gtk_box_append(GTK_BOX(title_box), title);
 
-  GtkWidget *menu_bar = build_menu_bar(view);
-  gtk_widget_set_margin_start(menu_bar, 32);
+  GtkWidget *topbar = build_topbar(view);
+  gtk_widget_set_margin_start(topbar, 32);
 
-  gtk_box_append(GTK_BOX(box), title_box);
-  gtk_box_append(GTK_BOX(box), menu_bar);
+  gtk_box_append(GTK_BOX(container), title_box);
+  gtk_box_append(GTK_BOX(container), topbar);
 
-  return box;
+  return container;
 }
 
-static GtkWidget *build_menu_bar(connectivity_view_t *view)
+static GtkWidget *build_sidebar(connectivity_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 24);
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_widget_set_size_request(container, 256, -1);
+  gtk_widget_add_css_class(container, "connectivity-sidebar");
 
-  const char *tools[CONNECTIVITY_PAGE_COUNT] = {
-    "Ping",
-    "TraceRoute",
-    "DNS Lookup",
-    "ARP"
-  };
+  GtkWidget *label = gtk_label_new("NETWORK TOOLS");
+  gtk_label_set_xalign(GTK_LABEL(label), 0.0);
+  gtk_widget_add_css_class(label, "connectivity-sidebar-label");
 
-  for (int i = 0; i < CONNECTIVITY_PAGE_COUNT; i++)
-  {
-    view->buttons[i] = GTK_TOGGLE_BUTTON(toggle_button_new(tools[i], NULL, "connectivity-tools-button"));
+  view->sidebar_tools = tab_bar_new(CONNECTIVITY_TOOL_COUNT, GTK_ORIENTATION_VERTICAL, on_tool_selected, view);
 
-    g_object_set_data(G_OBJECT(view->buttons[i]), "target-page", (void *)tools[i]);
+  tab_bar_create_buttons(&view->sidebar_tools, tool_labels, icons_default, "connectivity-sidebar-button");
 
-    g_signal_connect(GTK_WIDGET(view->buttons[i]), "clicked", G_CALLBACK(on_menu_button_clicked), view);
+  gtk_widget_set_vexpand(GTK_WIDGET(view->sidebar_tools.container), TRUE);
+  gtk_widget_add_css_class(GTK_WIDGET(view->sidebar_tools.container), "connectivity-sidebar");
 
-    gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->buttons[i]));
-  }
+  gtk_box_append(GTK_BOX(container), label);
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->sidebar_tools.container));
 
-  gtk_toggle_button_set_active(view->buttons[0], TRUE);
+  return container;
+}
 
-  return box;
+static GtkWidget *build_topbar(connectivity_view_t *view)
+{
+  view->topbar_tools = tab_bar_new(CONNECTIVITY_TOOL_COUNT, GTK_ORIENTATION_HORIZONTAL, on_tool_selected, view);
+
+  tab_bar_create_buttons(&view->topbar_tools, tool_labels, NULL, "connectivity-tools-button");
+
+  gtk_widget_set_hexpand(GTK_WIDGET(view->topbar_tools.container), TRUE);
+
+  return GTK_WIDGET(view->topbar_tools.container);
 }
 
 static GtkBox *ping_view_create(ping_view_t *view, connectivity_controller_t *controller)
@@ -554,39 +551,6 @@ static GtkWidget *build_terminal(ping_view_t *view)
   return box;
 }
 
-static void synchronize_navigation(connectivity_view_t *view, GtkWidget *button)
-{
-  const char *label = g_object_get_data(G_OBJECT(button), "target-page");
-  gtk_stack_set_visible_child_name(view->stack, label);
-
-  const char *icons_default[CONNECTIVITY_PAGE_COUNT] = {
-    "assets/icon-ping-default.svg",
-    "assets/icon-traceroute-default.svg",
-    "assets/icon-dns-lookup-default.svg",
-    "assets/icon-arp-table-default.svg"
-  };
-
-  const char *icons_active[CONNECTIVITY_PAGE_COUNT] = {
-    "assets/icon-ping-active.svg",
-    "assets/icon-traceroute-active.svg",
-    "assets/icon-dns-lookup-active.svg",
-    "assets/icon-arp-table-active.svg"
-  };
-
-  for (int i = 0; i < CONNECTIVITY_PAGE_COUNT; i++)
-  {
-    GtkWidget *box = gtk_widget_get_first_child(GTK_WIDGET(view->sidebar_buttons[i]));
-    GtkWidget *image = gtk_widget_get_first_child(box);
-
-    bool is_active = (GTK_WIDGET(view->buttons[i]) == button || GTK_WIDGET(view->sidebar_buttons[i]) == button);
-
-    gtk_toggle_button_set_active(view->buttons[i], is_active);
-    gtk_toggle_button_set_active(view->sidebar_buttons[i], is_active);
-
-    gtk_image_set_from_file(GTK_IMAGE(image), is_active ? icons_active[i] : icons_default[i]);
-  }
-}
-
 static GtkWidget *build_equipment_cell(equipment_t equipment) 
 {
   switch (equipment.status) 
@@ -623,16 +587,28 @@ static void build_list_row(GtkWidget *list, equipment_t equipment)
   gtk_list_box_append(GTK_LIST_BOX(list), row);
 }
 
-static void on_menu_button_clicked(GtkButton *button, gpointer data)
+static void sync_sidebar_icons(connectivity_view_t *view, int index)
 {
-  connectivity_view_t *view = (connectivity_view_t *)data;
-  synchronize_navigation(view, GTK_WIDGET(button));
+  for (int i = 0; i < CONNECTIVITY_TOOL_COUNT; i++) 
+  {
+    const char *icon = i == index ? icons_active[i] : icons_default[i];
+
+    toggle_button_set_icon(&view->sidebar_tools.buttons[i], icon);
+  }
 }
 
-static void on_sidebar_button_clicked(GtkButton *button, gpointer data)
+static void on_tool_selected(int index, void *data)
 {
+  if (index < 0 || index >= CONNECTIVITY_TOOL_COUNT) return;
+
   connectivity_view_t *view = (connectivity_view_t *)data;
-  synchronize_navigation(view, GTK_WIDGET(button));
+
+  tab_bar_set_selected(&view->sidebar_tools, index);
+  tab_bar_set_selected(&view->topbar_tools, index);
+
+  gtk_stack_set_visible_child_name(view->stack, tools_names[index]);
+
+  sync_sidebar_icons(view, index);
 }
 
 static void on_target_source_selection_clicked(GtkButton *button, gpointer data)

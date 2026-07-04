@@ -38,4 +38,6 @@ void screen_manager_destroy(screen_manager_t *manager);
 
 bool screen_manager_show(screen_manager_t *manager, screen_number_t number);
 
+screen_number_t screen_manager_get_current(screen_manager_t *manager);
+
 #endif 
