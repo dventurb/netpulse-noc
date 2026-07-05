@@ -8,7 +8,7 @@
 
 typedef struct app_t app_t;
 
-typedef struct screen_manager_t screen_manager_t;
+typedef struct screen_manager_t screen_manager_t; // opaque struct
 
 typedef enum {
   SCREEN_DASHBOARD,

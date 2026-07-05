@@ -7,7 +7,7 @@
 #include "technician.h"
 #include "hashmap.h"
 
-typedef struct {
+typedef struct app_data_t {
   equipment_list_t  equipments;
   
   hashmap_t         id_index;

@@ -1,6 +1,7 @@
-#include "connectivity_worker.h"
+#include "ping_worker.h"
 
-#include "connectivity.h"
+#include "ping_view.h"
+
 #include "persistence.h"
 
 #include <pthread.h>
@@ -24,7 +25,7 @@ static void *ping_single_task_thread(void *data)
     equipment_update_status(task->controller->selected_equipment, STATUS_FAILED);
     equipment_update_last_check(task->controller->selected_equipment);
    
-    connectivity_controller_create_incident(task->controller, task->controller->selected_equipment);
+    ping_controller_create_equipment_incident(task->controller, task->controller->selected_equipment);
 
     save_equipments(&task->controller->data->equipments);
   }
@@ -39,7 +40,7 @@ static void *ping_single_task_thread(void *data)
 
   connectivity_generate_log(task->params->ip, task->result->avg_latency, task->result->responded);
 
-  g_idle_add(task->callback, task); //  on_ping_finished()
+  g_idle_add(task->callback, task); //  on_run_ping_finished()
 
   return NULL;
 }
@@ -63,7 +64,7 @@ static void *ping_all_task_thread(void *data)
     {
       equipment_update_status(&node->data, STATUS_FAILED);
       equipment_update_last_check(&node->data);
-      connectivity_controller_create_incident(task->controller, &node->data);
+      ping_controller_create_equipment_incident(task->controller, &node->data);
     }
 
     else 
@@ -74,10 +75,12 @@ static void *ping_all_task_thread(void *data)
 
     connectivity_generate_log(node->data.ip_address, task->controller->result->avg_latency, task->controller->result->responded);
 
-    g_idle_add(on_ping_all_finished, task->controller); //  on_ping_finished()
+    g_idle_add(on_run_ping_all_equipments_finished, task->controller);
 
     node = node->next;
   }
+
+  ping_view_set_actions_enabled(task->controller->view, true);
 
   free(task->params);
   free(task->controller->result);
@@ -86,7 +89,7 @@ static void *ping_all_task_thread(void *data)
   return NULL;
 }
 
-void ping_single_task_worker(ping_params_t *params, callback_task callback, connectivity_controller_t *controller)
+void ping_single_task_worker(ping_params_t *params, callback_task callback, ping_controller_t *controller)
 {
   ping_task_t *task = malloc(sizeof(ping_task_t));
   if (task == NULL)
@@ -105,7 +108,7 @@ void ping_single_task_worker(ping_params_t *params, callback_task callback, conn
   pthread_detach(thread);
 }
 
-void ping_all_task_worker(ping_params_t *params, callback_task callback, connectivity_controller_t *controller)
+void ping_all_task_worker(ping_params_t *params, callback_task callback, ping_controller_t *controller)
 {
   ping_task_t *task = malloc(sizeof(ping_task_t));
   if (task == NULL)

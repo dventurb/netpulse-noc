@@ -1,98 +1,24 @@
 #include "connectivity_view.h"
 
-#include "utils.h"
-#include "macros.h"
-
-#include "action_button.h"
-#include "input_field.h"
-#include "unit_field.h"
-#include "list_item.h"
-#include "widget_utils.h"
-
-static const char* DATA_IP_ADDRESS = "EQUIPMENT-IP";
-
-static const char *tools_names[CONNECTIVITY_TOOL_COUNT] = {
-  "PING",
-  "TRACEROUTE",
-  "DNS-LOOKUP",
-  "ARP"
-};
-
-static const char *tool_labels[CONNECTIVITY_TOOL_COUNT] = {
-  "Ping",
-  "TraceRoute",
-  "DNS Lookup",
-  "ARP"
-};
-
-static const char *icons_default[CONNECTIVITY_TOOL_COUNT] = {
-  "assets/icon-ping-default.svg",
-  "assets/icon-traceroute-default.svg",
-  "assets/icon-dns-lookup-default.svg",
-  "assets/icon-arp-table-default.svg"
-};
-
-static const char *icons_active[CONNECTIVITY_TOOL_COUNT] = {
-  "assets/icon-ping-active.svg",
-  "assets/icon-traceroute-active.svg",
-  "assets/icon-dns-lookup-active.svg",
-  "assets/icon-arp-table-active.svg"
-};
+static void build_layout(connectivity_view_t *view);
+static void setup_tools(connectivity_view_t *view);
 
 static GtkWidget *build_header(connectivity_view_t *view);
 static GtkWidget *build_sidebar(connectivity_view_t *view);
 static GtkWidget *build_topbar(connectivity_view_t *view);
-
-static GtkBox *ping_view_create(ping_view_t *view, connectivity_controller_t *controller);
-
-static GtkWidget *build_ping_header(void);
-static GtkWidget *build_source_selection(ping_view_t *view);
-static GtkWidget *build_search(ping_view_t *view);
-static void build_parameters_section(GtkWidget *grid, ping_view_t *view);
-static void build_actions(GtkWidget *grid, ping_view_t *view);
-static GtkWidget *build_terminal(ping_view_t *view);
-static GtkWidget *build_equipment_cell(equipment_t equipment);
-static void build_list_row(GtkWidget *list, equipment_t equipment);
-static GtkWidget *build_stats_cards(void);
-static GtkWidget *build_card(const char *title, const char *icon, const char *main_value, const char *subtitle);
 
 static void sync_sidebar_icons(connectivity_view_t *view, int index);
 
 // Callbacks
 static void on_tool_selected(int index, void *data);
 
-static void on_search_equipment_activated(GtkSearchEntry *search, gpointer data);
-static void on_target_source_selection_clicked(GtkButton *button, gpointer data);
-static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpointer data);
-static void on_run_ping_clicked(GtkButton *button, gpointer data);
-static void on_ping_all_clicked(GtkButton *button, gpointer data);
-
-static void on_save_ping_clicked(GtkButton *button, gpointer data);
-static void on_copy_ping_clicked(GtkButton *button, gpointer data);
-static void on_save_ping_finish(GObject *self, GAsyncResult *res, gpointer data);
-
 
 GtkBox *connectivity_view_create(connectivity_view_t *view, connectivity_controller_t *controller)
 {
   view->controller = controller;
 
-  view->container = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
-  view->stack = GTK_STACK(gtk_stack_new());
-
-  GtkWidget *sidebar = build_sidebar(view);
-
-  GtkWidget *right_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-
-  GtkWidget *header = build_header(view);
-
-  GtkWidget *ping_container = GTK_WIDGET(ping_view_create(&view->ping_view, view->controller));
-  gtk_stack_add_named(view->stack, ping_container, tools_names[CONNECTIVITY_TOOL_PING]);
- 
-  gtk_box_append(GTK_BOX(right_box), header);
-  gtk_box_append(GTK_BOX(right_box), GTK_WIDGET(view->stack));
-
-  gtk_box_append(view->container, sidebar);
-  gtk_box_append(view->container, right_box);
+  build_layout(view);
+  setup_tools(view);
 
   on_tool_selected(CONNECTIVITY_TOOL_PING, view);
 
@@ -103,61 +29,38 @@ void connectivity_view_destroy(connectivity_view_t *view)
 {
   tab_bar_destroy(&view->sidebar_tools);
   tab_bar_destroy(&view->topbar_tools);
-}
 
-void ping_view_update_list(ping_view_t *view, equipment_t *equipments, int count)
-{
-  list_remove_rows(GTK_WIDGET(view->list));
-
-  gtk_widget_set_visible(GTK_WIDGET(view->list), TRUE);
-
-  if (equipments == NULL || count == 0) return;
-
-  for (int i = 0; i < count; i++)
+  if (view->tool_manager != NULL)
   {
-    build_list_row(GTK_WIDGET(view->list), equipments[i]);
+    connectivity_tool_manager_destroy(view->tool_manager);
+    free(view->tool_manager);
   }
 }
 
-void ping_view_set_result(ping_view_t *view, const char *output)
+static void build_layout(connectivity_view_t *view)
 {
-  ping_view_set_actions_enabled(view, true);
+  view->container = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
 
-  if (output == NULL) return;
-
-  char *utf8_char = g_utf8_make_valid(output, -1);
-
-  GtkTextBuffer *terminal_buffer = gtk_text_view_get_buffer(view->terminal);
-
-  GtkTextIter end;
-  gtk_text_buffer_get_end_iter(terminal_buffer, &end);
-
-  gtk_text_buffer_insert(terminal_buffer, &end, utf8_char, -1);
-
-  free(utf8_char);
-}
-
-char *ping_view_get_result(ping_view_t *view)
-{
-  GtkTextBuffer *terminal_buffer = gtk_text_view_get_buffer(view->terminal);
+  GtkWidget *right_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   
-  GtkTextIter start, end;
-  gtk_text_buffer_get_start_iter(terminal_buffer, &start);
-  gtk_text_buffer_get_end_iter(terminal_buffer, &end);
+  GtkWidget *header = build_header(view);
+  view->stack = GTK_STACK(gtk_stack_new());
 
-  return gtk_text_buffer_get_text(terminal_buffer, &start, &end, FALSE);
+  GtkWidget *sidebar = build_sidebar(view);
+
+  gtk_box_append(GTK_BOX(right_box), header);
+  gtk_box_append(GTK_BOX(right_box), GTK_WIDGET(view->stack));
+
+  gtk_box_append(view->container, sidebar);
+  gtk_box_append(view->container, right_box);
 }
 
-void ping_view_clear_result(ping_view_t *view)
+static void setup_tools(connectivity_view_t *view)
 {
-  GtkTextBuffer *terminal_buffer = gtk_text_view_get_buffer(view->terminal);
-  gtk_text_buffer_set_text(GTK_TEXT_BUFFER(terminal_buffer), "$ ", -1);
-}
+  view->tool_manager = connectivity_tool_manager_create(view->stack, view->controller->data);
 
-void ping_view_set_actions_enabled(ping_view_t *view, bool is_active)
-{
-  gtk_widget_set_sensitive(GTK_WIDGET(view->run_button), is_active);
-  gtk_widget_set_sensitive(GTK_WIDGET(view->ping_all_button), is_active);
+  connectivity_tool_manager_show(view->tool_manager, CONNECTIVITY_TOOL_PING);
+  sync_sidebar_icons(view, CONNECTIVITY_TOOL_PING);
 }
 
 static GtkWidget *build_header(connectivity_view_t *view)
@@ -202,7 +105,17 @@ static GtkWidget *build_sidebar(connectivity_view_t *view)
 
   view->sidebar_tools = tab_bar_new(CONNECTIVITY_TOOL_COUNT, GTK_ORIENTATION_VERTICAL, on_tool_selected, view);
 
-  tab_bar_create_buttons(&view->sidebar_tools, tool_labels, icons_default, "connectivity-sidebar-button");
+  const char *labels[CONNECTIVITY_TOOL_COUNT];
+  const char *icons[CONNECTIVITY_TOOL_COUNT];
+
+  for (int i = 0; i < CONNECTIVITY_TOOL_COUNT; i++) 
+  {
+    const connectivity_tool_descriptor_t *descriptor = connectivity_tool_get_descriptor(i);
+    labels[i] = descriptor->text;
+    icons[i] = descriptor->icon_default;
+  }
+
+  tab_bar_create_buttons(&view->sidebar_tools, labels, icons, "connectivity-sidebar-button");
 
   gtk_widget_set_vexpand(GTK_WIDGET(view->sidebar_tools.container), TRUE);
   gtk_widget_add_css_class(GTK_WIDGET(view->sidebar_tools.container), "connectivity-sidebar");
@@ -217,381 +130,28 @@ static GtkWidget *build_topbar(connectivity_view_t *view)
 {
   view->topbar_tools = tab_bar_new(CONNECTIVITY_TOOL_COUNT, GTK_ORIENTATION_HORIZONTAL, on_tool_selected, view);
 
-  tab_bar_create_buttons(&view->topbar_tools, tool_labels, NULL, "connectivity-tools-button");
+  const char *labels[CONNECTIVITY_TOOL_COUNT];
+
+  for (int i = 0; i < CONNECTIVITY_TOOL_COUNT; i++) 
+  {
+    const connectivity_tool_descriptor_t *descriptor = connectivity_tool_get_descriptor(i);
+    labels[i] = descriptor->text;
+  }
+
+  tab_bar_create_buttons(&view->topbar_tools, labels, NULL, "connectivity-tools-button");
 
   gtk_widget_set_hexpand(GTK_WIDGET(view->topbar_tools.container), TRUE);
 
   return GTK_WIDGET(view->topbar_tools.container);
 }
 
-static GtkBox *ping_view_create(ping_view_t *view, connectivity_controller_t *controller)
-{
-  view->controller = controller;
-
-  view->container = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 24));
-  gtk_widget_set_margin_top(GTK_WIDGET(view->container), 32);
-  gtk_widget_set_margin_start(GTK_WIDGET(view->container), 32);
-  gtk_widget_set_margin_end(GTK_WIDGET(view->container), 32);
-
-  GtkWidget *top_panel = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 20);
-
-  GtkWidget *config_panel = gtk_box_new(GTK_ORIENTATION_VERTICAL, 20);
-  gtk_widget_set_size_request(config_panel, -1, 400);
-  gtk_widget_add_css_class(config_panel, "connectivity-config-panel");
-
-  GtkWidget *panel_header = build_ping_header();
-
-  GtkWidget *label_target = gtk_label_new("TARGET SOURCE SELECTION");
-  gtk_widget_set_halign(label_target, GTK_ALIGN_START);
-  gtk_widget_add_css_class(label_target, "config-panel-form-label");
-
-  view->stack = GTK_STACK(gtk_stack_new());
-  gtk_stack_set_vhomogeneous(view->stack, FALSE);
-
-  GtkWidget *target_source_selector = build_source_selection(view);
-
-  GtkWidget *form_fields_grid = gtk_grid_new();
-  gtk_grid_set_row_spacing(GTK_GRID(form_fields_grid), 16);
-  gtk_grid_set_column_spacing(GTK_GRID(form_fields_grid), 16);
-
-  GtkWidget *container_search = build_search(view);
-  gtk_stack_add_named(view->stack, container_search, "REGISTERED");
-
-  gtk_stack_set_visible_child_name(view->stack, "REGISTERED");
- 
-  view->manual_ip_field = input_field_new("TARGET (IP ADDRESS)", "192.168.1.1", NULL);
-  gtk_widget_add_css_class(GTK_WIDGET(view->manual_ip_field.container), "target-field-label");
-  gtk_stack_add_named(view->stack, GTK_WIDGET(view->manual_ip_field.container), "MANUAL");
-
-  gtk_grid_attach(GTK_GRID(form_fields_grid), GTK_WIDGET(view->stack), 0, 1, 2, 1);
-
-  build_parameters_section(form_fields_grid, view);
-  build_actions(form_fields_grid, view);
-
-  gtk_box_append(GTK_BOX(config_panel), panel_header);
-  gtk_box_append(GTK_BOX(config_panel), label_target);
-  gtk_box_append(GTK_BOX(config_panel), target_source_selector);
-  gtk_box_append(GTK_BOX(config_panel), form_fields_grid);
-  
-  view->stats_cards = GTK_BOX(build_stats_cards());
-
-  GtkWidget *terminal_panel = build_terminal(view);
-
-  gtk_box_append(GTK_BOX(top_panel), config_panel);
-  gtk_box_append(GTK_BOX(top_panel), GTK_WIDGET(view->stats_cards));
-
-  gtk_box_append(view->container, top_panel);
-  gtk_box_append(view->container, terminal_panel);
-
-  return view->container;
-}
-
-static GtkWidget *build_ping_header(void)
-{
-  GtkWidget *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-  gtk_widget_add_css_class(header, "config_panel-header");
-  gtk_widget_set_valign(header, GTK_ALIGN_START);
-  
-  GtkWidget *header_icon = gtk_image_new_from_file("assets/icon-ping-configuration.svg");
-  gtk_image_set_pixel_size(GTK_IMAGE(header_icon), 14);
-
-  GtkWidget *header_title = gtk_label_new("Ping Configuration");
-  gtk_widget_add_css_class(header_title, "config-panel-title");
-
-  gtk_box_append(GTK_BOX(header), header_icon);
-  gtk_box_append(GTK_BOX(header), header_title);
-
-  return header;
-}
-
-void ping_view_update_stats_cards(ping_view_t *view, ping_result_t result)
-{
-  widget_remove_children(GTK_WIDGET(view->stats_cards));
-  gtk_widget_set_hexpand(GTK_WIDGET(view->stats_cards), TRUE);
-
-  ping_stats_t stats = {0};
-
-  view->controller->result = &result;
-  connectivity_controller_get_stats(view->controller, &stats);
-
-  GtkWidget *left_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 40);
-  gtk_box_set_homogeneous(GTK_BOX(left_box), TRUE);
-  gtk_widget_set_hexpand(left_box, TRUE);
-
-  GtkWidget *status_card = build_card("TARGET STATUS", "assets/icon-responded.svg", stats.status, view->controller->ip);
-
-  GtkWidget *packets_card = build_card("PACKET LOSS", "assets/icon-packet.svg", stats.loss_value, stats.loss_subtitle);
-
-  gtk_box_append(GTK_BOX(left_box), status_card);
-  gtk_box_append(GTK_BOX(left_box), packets_card);
-
-  GtkWidget *right_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 40);
-  gtk_box_set_homogeneous(GTK_BOX(right_box), TRUE);
-  gtk_widget_set_hexpand(right_box, TRUE);
-  
-  GtkWidget *average_card = build_card("AVG LATENCY", "assets/icon-timer.svg", stats.latency, "from current execution");
-
-  GtkWidget *last_execution_card = build_card("LAST EXECUTION", "assets/icon-clock.svg",stats.execution_value, stats.execution_subtitle);
-
-  gtk_box_append(GTK_BOX(right_box), average_card);
-  gtk_box_append(GTK_BOX(right_box), last_execution_card);
-
-  gtk_box_append(view->stats_cards, left_box);
-  gtk_box_append(view->stats_cards, right_box);
-}
-
-static GtkWidget *build_stats_cards(void)
-{
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 20);
-  gtk_box_set_homogeneous(GTK_BOX(box), TRUE);
-  gtk_widget_set_hexpand(box, TRUE);
-
-  GtkWidget *left_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 40);
-  gtk_box_set_homogeneous(GTK_BOX(left_box), TRUE);
-  gtk_widget_set_hexpand(left_box, TRUE);
-
-  GtkWidget *status_card = build_card("TARGET STATUS", "assets/icon-responded.svg", "Online", "192.168.1.1");
-
-  GtkWidget *packets_card = build_card("PACKET LOSS", "assets/icon-packet.svg", "0%", "0 transmitted, 0 received");
-
-  gtk_box_append(GTK_BOX(left_box), status_card);
-  gtk_box_append(GTK_BOX(left_box), packets_card);
-
-  GtkWidget *right_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 40);
-  gtk_box_set_homogeneous(GTK_BOX(right_box), TRUE);
-  gtk_widget_set_hexpand(right_box, TRUE);
-  
-  GtkWidget *average_card = build_card("AVG LATENCY", "assets/icon-timer.svg", "0.0", "0ms from baseline");
-  GtkWidget *last_execution_card = build_card("LAST EXECUTION", "assets/icon-clock.svg", "01-01-01 00:00", "Duration: 0.00s");
-
-  gtk_box_append(GTK_BOX(right_box), average_card);
-  gtk_box_append(GTK_BOX(right_box), last_execution_card);
-
-  gtk_box_append(GTK_BOX(box), left_box);
-  gtk_box_append(GTK_BOX(box), right_box);
-
-  return box;
-}
-
-static GtkWidget *build_card(const char *title, const char *icon, const char *main_value, const char *subtitle)
-{
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-  gtk_widget_set_vexpand(box, TRUE);
-  gtk_widget_set_hexpand(box, TRUE);
-  gtk_widget_add_css_class(box, "card-container");
-  
-  GtkWidget *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
-  
-  GtkWidget *label_title = gtk_label_new(title);  
-  gtk_widget_set_halign(label_title, GTK_ALIGN_START);
-  gtk_widget_add_css_class(label_title, "card-title");
-
-  GtkWidget *spacer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  gtk_widget_set_hexpand(spacer, TRUE);
-
-  GtkWidget *image = gtk_image_new_from_file(icon);
-  gtk_widget_set_halign(image, GTK_ALIGN_END);
-
-  gtk_box_append(GTK_BOX(header), label_title);
-  gtk_box_append(GTK_BOX(header), spacer);
-  gtk_box_append(GTK_BOX(header), image);
-
-  GtkWidget *label_main_value = gtk_label_new(main_value);
-  gtk_widget_set_halign(label_main_value, GTK_ALIGN_START);
-  gtk_widget_add_css_class(label_main_value, "card-value");
-  gtk_label_set_width_chars(GTK_LABEL(label_main_value), 1);
-  gtk_label_set_ellipsize(GTK_LABEL(label_main_value), PANGO_ELLIPSIZE_END);
-
-  GtkWidget *label_subtitle = gtk_label_new(subtitle);
-  gtk_widget_set_vexpand(label_subtitle, TRUE);
-  gtk_widget_set_halign(label_subtitle, GTK_ALIGN_START);
-  gtk_widget_set_valign(label_subtitle, GTK_ALIGN_END);
-  gtk_widget_set_margin_bottom(label_subtitle, 5);
-  gtk_widget_add_css_class(label_subtitle, "card-subtitle");
-  gtk_label_set_width_chars(GTK_LABEL(label_subtitle), 1);
-  gtk_label_set_ellipsize(GTK_LABEL(label_subtitle), PANGO_ELLIPSIZE_END);
-  gtk_widget_set_tooltip_text(label_subtitle, subtitle);
-
-  gtk_box_append(GTK_BOX(box), header);
-  gtk_box_append(GTK_BOX(box), label_main_value);
-  gtk_box_append(GTK_BOX(box), label_subtitle);
-
-  return box;
-}
-
-static GtkWidget *build_source_selection(ping_view_t *view)
-{
-  GtkWidget *target_source_selector = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
-
-  view->registered_button = GTK_CHECK_BUTTON(gtk_check_button_new_with_label("Registered Equipment"));
-  gtk_widget_add_css_class(GTK_WIDGET(view->registered_button), "config-panel-form-checkbutton");
-  gtk_check_button_set_active(view->registered_button, TRUE);
-  g_signal_connect(GTK_WIDGET(view->registered_button), "toggled", G_CALLBACK(on_target_source_selection_clicked), view);
-
-  view->manual_button = GTK_CHECK_BUTTON(gtk_check_button_new_with_label("Manual IP Address"));
-  gtk_widget_add_css_class(GTK_WIDGET(view->manual_button), "config-panel-form-checkbutton");
-  g_signal_connect(GTK_WIDGET(view->manual_button), "toggled", G_CALLBACK(on_target_source_selection_clicked), view);
-
-  gtk_check_button_set_group(view->registered_button, view->manual_button); // mutually exclusive selection
-
-  gtk_box_append(GTK_BOX(target_source_selector), GTK_WIDGET(view->registered_button));
-  gtk_box_append(GTK_BOX(target_source_selector), GTK_WIDGET(view->manual_button));
-
-  return target_source_selector;
-}
-
-static GtkWidget *build_search(ping_view_t *view)
-{
-  GtkWidget *container_search = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
-
-  GtkWidget *label_equipment = gtk_label_new("TARGET (ID / IP / MAC)");
-  gtk_widget_set_halign(label_equipment, GTK_ALIGN_START);
-  gtk_widget_add_css_class(label_equipment, "unit-field-label");
-
-  GtkWidget *equipment_search = gtk_search_entry_new();
-  gtk_search_entry_set_placeholder_text(GTK_SEARCH_ENTRY(equipment_search), "Search equipments...");
-  gtk_widget_set_size_request(equipment_search, 336, 40);
-  gtk_widget_add_css_class(equipment_search, "search-target");
-  g_signal_connect(equipment_search, "search-changed", G_CALLBACK(on_search_equipment_activated), view);
-
-  view->list = GTK_LIST_BOX(gtk_list_box_new());
-  gtk_widget_set_visible(GTK_WIDGET(view->list), FALSE);
-  g_signal_connect(GTK_WIDGET(view->list), "row-selected", G_CALLBACK(on_equipment_row_selected), view);
-
-  gtk_box_append(GTK_BOX(container_search), label_equipment);
-  gtk_box_append(GTK_BOX(container_search), equipment_search);
-  gtk_box_append(GTK_BOX(container_search), GTK_WIDGET(view->list));
-
-  return container_search;
-}
-
-static void build_parameters_section(GtkWidget *grid, ping_view_t *view)
-{
-  view->count_field = unit_field_new("COUNT", "5", "pkts");
-  gtk_entry_set_max_length(view->count_field.entry, PING_COUNT_MAX - 1);
-
-  view->timeout_field = unit_field_new("TIMEOUT", "2", "sec");
-  gtk_entry_set_max_length(view->timeout_field.entry, PING_TIMEOUT_MAX - 1);
-
-  view->packet_size_field = unit_field_new("PACKET SIZE", "56 bytes (Standard)", NULL);
-  gtk_entry_set_max_length(view->packet_size_field.entry, PING_PACKET_SIZE_MAX - 1);
-
-  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->count_field.container), 0, 2, 1, 1);
-  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->timeout_field.container), 1, 2, 1, 1);
-  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->packet_size_field.container), 0, 3, 2, 1);
-}
-
-static void build_actions(GtkWidget *grid, ping_view_t *view)
-{
-  view->run_button = GTK_BUTTON(action_button_new("Run Ping", "assets/icon-start.svg", "secondary-button"));
-  g_signal_connect(GTK_WIDGET(view->run_button), "clicked", G_CALLBACK(on_run_ping_clicked), view);
-
-  view->ping_all_button = GTK_BUTTON(action_button_new("Ping All Equipments", NULL, "ping-all-button"));
-  g_signal_connect(GTK_WIDGET(view->ping_all_button), "clicked", G_CALLBACK(on_ping_all_clicked), view);
-
-  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->run_button), 0, 4, 1, 1);
-  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->ping_all_button), 1, 4, 1, 1);
-}
-
-static GtkWidget *build_terminal(ping_view_t *view)
-{
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-
-  GtkWidget *terminal_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-  gtk_widget_set_size_request(terminal_header, -1, 44);
-  gtk_widget_add_css_class(terminal_header, "terminal-header");
-
-  GtkWidget *image = gtk_image_new_from_file("assets/terminal-control-close.svg");
-  gtk_image_set_pixel_size(GTK_IMAGE(image), 12);
-  gtk_box_append(GTK_BOX(terminal_header), image);
- 
-  image = gtk_image_new_from_file("assets/terminal-control-minimize.svg");
-  gtk_image_set_pixel_size(GTK_IMAGE(image), 12);
-  gtk_box_append(GTK_BOX(terminal_header), image);
-  
-  image = gtk_image_new_from_file("assets/terminal-control-maximize.svg");
-  gtk_image_set_pixel_size(GTK_IMAGE(image), 12);
-  gtk_box_append(GTK_BOX(terminal_header), image);
-
-  GtkWidget *copy_button = action_button_new("Copy", "assets/icon-copy.svg", "terminal-header-button");
-  gtk_widget_set_halign(copy_button, GTK_ALIGN_END);
-  gtk_widget_set_hexpand(copy_button, TRUE);
-  g_signal_connect(copy_button, "clicked", G_CALLBACK(on_copy_ping_clicked), view);
-
-  GtkWidget *save_button = action_button_new("Save", "assets/icon-save.svg", "terminal-header-button");
-  gtk_widget_set_halign(save_button, GTK_ALIGN_END);
-  g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_ping_clicked), view);
-
-  GtkWidget *label = gtk_label_new("noc-technician@netpulse: ~/tools");
-  gtk_widget_add_css_class(label, "terminal-header-title");
-
-  gtk_box_append(GTK_BOX(terminal_header), label);
-  gtk_box_append(GTK_BOX(terminal_header), copy_button);
-  gtk_box_append(GTK_BOX(terminal_header), save_button);
-
-  GtkWidget *scrolled = gtk_scrolled_window_new();
-  gtk_widget_set_size_request(scrolled, -1, 400);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-
-  view->terminal = GTK_TEXT_VIEW(gtk_text_view_new());
-  gtk_widget_set_size_request(GTK_WIDGET(view->terminal), -1, 400);
-  gtk_widget_set_sensitive(GTK_WIDGET(view->terminal), FALSE);
-  gtk_widget_add_css_class(GTK_WIDGET(view->terminal), "terminal-panel");
-
-  GtkTextBuffer *terminal_buffer = gtk_text_buffer_new(NULL);
-  gtk_text_buffer_set_text(GTK_TEXT_BUFFER(terminal_buffer), "$ ping -c 5 -W 2 -s 56 192.168.1.1", -1);
-
-  gtk_text_view_set_buffer(view->terminal, terminal_buffer);
-
-  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled), GTK_WIDGET(view->terminal));
-
-  gtk_box_append(GTK_BOX(box), terminal_header);
-  gtk_box_append(GTK_BOX(box), scrolled);
-
-  return box;
-}
-
-static GtkWidget *build_equipment_cell(equipment_t equipment) 
-{
-  switch (equipment.status) 
-  {
-    case STATUS_FAILED:
-      return list_item_new(equipment.name, equipment.ip_address, "assets/status-failed.svg");
-
-    case STATUS_MAINTENANCE:
-      return list_item_new(equipment.name, equipment.ip_address, "assets/status-maintenance.svg");
-
-    case STATUS_OPERATIONAL:
-      return list_item_new(equipment.name, equipment.ip_address, "assets/status-operational.svg");
-
-    case STATUS_DISABLED:
-      return list_item_new(equipment.name, equipment.ip_address, "assets/status-disabled.svg");
-
-    default: 
-      return NULL;
-  }
-}
-
-static void build_list_row(GtkWidget *list, equipment_t equipment)
-{
-  GtkWidget *item = build_equipment_cell(equipment);
-
-  GtkWidget *row = gtk_list_box_row_new();
-
-  char *ip_address = strdup(equipment.ip_address);
-  g_object_set_data_full(G_OBJECT(row), DATA_IP_ADDRESS, ip_address, free); // ownership + free automatic
-
-  gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), item);
-  gtk_widget_add_css_class(row, "search-row-item");
-
-  gtk_list_box_append(GTK_LIST_BOX(list), row);
-}
-
 static void sync_sidebar_icons(connectivity_view_t *view, int index)
 {
   for (int i = 0; i < CONNECTIVITY_TOOL_COUNT; i++) 
   {
-    const char *icon = i == index ? icons_active[i] : icons_default[i];
+    const connectivity_tool_descriptor_t *descriptor = connectivity_tool_get_descriptor(i);
+
+    const char *icon = i == index ? descriptor->icon_active : descriptor->icon_default;
 
     toggle_button_set_icon(&view->sidebar_tools.buttons[i], icon);
   }
@@ -603,162 +163,13 @@ static void on_tool_selected(int index, void *data)
 
   connectivity_view_t *view = (connectivity_view_t *)data;
 
-  tab_bar_set_selected(&view->sidebar_tools, index);
-  tab_bar_set_selected(&view->topbar_tools, index);
-
-  gtk_stack_set_visible_child_name(view->stack, tools_names[index]);
-
-  sync_sidebar_icons(view, index);
-}
-
-static void on_target_source_selection_clicked(GtkButton *button, gpointer data)
-{
-  ping_view_t *view = (ping_view_t *)data;
-
-  target_source_t source;
-
-  if (GTK_WIDGET(view->registered_button) == GTK_WIDGET(button))
+  if (connectivity_tool_manager_show(view->tool_manager, index) == FALSE)
   {
-    gtk_stack_set_visible_child_name(view->stack, "REGISTERED");
-    source = SOURCE_SEARCH;
+    connectivity_tool_number_t previous = connectivity_tool_manager_get_current(view->tool_manager);
+
+    tab_bar_set_selected(&view->sidebar_tools, previous);
+    tab_bar_set_selected(&view->topbar_tools, previous);
+
+    sync_sidebar_icons(view, previous);
   }
-
-  else 
-  {
-    gtk_stack_set_visible_child_name(view->stack, "MANUAL");
-    source = SOURCE_MANUAL;
-  }
-
-  connectivity_controller_set_source_selection(view->controller, source);
-}
-
-static void on_search_equipment_activated(GtkSearchEntry *search, gpointer data)
-{
-  ping_view_t *view = (ping_view_t *)data;
-
-  const char *text = gtk_editable_get_text(GTK_EDITABLE(search));
-
-  connectivity_controller_search_equipment(view->controller, text);
-}
-
-static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpointer data)
-{
-  (void)list; // unused variable
-  
-  ping_view_t *view = (ping_view_t *)data;
-  
-  if (row == NULL) return;
-
-  const char *ip_address = g_object_get_data(G_OBJECT(row), DATA_IP_ADDRESS);
-
-  connectivity_controller_set_ip_address(view->controller, ip_address);
-}
-
-static void on_run_ping_clicked(GtkButton *button, gpointer data)
-{
-  (void)button; // unused
-
-  ping_view_t *view = (ping_view_t *)data; 
-
-  ping_view_clear_result(view);
-  
-  ping_view_set_actions_enabled(view, false);
-
-  const char *ip_text = gtk_editable_get_text(GTK_EDITABLE(view->manual_ip_field.entry));
-  const char *count = gtk_editable_get_text(GTK_EDITABLE(view->count_field.entry));
-  const char *timeout = gtk_editable_get_text(GTK_EDITABLE(view->timeout_field.entry));
-  const char *packet_size = gtk_editable_get_text(GTK_EDITABLE(view->packet_size_field.entry));
-
-  connectivity_controller_set_ip_from_source(view->controller, ip_text);
-
-  gtk_widget_remove_css_class(GTK_WIDGET(view->manual_ip_field.container), "field-error");
-  gtk_widget_remove_css_class(GTK_WIDGET(view->count_field.container), "field-error");
-  gtk_widget_remove_css_class(GTK_WIDGET(view->timeout_field.container), "field-error");
-  gtk_widget_remove_css_class(GTK_WIDGET(view->packet_size_field.container), "field-error");
- 
-  ping_validation_t error = connectivity_controller_validate_ping(view->controller->ip, count, timeout, packet_size);
-
-  switch (error) 
-  {
-    case PING_INVALID_IP_ADDRESS:
-      gtk_widget_add_css_class(GTK_WIDGET(view->manual_ip_field.container), "field-error");
-      break;
-    case PING_INVALID_COUNT:
-      gtk_widget_add_css_class(GTK_WIDGET(view->count_field.container), "field-error");
-      break;
-    case PING_INVALID_TIMEOUT:
-      gtk_widget_add_css_class(GTK_WIDGET(view->timeout_field.container), "field-error");
-      break;
-    case PING_INVALID_PACKET_SIZE:
-      gtk_widget_add_css_class(GTK_WIDGET(view->packet_size_field.container), "field-error");
-      break;
-    case PING_OK:
-      connectivity_controller_ping(view->controller, count, timeout, packet_size);
-      break;
-  }
-
-  if (error != PING_OK) 
-    ping_view_set_actions_enabled(view, true);
-}
-
-static void on_ping_all_clicked(GtkButton *button, gpointer data)
-{
-  (void)button; // unused 
-
-  ping_view_t *view = (ping_view_t *)data; 
-
-  ping_view_set_actions_enabled(view, false);
-  
-  ping_view_clear_result(view);
-  
-  connectivity_controller_ping_all(view->controller);
-}
-
-static void on_save_ping_clicked(GtkButton *button, gpointer data)
-{
-  (void)button;
-
-  ping_view_t *view = (ping_view_t *)data;
-
-  GtkWindow *window = GTK_WINDOW(gtk_widget_get_root(GTK_WIDGET(view->container)));
-
-  GtkFileDialog *dialog = gtk_file_dialog_new();
-  gtk_file_dialog_set_modal(dialog, TRUE);
-
-  gtk_file_dialog_save(dialog, window, NULL, on_save_ping_finish, view);
-
-  g_object_unref(dialog);
-}
-
-static void on_copy_ping_clicked(GtkButton *button, gpointer data)
-{
-  (void)button;
-
-  ping_view_t *view = (ping_view_t *)data;
-
-  GdkClipboard *clipboard = gtk_widget_get_clipboard(GTK_WIDGET(view->terminal));
-
-  char *text = ping_view_get_result(view);
-  if (text == NULL) return;
-
-  gdk_clipboard_set_text(clipboard, text);
-
-  free(text);
-}
-
-static void on_save_ping_finish(GObject *self, GAsyncResult *res, gpointer data)
-{
-  ping_view_t *view = (ping_view_t *)data;
-
-  GFile *file = gtk_file_dialog_save_finish(GTK_FILE_DIALOG(self), res, NULL);
-  if (file == NULL) return;
-
-  char *filepath = g_file_get_path(file);
-
-  connectivity_controller_save_file(view->controller, filepath);
-
-  ping_view_set_actions_enabled(view, true);
-
-  free(filepath);
-  g_object_unref(file);
 }
