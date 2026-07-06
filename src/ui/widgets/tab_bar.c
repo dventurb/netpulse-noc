@@ -67,6 +67,22 @@ void tab_bar_set_selected(tab_bar_t *bar, int index)
   }
 }
 
+void tab_bar_set_button_icon(tab_bar_t *bar, int index, const char *icon)
+{
+  if (bar->buttons == NULL)  return;
+  if (index < 0 || index >= bar->count) return;
+
+  toggle_button_set_icon(&bar->buttons[index], icon);
+}
+
+void tab_bar_set_button_label(tab_bar_t *bar, int index, const char *text)
+{
+  if (bar->buttons == NULL)  return;
+  if (index < 0 || index >= bar->count) return;
+
+  toggle_button_set_label(&bar->buttons[index], text);
+}
+
 static void on_button_clicked(GtkToggleButton *button, gpointer data)
 {
   tab_bar_t *bar = (tab_bar_t *)data;

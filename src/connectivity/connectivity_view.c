@@ -20,8 +20,6 @@ GtkBox *connectivity_view_create(connectivity_view_t *view, connectivity_control
   build_layout(view);
   setup_tools(view);
 
-  on_tool_selected(CONNECTIVITY_TOOL_PING, view);
-
   return view->container;
 }
 
@@ -31,10 +29,7 @@ void connectivity_view_destroy(connectivity_view_t *view)
   tab_bar_destroy(&view->topbar_tools);
 
   if (view->tool_manager != NULL)
-  {
     connectivity_tool_manager_destroy(view->tool_manager);
-    free(view->tool_manager);
-  }
 }
 
 static void build_layout(connectivity_view_t *view)
@@ -59,8 +54,7 @@ static void setup_tools(connectivity_view_t *view)
 {
   view->tool_manager = connectivity_tool_manager_create(view->stack, view->controller->data);
 
-  connectivity_tool_manager_show(view->tool_manager, CONNECTIVITY_TOOL_PING);
-  sync_sidebar_icons(view, CONNECTIVITY_TOOL_PING);
+  on_tool_selected(CONNECTIVITY_TOOL_PING, view);
 }
 
 static GtkWidget *build_header(connectivity_view_t *view)
@@ -153,7 +147,7 @@ static void sync_sidebar_icons(connectivity_view_t *view, int index)
 
     const char *icon = i == index ? descriptor->icon_active : descriptor->icon_default;
 
-    toggle_button_set_icon(&view->sidebar_tools.buttons[i], icon);
+    tab_bar_set_button_icon(&view->sidebar_tools, i, icon);
   }
 }
 
@@ -163,13 +157,12 @@ static void on_tool_selected(int index, void *data)
 
   connectivity_view_t *view = (connectivity_view_t *)data;
 
+  // TODO: implementing others tools
   if (connectivity_tool_manager_show(view->tool_manager, index) == FALSE)
-  {
-    connectivity_tool_number_t previous = connectivity_tool_manager_get_current(view->tool_manager);
+    index = connectivity_tool_manager_get_current(view->tool_manager);
 
-    tab_bar_set_selected(&view->sidebar_tools, previous);
-    tab_bar_set_selected(&view->topbar_tools, previous);
+  tab_bar_set_selected(&view->sidebar_tools, index);
+  tab_bar_set_selected(&view->topbar_tools, index);
 
-    sync_sidebar_icons(view, previous);
-  }
+  sync_sidebar_icons(view, index);
 }

@@ -25,6 +25,9 @@ tab_bar_t tab_bar_new(int count, GtkOrientation orientation, tab_bar_callback ca
 void tab_bar_destroy(tab_bar_t *bar);
 
 void tab_bar_create_buttons(tab_bar_t *bar, const char **labels, const char **icons, const char *css);
+
 void tab_bar_set_selected(tab_bar_t *bar, int index);
+void tab_bar_set_button_icon(tab_bar_t *bar, int index, const char *icon);
+void tab_bar_set_button_label(tab_bar_t *bar, int index, const char *text);
 
 #endif
