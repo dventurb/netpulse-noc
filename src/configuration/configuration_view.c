@@ -338,6 +338,7 @@ static GtkWidget *build_pagination_bar(configuration_view_t *view)
 
   pagination_get_range(view->controller->pagination, &start, &end);
 
+  /*
   for (int i = start; i <= end; i++) 
   {
     char buffer[12];
@@ -348,6 +349,7 @@ static GtkWidget *build_pagination_bar(configuration_view_t *view)
 
     gtk_box_append(GTK_BOX(box), button);
   }
+  */
 
   GtkWidget *next_button = action_button_new(NULL, "assets/right-arrow.svg", "arrow-page");
   gtk_widget_set_margin_top(next_button, 16);

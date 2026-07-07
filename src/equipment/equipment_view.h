@@ -5,6 +5,7 @@
 
 #include "input_field.h"
 #include "dropdown_field.h"
+#include "pagination_bar.h"
 
 #include "equipment.h"
 #include "equipment_controller.h"
@@ -35,13 +36,15 @@ typedef struct {
 } equipment_form_t;
 
 typedef struct equipment_view_t {
+
   equipment_controller_t *controller;
   
   GtkBox      *container;
   GtkGrid     *table;
 
   GtkBox      *cards;
-  GtkBox      *pagination_bar;
+  
+  pagination_bar_t pagination_bar;
 
   GtkButton   *add_button;
   GtkButton   *edit_button;

@@ -275,16 +275,18 @@ static GtkWidget *build_pagination_bar(sensor_view_t *view)
 
   pagination_get_range(view->controller->pagination, &start, &end);
 
+  /*
   for (int i = start; i <= end; i++) 
   {
     char buffer[12];
     snprintf(buffer, sizeof(buffer), "%d", i + 1);
 
-    GtkWidget *button = pagination_button_new(view->controller->pagination, buffer, i);
-    g_signal_connect(button, "clicked", G_CALLBACK(on_page_clicked), view);
+    //GtkWidget *button = pagination_button_new(view->controller->pagination, buffer, i);
+    //g_signal_connect(button, "clicked", G_CALLBACK(on_page_clicked), view);
 
     gtk_box_append(GTK_BOX(box), button);
   }
+  */
 
   GtkWidget *next_button = action_button_new(NULL, "assets/right-arrow.svg", "arrow-page");
   gtk_widget_set_margin_top(next_button, 16);
