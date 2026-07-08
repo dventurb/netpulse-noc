@@ -278,11 +278,19 @@ void sensor_controller_get_stats(sensor_controller_t *controller, sensor_stats_t
 {
   sensor_array_t array = controller->data->sensors;
 
-  stats->total = sensor_get_count(array);
-  stats->ok = sensor_get_number_status(array, SENSOR_OK);
-  stats->failure = sensor_get_number_status(array, SENSOR_NET_FAILURE);
-  stats->warning = sensor_get_number_status(array, SENSOR_WARNING);
-  stats->critical = sensor_get_number_status(array, SENSOR_CRITICAL);
+  int total = sensor_get_count(array);
+  snprintf(stats->total, STRING_MAX, "%d", total);
+
+  int ok = sensor_get_number_status(array, SENSOR_OK);
+  snprintf(stats->ok, STRING_MAX, "%d", ok);
+
+  int failure = sensor_get_number_status(array, SENSOR_NET_FAILURE);
+  snprintf(stats->failure, STRING_MAX, "%d", failure);
+
+  // TODO
+  int warning = sensor_get_number_status(array, SENSOR_WARNING);
+  int critical = sensor_get_number_status(array, SENSOR_CRITICAL);
+  snprintf(stats->warning_critical, STRING_MAX, "%d", warning + critical);
 }
 
 gboolean on_sensor_finish(gpointer data)

@@ -285,10 +285,17 @@ equipment_validation_t equipment_controller_validate_edit(equipment_controller_t
 
 void equipment_controller_get_stats(equipment_controller_t *controller, equipment_stats_t *stats)
 {
-  stats->total = equipment_get_count(&controller->data->equipments);
-  stats->operational = equipment_get_number_status(&controller->data->equipments, STATUS_OPERATIONAL);
-  stats->failed = equipment_get_number_status(&controller->data->equipments, STATUS_FAILED);
-  stats->maintenance = equipment_get_number_status(&controller->data->equipments, STATUS_MAINTENANCE);
+  int total = equipment_get_count(&controller->data->equipments);
+  snprintf(stats->total, STRING_MAX, "%d", total);
+
+  int operational = equipment_get_number_status(&controller->data->equipments, STATUS_OPERATIONAL);
+  snprintf(stats->operational, STRING_MAX, "%d", operational);
+
+  int failed = equipment_get_number_status(&controller->data->equipments, STATUS_FAILED);
+  snprintf(stats->failed, STRING_MAX, "%d", failed);
+
+  int maintenance = equipment_get_number_status(&controller->data->equipments, STATUS_MAINTENANCE);
+  snprintf(stats->maintenance, STRING_MAX, "%d", maintenance);
 }
 
 gboolean on_equipment_finish(gpointer data)

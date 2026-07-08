@@ -243,11 +243,16 @@ bool configuration_controller_is_top_stack(configuration_controller_t *controlle
 void configuration_controller_get_stats(configuration_controller_t *controller, configuration_stats_t *stats)
 {
   if (!configuration_controller_has_selected_equipment(controller)) return;
+
+  configuration_stack_t *stack = &controller->selected_equipment->data.configs;
   
-  stats->total = configuration_get_count(&controller->selected_equipment->data.configs);
+  int total = configuration_get_count(stack);
+  snprintf(stats->total, STRING_MAX, "%d", total);
   
-  if (controller->selected_equipment->data.configs.count != 0)
-    format_timestamp_to_datetime(controller->selected_equipment->data.configs.top->data.operated_at, stats->last_updated);
+  if (total != 0)
+    format_timestamp_to_datetime(stack->top->data.operated_at, stats->last_updated);
+  
+  // TODO: stats->technicians;
 }
 
 gboolean on_configuration_finish(gpointer data)

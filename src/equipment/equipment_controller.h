@@ -12,6 +12,7 @@
 typedef struct equipment_view_t equipment_view_t;
 
 typedef enum {
+
   EQUIPMENT_INVALID_NAME,
   EQUIPMENT_INVALID_VENDOR,
   EQUIPMENT_INVALID_MODEL,
@@ -24,9 +25,11 @@ typedef enum {
   EQUIPMENT_DUPLICATE_MAC,
 
   EQUIPMENT_VALID
+
 } equipment_validation_t;
 
 typedef struct {
+
   app_data_t *data;
 
   equipment_view_t *view;
@@ -41,9 +44,11 @@ typedef struct {
   int prev_sort;
 
   pagination_t pagination;
+
 } equipment_controller_t;
 
 typedef struct {
+
   int start;
   int end;
 
@@ -55,14 +60,18 @@ typedef struct {
 
   int count;
   int total;
+
 } equipment_params_t;
 
 typedef struct {
-  int total;
-  int operational;
-  int failed;
-  int maintenance;
+
+  char total[STRING_MAX];
+  char operational[STRING_MAX];
+  char failed[STRING_MAX];
+  char maintenance[STRING_MAX];
+
 } equipment_stats_t;
+
 
 void equipment_controller_init(equipment_controller_t *controller, equipment_view_t *view, app_data_t *data);
 

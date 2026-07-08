@@ -13,6 +13,7 @@ typedef struct configuration_view_t configuration_view_t;
 typedef struct configuration_task_t configuration_task_t;
 
 typedef struct {
+
   app_data_t *data;
 
   configuration_view_t *view;
@@ -22,12 +23,15 @@ typedef struct {
   char search_text[STRING_MAX];
 
   pagination_t pagination;
+
 } configuration_controller_t;
 
 typedef struct {
-  int total;
+
+  char total[STRING_MAX];
   char last_updated[DATETIME_MAX];
-  int technicians;
+  char technicians[STRING_MAX];
+  
 } configuration_stats_t;
 
 

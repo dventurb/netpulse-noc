@@ -2,26 +2,39 @@
 
 #include "macros.h"
 
-GtkWidget *stats_card_new(const char *title, int value, const char *css)
+stats_card_t stats_card_new(const char *title, const char *value, const char *css)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
-  gtk_widget_set_hexpand(box, TRUE);
-  gtk_widget_add_css_class(box, "stats-card");
-  gtk_widget_add_css_class(box, css != NULL ? css : "");
+  stats_card_t card = {0};
 
-  GtkWidget *title_label = gtk_label_new(title != NULL ? title : "");
-  gtk_widget_set_halign(title_label, GTK_ALIGN_START);
-  gtk_widget_add_css_class(title_label, "stats-card-title");
+  card.container = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 8));
+  gtk_widget_set_hexpand(GTK_WIDGET(card.container), TRUE);
+  gtk_widget_add_css_class(GTK_WIDGET(card.container), "stats-card");
+  gtk_widget_add_css_class(GTK_WIDGET(card.container), css ? css : "");
 
-  char buffer[STRING_MAX];
-  snprintf(buffer, STRING_MAX, "%d", value);
+  card.title = GTK_LABEL(gtk_label_new(title ? title : ""));
+  gtk_widget_set_halign(GTK_WIDGET(card.title), GTK_ALIGN_START);
+  gtk_widget_add_css_class(GTK_WIDGET(card.title), "stats-card-title");
 
-  GtkWidget *value_label = gtk_label_new(buffer);
-  gtk_widget_set_halign(value_label, GTK_ALIGN_START);
-  gtk_widget_add_css_class(value_label, "stats-card-value");
+  card.value = GTK_LABEL(gtk_label_new(value ? value : ""));
+  gtk_widget_set_halign(GTK_WIDGET(card.value), GTK_ALIGN_START);
+  gtk_widget_add_css_class(GTK_WIDGET(card.value), "stats-card-value");
 
-  gtk_box_append(GTK_BOX(box), title_label);
-  gtk_box_append(GTK_BOX(box), value_label);
+  gtk_box_append(card.container, GTK_WIDGET(card.title));
+  gtk_box_append(card.container, GTK_WIDGET(card.value));
 
-  return box;
+  return card;
+}
+
+void stats_card_set_title(stats_card_t *card, const char *title)
+{
+  if (card->title == NULL || title == NULL) return;
+
+  gtk_label_set_text(card->title, title);
+}
+
+void stats_card_set_value(stats_card_t *card, const char *value)
+{
+  if (card->value == NULL || value == NULL) return;
+
+  gtk_label_set_text(card->value, value);
 }

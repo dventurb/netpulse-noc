@@ -217,10 +217,17 @@ incident_validation_t incident_controller_validate(incident_controller_t *contro
 
 void incident_controller_get_stats(incident_controller_t *controller, incident_stats_t *stats)
 {
-  stats->total = incident_get_count(&controller->data->incidents_pending, &controller->data->incidents_history);
-  stats->pending = incident_queue_get_count(&controller->data->incidents_pending);
-  stats->in_progress = incident_list_get_number_status(&controller->data->incidents_history, INCIDENT_IN_PROGRESS);
-  stats->concluded = incident_list_get_number_status(&controller->data->incidents_history, INCIDENT_CONCLUDED);
+  int total = incident_get_count(&controller->data->incidents_pending, &controller->data->incidents_history);
+  snprintf(stats->total, STRING_MAX, "%d", total);
+
+  int pending = incident_queue_get_count(&controller->data->incidents_pending);
+  snprintf(stats->pending, STRING_MAX, "%d", pending);
+
+  int in_progress = incident_list_get_number_status(&controller->data->incidents_history, INCIDENT_IN_PROGRESS);
+  snprintf(stats->in_progress, STRING_MAX, "%d", in_progress);
+
+  int concluded = incident_list_get_number_status(&controller->data->incidents_history, INCIDENT_CONCLUDED);
+  snprintf(stats->concluded, STRING_MAX, "%d", concluded);
 }
 
 gboolean on_incident_finished(gpointer data)

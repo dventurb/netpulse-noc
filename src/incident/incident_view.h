@@ -6,6 +6,7 @@
 #include "input_field.h"
 #include "dropdown_field.h"
 #include "pagination_bar.h"
+#include "stats_card.h"
 
 #include "incident.h"
 #include "incident_controller.h"
@@ -35,7 +36,10 @@ typedef struct incident_view_t {
   GtkBox      *container;
   GtkGrid     *table;
 
-  GtkBox      *cards;
+  stats_card_t total_card;
+  stats_card_t pending_card;
+  stats_card_t in_progress_card;
+  stats_card_t concluded_card;
 
   pagination_bar_t pagination_bar;
 

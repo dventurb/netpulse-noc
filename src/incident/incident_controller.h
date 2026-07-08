@@ -13,13 +13,16 @@
 typedef struct incident_view_t incident_view_t;
 
 typedef enum {
+
   INCIDENT_INVALID_SOURCE_ID,
   INCIDENT_INVALID_TYPE,
   INCIDENT_INVALID_DESCRIPTION,
   INCIDENT_VALID
+
 } incident_validation_t;
 
 typedef struct {
+
   app_data_t *data;
 
   incident_view_t *view;
@@ -34,9 +37,11 @@ typedef struct {
   search_type_t search_type;
 
   pagination_t pagination;
+
 } incident_controller_t;
 
 typedef struct {
+
   int start;
   int end;
 
@@ -44,14 +49,18 @@ typedef struct {
   int priority_filter;
 
   char search_text[STRING_MAX];
+
 } incident_params_t;
 
 typedef struct {
-  int total;
-  int pending;
-  int in_progress;
-  int concluded;
+
+  char total[STRING_MAX];
+  char pending[STRING_MAX];
+  char in_progress[STRING_MAX];
+  char concluded[STRING_MAX];
+
 } incident_stats_t;
+
 
 void incident_controller_init(incident_controller_t *controller, incident_view_t *view, app_data_t *data);
 

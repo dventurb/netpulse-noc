@@ -73,21 +73,14 @@ void sensor_view_update(sensor_view_t *view)
 
 void sensor_view_update_stats_cards(sensor_view_t *view)
 {
-  widget_remove_children(GTK_WIDGET(view->cards));
-
   sensor_stats_t stats = {0};
 
   sensor_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *total_card = stats_card_new("Total Sensors", stats.total, "default-card");
-  GtkWidget *ok_card = stats_card_new("OK", stats.ok, "operational-card");
-  GtkWidget *warning_card = stats_card_new("Warning + Critical", stats.warning + stats.critical, "maintenance-card");
-  GtkWidget *failure_card = stats_card_new("Network Failures", stats.failure, "failed-card");
-
-  gtk_box_append(view->cards, total_card);
-  gtk_box_append(view->cards, ok_card);
-  gtk_box_append(view->cards, warning_card);
-  gtk_box_append(view->cards, failure_card);
+  stats_card_set_value(&view->total_card, stats.total);
+  stats_card_set_value(&view->ok_card, stats.ok);
+  stats_card_set_value(&view->warning_card, stats.warning_critical); // TODO
+  stats_card_set_value(&view->failed_card, stats.failure);
 }
 
 void sensor_view_update_table(sensor_view_t *view, const sensor_t *sensors, int count)
@@ -121,25 +114,25 @@ static GtkWidget *build_sidebar(sensor_view_t *view)
 
 static GtkWidget *build_content(sensor_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
-  gtk_widget_set_hexpand(box, TRUE);
-  gtk_widget_set_margin_start(box, 24);
-  gtk_widget_set_margin_end(box, 24);
-  gtk_widget_set_margin_top(box, 24);
-  gtk_widget_set_margin_bottom(box, 24);
-  //gtk_widget_set_size_request(box, 1160, -1);
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
+  gtk_widget_set_hexpand(container, TRUE);
+  gtk_widget_set_margin_start(container, 24);
+  gtk_widget_set_margin_end(container, 24);
+  gtk_widget_set_margin_top(container, 24);
+  gtk_widget_set_margin_bottom(container, 24);
+  //gtk_widget_set_size_request(container, 1160, -1);
 
   GtkWidget *header = build_header(view);
-  view->cards = GTK_BOX(build_stats_cards(view));
+  GtkWidget *cards = build_stats_cards(view);
   GtkWidget *filters = build_filter_bar(view);
   GtkWidget *table = build_table(view);
 
-  gtk_box_append(GTK_BOX(box), header);
-  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->cards));
-  gtk_box_append(GTK_BOX(box), filters);
-  gtk_box_append(GTK_BOX(box), table);
+  gtk_box_append(GTK_BOX(container), header);
+  gtk_box_append(GTK_BOX(container), cards);
+  gtk_box_append(GTK_BOX(container), filters);
+  gtk_box_append(GTK_BOX(container), table);
 
-  return box;
+  return container;
 }
 
 static GtkWidget *build_header(sensor_view_t *view)
@@ -166,24 +159,24 @@ static GtkWidget *build_header(sensor_view_t *view)
 
 static GtkWidget *build_stats_cards(sensor_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
-  gtk_widget_set_hexpand(box, TRUE);
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
+  gtk_widget_set_hexpand(container, TRUE);
 
   sensor_stats_t stats = {0};
 
   sensor_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *total_card = stats_card_new("Total Sensors", stats.total, "default-card");
-  GtkWidget *ok_card = stats_card_new("OK", stats.ok, "operational-card");
-  GtkWidget *warning_card = stats_card_new("Warning + Critical", stats.warning + stats.critical, "maintenance-card");
-  GtkWidget *failure_card = stats_card_new("Network Failures", stats.failure, "failed-card");
+  view->total_card = stats_card_new("Total Sensors", stats.total, "default-card");
+  view->ok_card = stats_card_new("OK", stats.ok, "operational-card");
+  view->warning_card = stats_card_new("Warning + Critical", stats.warning_critical, "maintenance-card"); // TODO
+  view->failed_card = stats_card_new("Network Failures", stats.failure, "failed-card");
 
-  gtk_box_append(GTK_BOX(box), total_card);
-  gtk_box_append(GTK_BOX(box), ok_card);
-  gtk_box_append(GTK_BOX(box), warning_card);
-  gtk_box_append(GTK_BOX(box), failure_card);
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->total_card.container));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->ok_card.container));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->warning_card.container));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->failed_card.container));
 
-  return box;
+  return container;
 }
 
 static GtkWidget *build_filter_bar(sensor_view_t *view)

@@ -4,7 +4,6 @@
 #include "macros.h"
 
 #include "action_button.h"
-#include "stats_card.h"
 #include "dialog.h"
 #include "table_header.h"
 #include "table_cell.h"
@@ -96,21 +95,14 @@ void incident_view_update_header(incident_view_t *view)
 
 void incident_view_update_stats_cards(incident_view_t *view)
 {
-  widget_remove_children(GTK_WIDGET(view->cards));
-
   incident_stats_t stats = {0};
 
   incident_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *total_card = stats_card_new("Total Incidents", stats.total, "default-card");
-  GtkWidget *pending_card = stats_card_new("Pending", stats.pending, "pending-card");
-  GtkWidget *in_progress_card = stats_card_new("In Progress", stats.in_progress, "in-progress-card");
-  GtkWidget *concluded_card = stats_card_new("Concluded", stats.concluded, "concluded-card");
-
-  gtk_box_append(view->cards, total_card);
-  gtk_box_append(view->cards, pending_card);
-  gtk_box_append(view->cards, in_progress_card);
-  gtk_box_append(view->cards, concluded_card);
+  stats_card_set_value(&view->total_card, stats.total);
+  stats_card_set_value(&view->pending_card, stats.pending);
+  stats_card_set_value(&view->in_progress_card, stats.in_progress);
+  stats_card_set_value(&view->concluded_card, stats.concluded);
 }
 
 void incident_view_update_table(incident_view_t *view, incident_t *incidents, int count)
@@ -138,25 +130,25 @@ static GtkWidget *build_sidebar(incident_view_t *view)
 
 static GtkWidget *build_content(incident_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
-  gtk_widget_set_hexpand(box, TRUE);
-  gtk_widget_set_margin_start(box, 24);
-  gtk_widget_set_margin_end(box, 24);
-  gtk_widget_set_margin_top(box, 24);
-  gtk_widget_set_margin_bottom(box, 24);
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
+  gtk_widget_set_hexpand(container, TRUE);
+  gtk_widget_set_margin_start(container, 24);
+  gtk_widget_set_margin_end(container, 24);
+  gtk_widget_set_margin_top(container, 24);
+  gtk_widget_set_margin_bottom(container, 24);
   //gtk_widget_set_size_request(box, 1160, -1);
 
   GtkWidget *header = build_header(view);
-  view->cards = GTK_BOX(build_stats_cards(view));
+  GtkWidget *cards = build_stats_cards(view);
   GtkWidget *filters = build_filter_bar(view);
   GtkWidget *table = build_table(view);
 
-  gtk_box_append(GTK_BOX(box), header);
-  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->cards));
-  gtk_box_append(GTK_BOX(box), filters);
-  gtk_box_append(GTK_BOX(box), table);
+  gtk_box_append(GTK_BOX(container), header);
+  gtk_box_append(GTK_BOX(container), cards);
+  gtk_box_append(GTK_BOX(container), filters);
+  gtk_box_append(GTK_BOX(container), table);
 
-  return box;
+  return container;
 }
 
 static GtkWidget *build_header(incident_view_t *view)
@@ -188,24 +180,24 @@ static GtkWidget *build_header(incident_view_t *view)
 
 static GtkWidget *build_stats_cards(incident_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
-  gtk_widget_set_hexpand(box, TRUE);
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
+  gtk_widget_set_hexpand(container, TRUE);
 
   incident_stats_t stats = {0};
 
   incident_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *total_card = stats_card_new("Total Incidents", stats.total, "default-card");
-  GtkWidget *pending_card = stats_card_new("Pending", stats.pending, "pending-card");
-  GtkWidget *in_progress_card = stats_card_new("In Progress", stats.in_progress, "in-progress-card");
-  GtkWidget *concluded_card = stats_card_new("Concluded", stats.concluded, "concluded-card");
+  view->total_card = stats_card_new("Total Incidents", stats.total, "default-card");
+  view->pending_card = stats_card_new("Pending", stats.pending, "pending-card");
+  view->in_progress_card = stats_card_new("In Progress", stats.in_progress, "in-progress-card");
+  view->concluded_card = stats_card_new("Concluded", stats.concluded, "concluded-card");
 
-  gtk_box_append(GTK_BOX(box), total_card);
-  gtk_box_append(GTK_BOX(box), pending_card);
-  gtk_box_append(GTK_BOX(box), in_progress_card);
-  gtk_box_append(GTK_BOX(box), concluded_card);
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->total_card.container));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->pending_card.container));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->in_progress_card.container));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->concluded_card.container));
 
-  return box;
+  return container;
 }
 
 static GtkWidget *build_filter_bar(incident_view_t *view)
@@ -371,7 +363,7 @@ static GtkWidget *build_form(incident_view_t *view)
   gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.source_id_field.container), 1, 1, 1, 1);
   gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.type_field.container), 0, 2, 1, 1);
   gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.priority_field.container), 1, 2, 1, 1);
-  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.description_field.container), 0, 3, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(view->form.description_field.container), 0, 3, 2, 1);
 
   return grid;
 }

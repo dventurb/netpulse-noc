@@ -4,7 +4,6 @@
 #include "macros.h"
 
 #include "action_button.h"
-#include "stats_card.h"
 #include "status_badge.h"
 #include "summary_item.h"
 #include "input_field.h"
@@ -42,7 +41,6 @@ static GtkWidget *build_clear_history_form(configuration_view_t *view);
 static GtkWidget *build_equipment_cell(equipment_t equipment);
 static GtkWidget *build_summary_card(equipment_t equipment);
 static GtkWidget *build_status_cell(equipment_status_t status);
-static GtkWidget *build_last_updated_card(const char *title, const char *value, const char *css);
 
 // Callbacks
 static void on_add_config_clicked(GtkButton *button, gpointer data);
@@ -92,19 +90,13 @@ void configuration_view_update(configuration_view_t *view)
 
 void configuration_view_update_cards(configuration_view_t *view)
 {
-  widget_remove_children(GTK_WIDGET(view->cards));
-
   configuration_stats_t stats = {0};
 
   configuration_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *total_card = stats_card_new("TOTAL COMMANDS", stats.total, "default-card");
-  GtkWidget *last_card = build_last_updated_card("LAST UPDATED", stats.last_updated, "default-card");
-  GtkWidget *technicians_card = stats_card_new("TECHNICIANS", stats.technicians, "default-card");
-
-  gtk_box_append(view->cards, total_card);
-  gtk_box_append(view->cards, last_card);
-  gtk_box_append(view->cards, technicians_card);
+  stats_card_set_value(&view->total_card, stats.total);
+  stats_card_set_value(&view->last_card, stats.last_updated);
+  stats_card_set_value(&view->technicians_card, stats.technicians);
 }
 
 void configuration_view_update_config_table(configuration_view_t *view, const void *result, int count)
@@ -173,23 +165,23 @@ static GtkWidget *build_sidebar(configuration_view_t *view)
 
 static GtkWidget *build_content(configuration_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
-  gtk_widget_set_hexpand(box, TRUE);
-  gtk_widget_set_margin_start(box, 24);
-  gtk_widget_set_margin_end(box, 24);
-  gtk_widget_set_margin_top(box, 24);
-  gtk_widget_set_margin_bottom(box, 24);
-  //gtk_widget_set_size_request(box, 1160, -1);
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
+  gtk_widget_set_hexpand(container, TRUE);
+  gtk_widget_set_margin_start(container, 24);
+  gtk_widget_set_margin_end(container, 24);
+  gtk_widget_set_margin_top(container, 24);
+  gtk_widget_set_margin_bottom(container, 24);
+  //gtk_widget_set_size_request(container, 1160, -1);
 
   GtkWidget *header = build_header(view);
-  view->cards = GTK_BOX(build_stats_cards(view));
+  GtkWidget *cards = build_stats_cards(view);
   GtkWidget *table = build_config_table(view);
 
-  gtk_box_append(GTK_BOX(box), header);
-  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->cards));
-  gtk_box_append(GTK_BOX(box), table);
+  gtk_box_append(GTK_BOX(container), header);
+  gtk_box_append(GTK_BOX(container), cards);
+  gtk_box_append(GTK_BOX(container), table);
 
-  return box;
+  return container;
 }
 
 static GtkWidget *build_header(configuration_view_t *view)
@@ -220,22 +212,22 @@ static GtkWidget *build_header(configuration_view_t *view)
 
 static GtkWidget *build_stats_cards(configuration_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
-  gtk_widget_set_hexpand(box, TRUE);
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
+  gtk_widget_set_hexpand(container, TRUE);
 
   configuration_stats_t stats = {0};
 
   configuration_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *total_card = stats_card_new("TOTAL COMMANDS", stats.total, "default-card");
-  GtkWidget *last_card = build_last_updated_card("LAST UPDATED", stats.last_updated, "default-card");
-  GtkWidget *technicians_card = stats_card_new("TECHNICIANS", stats.technicians, "default-card");
+  view->total_card = stats_card_new("TOTAL COMMANDS", stats.total, "default-card");
+  view->last_card = stats_card_new("LAST UPDATED", stats.last_updated, "default-card");
+  view->technicians_card = stats_card_new("TECHNICIANS", stats.technicians, "default-card");
 
-  gtk_box_append(GTK_BOX(box), total_card);
-  gtk_box_append(GTK_BOX(box), last_card);
-  gtk_box_append(GTK_BOX(box), technicians_card);  
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->total_card.container));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->last_card.container));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->technicians_card.container));
 
-  return box;
+  return container;
 }
 
 static GtkWidget *build_equipment_list(configuration_view_t *view)
@@ -354,26 +346,17 @@ static void build_config_table_row(configuration_view_t *view, configuration_t c
 
 static GtkWidget *build_equipment_cell(equipment_t equipment) 
 {
+  const char *icons[] = {
+    "assets/status-failed.svg",
+    "assets/status-maintenance.svg",
+    "assets/status-operational.svg",
+    "assets/status-disabled.svg"
+  };
+
   char buffer[ID_MAX];
   equipment_format_id(equipment.id, buffer);
 
-  switch (equipment.status) 
-  {
-    case STATUS_FAILED:
-      return list_item_new(equipment.name, buffer, "assets/status-failed.svg");
-
-    case STATUS_MAINTENANCE:
-      return list_item_new(equipment.name, buffer, "assets/status-maintenance.svg");
-
-    case STATUS_OPERATIONAL:
-      return list_item_new(equipment.name, buffer, "assets/status-operational.svg");
-
-    case STATUS_DISABLED:
-      return list_item_new(equipment.name, buffer, "assets/status-disabled.svg");
-
-    default:
-      return list_item_new(equipment.name, buffer, "assets/status-disabled.svg");
-  }
+  return list_item_new(equipment.name, buffer, icons[equipment.status]);
 }
 
 static GtkWidget *build_add_config_form(configuration_view_t *view)
@@ -500,44 +483,21 @@ static GtkWidget *build_summary_card(equipment_t equipment)
 
 static GtkWidget *build_status_cell(equipment_status_t status)
 {
-  switch (status) 
-  {
-    case STATUS_FAILED:
-      return status_badge_new(equipment_status_to_string(status), "assets/status-failed.svg", "status-failed");
+  const char *icons[] = {
+    "assets/status-failed.svg",
+    "assets/status-maintenance.svg",
+    "assets/status-operational.svg",
+    "assets/status-disabled.svg"
+  };
 
-    case STATUS_MAINTENANCE:
-      return status_badge_new(equipment_status_to_string(status), "assets/status-maintenance.svg", "status-maintenance");
+  const char *css[] = {
+    "status-failed",
+    "status-maintenance",
+    "status-operational",
+    "status-disabled"
+  };
 
-    case STATUS_OPERATIONAL:
-      return status_badge_new(equipment_status_to_string(status), "assets/status-operational.svg", "status-operational");
-
-    case STATUS_DISABLED:
-      return status_badge_new(equipment_status_to_string(status), "assets/status-disabled.svg", "status-disabled");
-
-    default:
-      return NULL;
-  }
-}
-
-static GtkWidget *build_last_updated_card(const char *title, const char *value, const char *css)
-{
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
-  gtk_widget_set_hexpand(box, TRUE);
-  gtk_widget_add_css_class(box, "stats-card");
-  gtk_widget_add_css_class(box, css != NULL ? css : "");
-
-  GtkWidget *title_label = gtk_label_new(title != NULL ? title : "");
-  gtk_widget_set_halign(title_label, GTK_ALIGN_START);
-  gtk_widget_add_css_class(title_label, "stats-card-title");
-
-  GtkWidget *value_label = gtk_label_new(value);
-  gtk_widget_set_halign(value_label, GTK_ALIGN_START);
-  gtk_widget_add_css_class(value_label, "stats-card-value");
-
-  gtk_box_append(GTK_BOX(box), title_label);
-  gtk_box_append(GTK_BOX(box), value_label);
-
-  return box;
+  return status_badge_new(equipment_status_to_string(status), icons[status], css[status]);
 }
 
 static void on_add_config_clicked(GtkButton *button, gpointer data)

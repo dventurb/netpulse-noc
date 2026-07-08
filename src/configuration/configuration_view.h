@@ -5,6 +5,7 @@
 
 #include "input_field.h"
 #include "pagination_bar.h"
+#include "stats_card.h"
 
 #include "configuration.h"
 #include "configuration_controller.h"
@@ -29,7 +30,9 @@ typedef struct configuration_view_t {
   GtkGrid     *table;
   GtkListBox  *list;
 
-  GtkBox      *cards;
+  stats_card_t total_card;
+  stats_card_t last_card;
+  stats_card_t technicians_card;
 
   pagination_bar_t pagination_bar;
 

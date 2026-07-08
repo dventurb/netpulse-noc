@@ -4,7 +4,6 @@
 #include "macros.h"
 
 #include "action_button.h"
-#include "stats_card.h"
 #include "status_badge.h"
 #include "summary_item.h"
 #include "dialog.h"
@@ -13,7 +12,6 @@
 #include "table_cell.h"
 #include "table_checkbox.h"
 #include "text_label.h"
-#include "status_badge.h"
 #include "widget_utils.h"
 
 // TODO: look for better way
@@ -91,27 +89,22 @@ void equipment_view_refresh(equipment_view_t *view)
 
 void equipment_view_update_header(equipment_view_t *view)
 {
-  gtk_widget_set_visible(GTK_WIDGET(view->edit_button), view->controller->selected_count != 0);
-  gtk_widget_set_visible(GTK_WIDGET(view->remove_button), view->controller->selected_count != 0);
+  bool has_selection = view->controller->selected_count != 0;
+
+  gtk_widget_set_visible(GTK_WIDGET(view->edit_button), has_selection);
+  gtk_widget_set_visible(GTK_WIDGET(view->remove_button), has_selection);
 }
 
 void equipment_view_update_stats_cards(equipment_view_t *view)
 {
-  widget_remove_children(GTK_WIDGET(view->cards));
-
   equipment_stats_t stats = {0};
 
   equipment_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *total_card = stats_card_new("Total Equipments", stats.total, "default-card");
-  GtkWidget *operational_card = stats_card_new("Operational", stats.operational, "operational-card");
-  GtkWidget *failed_card = stats_card_new("Failed", stats.failed, "failed-card");
-  GtkWidget *maintenance_card = stats_card_new("Maintenance", stats.maintenance, "maintenance-card");
-
-  gtk_box_append(view->cards, total_card);
-  gtk_box_append(view->cards, operational_card);
-  gtk_box_append(view->cards, failed_card);
-  gtk_box_append(view->cards, maintenance_card);
+  stats_card_set_value(&view->total_card, stats.total);
+  stats_card_set_value(&view->operational_card, stats.operational);
+  stats_card_set_value(&view->failed_card, stats.failed);
+  stats_card_set_value(&view->maintenance_card, stats.maintenance);
 }
 
 void equipment_view_update_table(equipment_view_t *view, const equipment_t *equipments, int count)
@@ -139,25 +132,25 @@ static GtkWidget *build_sidebar(equipment_view_t *view)
 
 static GtkWidget *build_content(equipment_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
-  gtk_widget_set_hexpand(box, TRUE);
-  gtk_widget_set_margin_start(box, 24);
-  gtk_widget_set_margin_end(box, 24);
-  gtk_widget_set_margin_top(box, 24);
-  gtk_widget_set_margin_bottom(box, 24);
-  //gtk_widget_set_size_request(box, 1160, -1);
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 24);
+  gtk_widget_set_hexpand(container, TRUE);
+  gtk_widget_set_margin_start(container, 24);
+  gtk_widget_set_margin_end(container, 24);
+  gtk_widget_set_margin_top(container, 24);
+  gtk_widget_set_margin_bottom(container, 24);
+  //gtk_widget_set_size_request(container, 1160, -1);
 
   GtkWidget *header = build_header(view);
-  view->cards = GTK_BOX(build_stats_cards(view));
+  GtkWidget *cards = build_stats_cards(view);
   GtkWidget *filters = build_filter_bar(view);
   GtkWidget *table = build_table(view);
 
-  gtk_box_append(GTK_BOX(box), header);
-  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->cards));
-  gtk_box_append(GTK_BOX(box), filters);
-  gtk_box_append(GTK_BOX(box), table);
+  gtk_box_append(GTK_BOX(container), header);
+  gtk_box_append(GTK_BOX(container), cards);
+  gtk_box_append(GTK_BOX(container), filters);
+  gtk_box_append(GTK_BOX(container), table);
 
-  return box;
+  return container;
 }
 
 static GtkWidget *build_header(equipment_view_t *view)
@@ -190,24 +183,24 @@ static GtkWidget *build_header(equipment_view_t *view)
 
 static GtkWidget *build_stats_cards(equipment_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
-  gtk_widget_set_hexpand(box, TRUE);
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
+  gtk_widget_set_hexpand(container, TRUE);
 
   equipment_stats_t stats = {0};
 
   equipment_controller_get_stats(view->controller, &stats);
 
-  GtkWidget *total_card = stats_card_new("Total Equipments", stats.total, "default-card");
-  GtkWidget *operational_card = stats_card_new("Operational", stats.operational, "operational-card");
-  GtkWidget *failed_card = stats_card_new("Failed", stats.failed, "failed-card");
-  GtkWidget *maintenance_card = stats_card_new("Maintenance", stats.maintenance, "maintenance-card");
+  view->total_card = stats_card_new("Total Equipments", stats.total, "default-card");
+  view->operational_card = stats_card_new("Operational", stats.operational, "operational-card");
+  view->failed_card = stats_card_new("Failed", stats.failed, "failed-card");
+  view->maintenance_card = stats_card_new("Maintenance", stats.maintenance, "maintenance-card");
 
-  gtk_box_append(GTK_BOX(box), total_card);
-  gtk_box_append(GTK_BOX(box), operational_card);
-  gtk_box_append(GTK_BOX(box), failed_card);
-  gtk_box_append(GTK_BOX(box), maintenance_card);
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->total_card.container));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->operational_card.container));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->failed_card.container));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->maintenance_card.container));
 
-  return box;
+  return container;
 }
 
 static GtkWidget *build_filter_bar(equipment_view_t *view)

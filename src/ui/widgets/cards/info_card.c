@@ -5,8 +5,6 @@ info_card_t info_card_new(const char *title, const char *icon, const char *value
   info_card_t card = {0};
 
   card.container = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 10));
-  //gtk_widget_set_vexpand(GTK_WIDGET(card.container), TRUE);
-  //gtk_widget_set_hexpand(GTK_WIDGET(card.container), TRUE);
   gtk_widget_add_css_class(GTK_WIDGET(card.container), "card-container");
   
   GtkWidget *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
