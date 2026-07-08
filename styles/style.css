@@ -613,10 +613,12 @@
   font-weight: 500;
 }
 
+.connectivity-tools-button:active,
 .connectivity-tools-button:checked {
   border-bottom: 2px solid #19c37d;
 }
 
+.connectivity-tools-button:active label,
 .connectivity-tools-button:checked label {
   color: #171717;
   font-size: 14px;
@@ -636,12 +638,14 @@
   font-size: 16px;
 }
 
+.connectivity-sidebar-button:active,
 .connectivity-sidebar-button:checked {
   background-color: rgba(25, 195, 125, 0.1);
   border-left: 4px solid #19c37d;
   border-radius: 0px 6px 6px 0;
 }
 
+.connectivity-sidebar-button:active label,
 .connectivity-sidebar-button:checked label {
   color: #19c37d;
   font-weight: 500;

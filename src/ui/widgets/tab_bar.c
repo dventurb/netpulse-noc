@@ -1,7 +1,5 @@
 #include "tab_bar.h"
 
-#include "toggle_button.h"
-
 #include <stdlib.h>
 
 // Callbacks
@@ -44,8 +42,6 @@ void tab_bar_create_buttons(tab_bar_t *bar, const char **labels, const char **ic
 
     g_signal_connect(bar->buttons[i].widget, "clicked", G_CALLBACK(on_button_clicked), bar);
 
-    g_object_set_data(G_OBJECT(bar->buttons[i].widget), "TAB-INDEX", GINT_TO_POINTER(i));
-
     gtk_box_append(bar->container, GTK_WIDGET(bar->buttons[i].widget));
   }
 
@@ -83,11 +79,21 @@ void tab_bar_set_button_label(tab_bar_t *bar, int index, const char *text)
   toggle_button_set_label(&bar->buttons[index], text);
 }
 
+static int tab_bar_get_button_number(tab_bar_t *bar, GtkToggleButton *button)
+{
+  if (bar->buttons == NULL || button == NULL) return -1;
+
+  for (int i = 0; i < bar->count; i++) 
+    if (bar->buttons[i].widget == button) return i;
+
+  return -1;
+}
+
 static void on_button_clicked(GtkToggleButton *button, gpointer data)
 {
   tab_bar_t *bar = (tab_bar_t *)data;
 
-  int index = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "TAB-INDEX"));
+  int index = tab_bar_get_button_number(bar, button);
 
   if (index == bar->selected)
   {
