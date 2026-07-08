@@ -11,12 +11,15 @@
 #include "equipment_controller.h"
 
 typedef enum {
+
   EQUIPMENT_FORM_ADD,
   EQUIPMENT_FORM_EDIT,
   EQUIPMENT_FORM_REMOVE
+
 } equipment_form_mode_t;
 
 typedef struct {
+
   GtkWindow *dialog;
 
   GtkWidget   *layout;
@@ -33,6 +36,7 @@ typedef struct {
   dropdown_field_t  status_field;
 
   equipment_form_mode_t mode;
+
 } equipment_form_t;
 
 typedef struct equipment_view_t {
@@ -58,7 +62,9 @@ typedef struct equipment_view_t {
 
 } equipment_view_t;
 
+
 GtkBox *equipment_view_create(equipment_view_t *equipment_view, equipment_controller_t *controller);
+void equipment_view_destroy(equipment_view_t *view);
 
 void equipment_view_refresh(equipment_view_t *view);
 void equipment_view_update_table(equipment_view_t *view, const equipment_t *equipments, int count);

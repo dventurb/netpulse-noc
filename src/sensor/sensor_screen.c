@@ -33,6 +33,8 @@ static void sensor_screen_destroy(screen_t *parent)
 {
   sensor_screen_t *screen = (sensor_screen_t *)parent;
 
+  sensor_view_destroy(&screen->view);
+
   free(screen);
 }
 

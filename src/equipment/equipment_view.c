@@ -2,7 +2,6 @@
 
 #include "utils.h"
 #include "macros.h"
-#include "pagination.h"
 
 #include "action_button.h"
 #include "stats_card.h"
@@ -26,7 +25,7 @@ static const char* const filter_types[] = { "All", "Router", "Firewall", "Switch
 static const char* const headers[] = { "ID", "NAME", "TYPE", "VENDOR", "MODEL", "IP ADDRESS", "MAC ADDRESS", "LOCATION", "STATUS", "LAST CHECK" };
 static const int widths[] = { CELL_ID_WIDTH, CELL_NAME_WIDTH, CELL_TYPE_WIDTH, CELL_VENDOR_WIDTH, CELL_MODEL_WIDTH, CELL_IP_ADDRESS_WIDTH, CELL_MAC_ADDRESS_WIDTH, CELL_LOCATION_WIDTH, CELL_STATUS_WIDTH, CELL_LAST_CHECK_WIDTH };
 
-static const char* DATA_EQUIPMENT = "equipment-id";
+static const char* DATA_EQUIPMENT = "EQUIPMENT-ID";
 
 static const int INVENTORY_HEADER_COLUMN_COUNT = 10;
 static const int INVENTORY_TABLE_COLUMN_COUNT = 11;
@@ -78,6 +77,11 @@ GtkBox *equipment_view_create(equipment_view_t *view, equipment_controller_t *co
   gtk_box_append(view->container, content);
 
   return view->container;
+}
+
+void equipment_view_destroy(equipment_view_t *view)
+{
+  pagination_bar_destroy(&view->pagination_bar);
 }
 
 void equipment_view_refresh(equipment_view_t *view)

@@ -2,10 +2,8 @@
 
 #include "utils.h"
 #include "macros.h"
-#include "pagination.h"
 
 #include "action_button.h"
-#include "pagination_bar.h"
 #include "stats_card.h"
 #include "table_header.h"
 #include "table_cell.h"
@@ -25,7 +23,6 @@ static GtkWidget *build_header(sensor_view_t *view);
 static GtkWidget *build_stats_cards(sensor_view_t *view);
 static GtkWidget *build_filter_bar(sensor_view_t *view);
 static GtkWidget *build_table(sensor_view_t *view);
-static GtkWidget *build_pagination_bar(sensor_view_t *view);
 
 static void build_table_header(GtkWidget *table);
 static void build_table_row(sensor_view_t *view, sensor_t sensor, int row);
@@ -41,9 +38,7 @@ static void on_search_entry_changed(GtkSearchEntry *search, gpointer data);
 static void on_date_entry_changed(GtkEntry *entry, gpointer data);
 static void on_filter_dropdown_changed(GObject *self, GParamSpec *pspec, gpointer data);
 
-static void on_previous_page_clicked(GtkButton *button, gpointer data);
-static void on_next_page_clicked(GtkButton *button, gpointer data);
-static void on_page_clicked(GtkButton *button, gpointer data);
+static void on_page_clicked(void *data);
 
 
 GtkBox *sensor_view_create(sensor_view_t *view, sensor_controller_t *controller)
@@ -59,6 +54,11 @@ GtkBox *sensor_view_create(sensor_view_t *view, sensor_controller_t *controller)
   gtk_box_append(view->container, content);
 
   return view->container;
+}
+
+void sensor_view_destroy(sensor_view_t *view)
+{
+  pagination_bar_destroy(&view->pagination_bar);
 }
 
 void sensor_view_refresh(sensor_view_t *view)
@@ -97,19 +97,9 @@ void sensor_view_update_table(sensor_view_t *view, const sensor_t *sensors, int 
   if (sensors == NULL || count == 0) return;
 
   for (int i = 0; i < count; i++) 
-  {
     build_table_row(view, sensors[i], i + 1);
-  }
 
-  GtkWidget *parent = gtk_widget_get_parent(GTK_WIDGET(view->pagination_bar));
-  
-  if (parent != NULL)
-  {
-    gtk_box_remove(GTK_BOX(parent), GTK_WIDGET(view->pagination_bar));
-
-    view->pagination_bar = GTK_BOX(build_pagination_bar(view));
-    gtk_box_append(GTK_BOX(parent), GTK_WIDGET(view->pagination_bar));
-  }
+  pagination_bar_refresh(&view->pagination_bar);
 }
 
 void sensor_view_set_actions_enabled(sensor_view_t *view, bool is_active)
@@ -118,6 +108,7 @@ void sensor_view_set_actions_enabled(sensor_view_t *view, bool is_active)
   gtk_widget_set_sensitive(GTK_WIDGET(view->fetch_button), is_active);
 }
 
+// TODO : sidebar with charts (Using Cairo and GtkChart lib)
 static GtkWidget *build_sidebar(sensor_view_t *view)
 {
   (void)view; // unused parameter
@@ -246,56 +237,14 @@ static GtkWidget *build_table(sensor_view_t *view)
 
   build_table_header(GTK_WIDGET(view->table));
 
-  view->pagination_bar = GTK_BOX(build_pagination_bar(view));
+  view->pagination_bar = pagination_bar_new(&view->controller->pagination, on_page_clicked, view);
+  pagination_bar_refresh(&view->pagination_bar);
+  pagination_bar_setup_callbacks(&view->pagination_bar);
 
   gtk_box_append(GTK_BOX(box), scrolled_window);
-  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->pagination_bar));
+  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->pagination_bar.container));
 
   sensor_controller_reset_query(view->controller);
-
-  return box;
-}
-
-static GtkWidget *build_pagination_bar(sensor_view_t *view)
-{
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
-  gtk_widget_set_size_request(box, -1, 64);
-  gtk_widget_set_hexpand(box, TRUE);
-  gtk_widget_set_halign(box, GTK_ALIGN_END);
-
-  GtkWidget *previous_button = action_button_new(NULL, "assets/left-arrow.svg", "arrow-page");
-  gtk_widget_set_margin_top(previous_button, 16);
-  gtk_widget_set_margin_bottom(previous_button, 16);
-  gtk_widget_set_size_request(previous_button, 32, 32);
-  
-  g_signal_connect(previous_button, "clicked", G_CALLBACK(on_previous_page_clicked), view);
-  gtk_box_append(GTK_BOX(box), previous_button);
-
-  int start, end;
-
-  pagination_get_range(view->controller->pagination, &start, &end);
-
-  /*
-  for (int i = start; i <= end; i++) 
-  {
-    char buffer[12];
-    snprintf(buffer, sizeof(buffer), "%d", i + 1);
-
-    //GtkWidget *button = pagination_button_new(view->controller->pagination, buffer, i);
-    //g_signal_connect(button, "clicked", G_CALLBACK(on_page_clicked), view);
-
-    gtk_box_append(GTK_BOX(box), button);
-  }
-  */
-
-  GtkWidget *next_button = action_button_new(NULL, "assets/right-arrow.svg", "arrow-page");
-  gtk_widget_set_margin_top(next_button, 16);
-  gtk_widget_set_margin_bottom(next_button, 16);
-  gtk_widget_set_margin_end(next_button, 24);
-  g_signal_connect(next_button, "clicked", G_CALLBACK(on_next_page_clicked), view);
-  gtk_widget_set_size_request(next_button, 32, 32);
- 
-  gtk_box_append(GTK_BOX(box), next_button);
 
   return box;
 }
@@ -337,23 +286,21 @@ static void build_table_row(sensor_view_t *view, sensor_t sensor, int row)
 
 static GtkWidget *build_status_cell(sensor_status_t status)
 {
-  switch (status) 
-  {
-    case SENSOR_CRITICAL:
-      return status_badge_new(sensor_status_to_string(status), "assets/status-failed.svg", "status-failed");
+  const char *icons[] = {
+    "assets/status-operational.svg",
+    "assets/status-maintenance.svg",
+    "assets/status-failed.svg",
+    "assets/status-disabled.svg"
+  };
 
-    case SENSOR_WARNING:
-      return status_badge_new(sensor_status_to_string(status), "assets/status-maintenance.svg", "status-maintenance");
-
-    case SENSOR_OK:
-      return status_badge_new(sensor_status_to_string(status), "assets/status-operational.svg", "status-operational");
-
-    case SENSOR_NET_FAILURE:
-      return status_badge_new(sensor_status_to_string(status), "assets/status-disabled.svg", "status-disabled");
-
-    default:
-      return NULL;
-  }
+  const char *css[] = {
+    "status-operational",
+    "status-maintenance",
+    "status-failed",
+    "status-disabled"
+  };
+    
+  return status_badge_new(sensor_status_to_string(status), icons[status], css[status]);
 }
 
 static void sensor_view_apply_filters(sensor_view_t *view)
@@ -437,37 +384,9 @@ static void on_filter_dropdown_changed(GObject *self, GParamSpec *pspec, gpointe
   sensor_view_apply_filters(view);
 }
 
-static void on_previous_page_clicked(GtkButton *button, gpointer data)
+static void on_page_clicked(void *data)
 {
-  (void)button; // unused parameter
-  
   sensor_view_t *view = (sensor_view_t *)data;
-
-  pagination_previous(&view->controller->pagination);
-
-  sensor_view_update(view);
-}
-
-static void on_next_page_clicked(GtkButton *button, gpointer data)
-{
-  (void)button; // unused parameter 
-
-  sensor_view_t *view = (sensor_view_t *)data;
-
-  pagination_next(&view->controller->pagination);
-
-  sensor_view_update(view);
-}
-
-static void on_page_clicked(GtkButton *button, gpointer data)
-{
-  (void)button; // unused parameter 
-  
-  sensor_view_t *view = (sensor_view_t *)data;
-
-  int page_number = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "page-number"));
-
-  pagination_set_page_number(&view->controller->pagination, page_number);
 
   sensor_view_update(view);
 }

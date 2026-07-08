@@ -33,6 +33,8 @@ static void incident_screen_destroy(screen_t *parent)
 {
   incident_screen_t *screen = (incident_screen_t *)parent;
 
+  incident_view_destroy(&screen->view);
+
   free(screen);
 }
 

@@ -4,21 +4,25 @@
 #include <gtk/gtk.h>
 
 #include "input_field.h"
+#include "pagination_bar.h"
 
 #include "configuration.h"
 #include "configuration_controller.h"
 
 
 typedef struct {
+
   GtkWindow  *dialog;
 
   GtkWidget  *layout;
 
   input_field_t   equipment_field;
   input_field_t   command_field;
+
 } configuration_form_t;
 
 typedef struct configuration_view_t {
+
   configuration_controller_t *controller;
   
   GtkBox      *container;
@@ -26,17 +30,20 @@ typedef struct configuration_view_t {
   GtkListBox  *list;
 
   GtkBox      *cards;
-  GtkBox      *pagination_bar;
+
+  pagination_bar_t pagination_bar;
 
   GtkButton   *add_button;
   GtkButton   *revert_button;
   GtkButton   *clear_button;
 
   configuration_form_t form;
+
 } configuration_view_t;
 
 
 GtkBox *configuration_view_create(configuration_view_t *view, configuration_controller_t *controller);
+void configuration_view_destroy(configuration_view_t *view);
 
 void configuration_view_refresh(configuration_view_t *view);
 void configuration_view_update(configuration_view_t *view);

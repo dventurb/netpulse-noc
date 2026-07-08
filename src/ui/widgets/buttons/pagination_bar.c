@@ -42,6 +42,12 @@ pagination_bar_t pagination_bar_new(pagination_t *pagination, pagination_bar_cal
   return bar;
 }
 
+void pagination_bar_destroy(pagination_bar_t *bar)
+{
+  if (bar->page_buttons == NULL) return;
+  free(bar->page_buttons);
+}
+
 void pagination_bar_refresh(pagination_bar_t *bar)
 {
   pagination_bar_remove_buttons(bar);
@@ -54,7 +60,6 @@ void pagination_bar_refresh(pagination_bar_t *bar)
 
   bar->page_buttons = malloc(sizeof(GtkButton *) * total);
   if (bar->page_buttons == NULL) return;
-  printf("total: %d\n\n", total);
 
   for (int i = total - 1; i >= 0; i--) 
   {
@@ -62,8 +67,6 @@ void pagination_bar_refresh(pagination_bar_t *bar)
 
     char buffer[12];
     snprintf(buffer, sizeof(buffer), "%d", number + 1);
-
-    printf("i: %d\n | number: %d\n | buffer: %s\n\n", i, number, buffer);
 
     bar->page_buttons[i] = GTK_BUTTON(pagination_button_new(bar, buffer,  number));
 
@@ -128,7 +131,10 @@ static void on_previous_page_button_clicked(GtkButton *button, gpointer data)
 
   pagination_bar_t *bar = (pagination_bar_t *)data;
 
+  if (bar->pagination->current_page == 0) return;
+
   pagination_previous(bar->pagination);
+
   pagination_bar_refresh(bar);
 
   bar->callback(bar->data);
@@ -139,8 +145,12 @@ static void on_next_page_button_clicked(GtkButton *button, gpointer data)
   (void)button;
 
   pagination_bar_t *bar = (pagination_bar_t *)data;
+  
+  int total_pages = pagination_total_pages(*bar->pagination, bar->pagination->total_items);
+  if (bar->pagination->current_page == total_pages) return;
 
   pagination_next(bar->pagination);
+
   pagination_bar_refresh(bar);
 
   bar->callback(bar->data);
@@ -151,7 +161,6 @@ static void on_page_button_clicked(GtkButton *button, gpointer data)
   pagination_bar_t *bar = (pagination_bar_t *)data;
 
   int number = pagination_bar_get_button_number(bar, button);
-  printf("number clicked: %d\n\n", number);
 
   if (number == bar->pagination->current_page) return;
 

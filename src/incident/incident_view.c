@@ -2,12 +2,9 @@
 
 #include "utils.h"
 #include "macros.h"
-#include "pagination.h"
 
 #include "action_button.h"
-#include "pagination_bar.h"
 #include "stats_card.h"
-#include "input_field.h"
 #include "dialog.h"
 #include "table_header.h"
 #include "table_cell.h"
@@ -24,7 +21,7 @@ static const char* const filter_priority[] = { "All", "Low", "Medium", "High", "
 static const char* const headers[] = { "ID", "QUEUE", "SOURCE", "TYPE", "DESCRIPTION", "PRIORITY", "STATUS", "TECHNICIAN", "CREATED", "CONCLUDED"};
 static const int widths[] = { CELL_NUMBER_WIDTH, CELL_QUEUE_WIDTH, CELL_SOURCE_WIDTH, CELL_TYPE_WIDTH, CELL_DESCRIPTION_WIDTH, CELL_PRIORITY_WIDTH, CELL_STATUS_WIDTH, CELL_TECHNICIAN_WIDTH, CELL_CREATED_WIDTH, CELL_CONCLUDED_WIDTH };
 
-static const char* DATA_INCIDENT = "incident-id";
+static const char* DATA_INCIDENT = "INCIDENT-ID";
 
 static const int INCIDENT_HEADER_COLUMN_COUNT = 10;
 static const int INCIDENT_TABLE_COLUMN_COUNT = 11;
@@ -35,7 +32,6 @@ static GtkWidget *build_header(incident_view_t *view);
 static GtkWidget *build_stats_cards(incident_view_t *view);
 static GtkWidget *build_filter_bar(incident_view_t *view);
 static GtkWidget *build_table(incident_view_t *view);
-static GtkWidget *build_pagination_bar(incident_view_t *view);
 
 static void build_table_header(GtkWidget *grid);
 static void build_table_row(incident_view_t *view, incident_t incident, int row);
@@ -58,9 +54,7 @@ static void on_filter_dropdown_changed(GObject *self, GParamSpec *pspec, gpointe
 static void on_row_selection_toggled(GtkCheckButton *button, gpointer data);
 static void on_source_id_entry_changed(GtkEntry *entry, gpointer data);
 
-static void on_previous_page_clicked(GtkButton *button, gpointer data);
-static void on_next_page_clicked(GtkButton *button, gpointer data);
-static void on_page_clicked(GtkButton *button, gpointer data);
+static void on_page_clicked(void *data);
 
 
 GtkBox *incident_view_create(incident_view_t *view, incident_controller_t *controller)
@@ -76,6 +70,11 @@ GtkBox *incident_view_create(incident_view_t *view, incident_controller_t *contr
   gtk_box_append(view->container, content);
 
   return view->container;
+}
+
+void incident_view_destroy(incident_view_t *view)
+{
+  pagination_bar_destroy(&view->pagination_bar);
 }
 
 void incident_view_refresh(incident_view_t *view)
@@ -121,19 +120,9 @@ void incident_view_update_table(incident_view_t *view, incident_t *incidents, in
   if (incidents == NULL || count == 0) return;
 
   for (int i = 0; i < count; i++) 
-  {
     build_table_row(view, incidents[i], i + 1);
-  }
 
-  GtkWidget *parent = gtk_widget_get_parent(GTK_WIDGET(view->pagination_bar));
-  
-  if (parent != NULL)
-  {
-    gtk_box_remove(GTK_BOX(parent), GTK_WIDGET(view->pagination_bar));
-
-    view->pagination_bar = GTK_BOX(build_pagination_bar(view));
-    gtk_box_append(GTK_BOX(parent), GTK_WIDGET(view->pagination_bar));
-  }
+  pagination_bar_refresh(&view->pagination_bar);
 }
 
 // TODO
@@ -264,55 +253,14 @@ static GtkWidget *build_table(incident_view_t *view)
 
   build_table_header(GTK_WIDGET(view->table));
 
-  view->pagination_bar = GTK_BOX(build_pagination_bar(view));
+  view->pagination_bar = pagination_bar_new(&view->controller->pagination, on_page_clicked, view);
+  pagination_bar_refresh(&view->pagination_bar);
+  pagination_bar_setup_callbacks(&view->pagination_bar);
 
   gtk_box_append(GTK_BOX(box), scrolled_window);
-  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->pagination_bar));
+  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->pagination_bar.container));
 
   incident_controller_refresh_page(view->controller);
-
-  return box;
-}
-
-static GtkWidget *build_pagination_bar(incident_view_t *view)
-{
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
-  gtk_widget_set_size_request(box, -1, 64);
-  gtk_widget_set_hexpand(box, TRUE);
-  gtk_widget_set_halign(box, GTK_ALIGN_END);
-
-  GtkWidget *previous_button = action_button_new(NULL, "assets/left-arrow.svg", "arrow-page");
-  gtk_widget_set_margin_top(previous_button, 16);
-  gtk_widget_set_margin_bottom(previous_button, 16);
-  gtk_widget_set_size_request(previous_button, 32, 32);
-  g_signal_connect(previous_button, "clicked", G_CALLBACK(on_previous_page_clicked), view);
-  gtk_box_append(GTK_BOX(box), previous_button);
-
-  int start, end;
-
-  pagination_get_range(view->controller->pagination, &start, &end);
-
-  /*
-  for (int i = start; i <= end; i++) 
-  {
-    char buffer[12];
-    snprintf(buffer, sizeof(buffer), "%d", i + 1);
-
-    GtkWidget *button = pagination_button_new(view->controller->pagination, buffer, i);
-    g_signal_connect(button, "clicked", G_CALLBACK(on_page_clicked), view);
-
-    gtk_box_append(GTK_BOX(box), button);
-  }
-  */
-
-  GtkWidget *next_button = action_button_new(NULL, "assets/right-arrow.svg", "arrow-page");
-  gtk_widget_set_margin_top(next_button, 16);
-  gtk_widget_set_margin_bottom(next_button, 16);
-  gtk_widget_set_margin_end(next_button, 24);
-  g_signal_connect(next_button, "clicked", G_CALLBACK(on_next_page_clicked), view);
-  gtk_widget_set_size_request(next_button, 32, 32);
- 
-  gtk_box_append(GTK_BOX(box), next_button);
 
   return box;
 }
@@ -430,40 +378,31 @@ static GtkWidget *build_form(incident_view_t *view)
 
 static GtkWidget *build_priority_cell(incident_priority_t priority)
 {
-  switch (priority) 
-  {
-    case PRIORITY_LOW:
-      return priority_badge_new(incident_priority_to_string(priority), "priority-low");
+  const char *css[] = {
+    "priority-low",
+    "priority-medium",
+    "priority-high",
+    "priority-critical"
+  };
 
-    case PRIORITY_MEDIUM:
-      return priority_badge_new(incident_priority_to_string(priority), "priority-medium");
-    case PRIORITY_HIGH:
-      return priority_badge_new(incident_priority_to_string(priority), "priority-high");
-
-    case PRIORITY_CRITICAL:
-      return priority_badge_new(incident_priority_to_string(priority), "priority-critical");
-
-    default:
-      return NULL;
-  }
+  return priority_badge_new(incident_priority_to_string(priority), css[priority]);
 }
 
 static GtkWidget *build_status_cell(incident_status_t status)
 {
-  switch (status) 
-  {
-    case INCIDENT_PENDING:
-      return status_badge_new(incident_status_to_string(status), "assets/status-maintenance.svg", "status-pending");
+  const char *icons[] = {
+    "assets/status-maintenance.svg",
+    "assets/status-in-progress.svg",
+    "assets/status-operational.svg"
+  };
 
-    case INCIDENT_IN_PROGRESS:
-      return status_badge_new(incident_status_to_string(status), "assets/status-in-progress.svg", "status-in-progress");
+  const char *css[] = {
+    "status-pending",
+    "status-in-progress",
+    "status-concluded",
+  };
 
-    case INCIDENT_CONCLUDED:
-      return status_badge_new(incident_status_to_string(status), "assets/status-operational.svg", "status-concluded");
-
-    default:
-      return NULL;
-  }
+  return status_badge_new(incident_status_to_string(status), icons[status], css[status]);
 }
 
 static void incident_view_apply_filters(incident_view_t *view)
@@ -609,37 +548,9 @@ static void on_source_id_entry_changed(GtkEntry *entry, gpointer data)
     gtk_drop_down_set_selected(view->form.source_field.dropdown, 1);
 }
 
-static void on_previous_page_clicked(GtkButton *button, gpointer data)
+static void on_page_clicked(void *data)
 {
-  (void)button; // unused parameter
-  
   incident_view_t *view = (incident_view_t *)data;
-
-  pagination_previous(&view->controller->pagination);
-
-  incident_controller_update_table(view->controller);
-}
-
-static void on_next_page_clicked(GtkButton *button, gpointer data)
-{
-  (void)button; // unused parameter 
-
-  incident_view_t *view = (incident_view_t *)data;
-
-  pagination_next(&view->controller->pagination);
-
-  incident_controller_update_table(view->controller);
-}
-
-static void on_page_clicked(GtkButton *button, gpointer data)
-{
-  (void)button; // unused parameter 
-  
-  incident_view_t *view = (incident_view_t *)data;
-
-  int page_number = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "page-number"));
-
-  pagination_set_page_number(&view->controller->pagination, page_number);
 
   incident_controller_update_table(view->controller);
 }

@@ -5,12 +5,14 @@
 
 #include "input_field.h"
 #include "dropdown_field.h"
+#include "pagination_bar.h"
 
 #include "incident.h"
 #include "incident_controller.h"
 
 
 typedef struct {
+
   GtkWindow  *dialog;
 
   GtkWidget  *layout;
@@ -27,13 +29,15 @@ typedef struct {
 } incident_form_t;
 
 typedef struct incident_view_t {
+  
   incident_controller_t *controller;
   
   GtkBox      *container;
   GtkGrid     *table;
 
   GtkBox      *cards;
-  GtkBox      *pagination_bar;
+
+  pagination_bar_t pagination_bar;
 
   GtkButton   *create_button;
   GtkButton   *resolve_button;
@@ -48,6 +52,7 @@ typedef struct incident_view_t {
 
 
 GtkBox *incident_view_create(incident_view_t *view, incident_controller_t *controller);
+void incident_view_destroy(incident_view_t *view);
 
 void incident_view_refresh(incident_view_t *view);
 void incident_view_update_table(incident_view_t *view, incident_t *incidents, int count);

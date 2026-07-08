@@ -2,10 +2,8 @@
 
 #include "utils.h"
 #include "macros.h"
-#include "pagination.h"
 
 #include "action_button.h"
-#include "pagination_bar.h"
 #include "stats_card.h"
 #include "status_badge.h"
 #include "summary_item.h"
@@ -21,7 +19,7 @@
 static const char* const headers[] = { "#", "COMMAND", "TECHNICIAN", "DATE/TIME" };
 static const int widths[] = { CELL_NUMBER_WIDTH, CELL_TYPE_WIDTH, CELL_VALUE_WIDTH, CELL_STATUS_WIDTH };
 
-static const char* const DATA_EQUIPMENT_ID = "equipment-id";
+static const char* const DATA_EQUIPMENT_ID = "EQUIPMENT-ID";
 
 static const int CONFIG_HEADER_COLUMN_COUNT = 4;
 static const int CONFIG_TABLE_COLUMN_COUNT = 4;
@@ -30,7 +28,6 @@ static GtkWidget *build_sidebar(configuration_view_t *view);
 static GtkWidget *build_content(configuration_view_t *view);
 static GtkWidget *build_header(configuration_view_t *view);
 static GtkWidget *build_stats_cards(configuration_view_t *view);
-static GtkWidget *build_pagination_bar(configuration_view_t *view);
 
 static GtkWidget *build_config_table(configuration_view_t *view);
 static void build_config_table_header(GtkWidget *table);
@@ -58,9 +55,7 @@ static void on_clear_history_form_submit(GtkButton *button, gpointer data);
 static void on_search_equipment_clicked(GtkSearchEntry *search, gpointer data);
 static void on_equipment_row_selected(GtkListBox *list, GtkListBoxRow *row, gpointer data);
 
-static void on_previous_page_clicked(GtkButton *button, gpointer data);
-static void on_next_page_clicked(GtkButton *button, gpointer data);
-static void on_page_clicked(GtkButton *button, gpointer data);
+static void on_page_clicked(void *data);
 
 
 GtkBox *configuration_view_create(configuration_view_t *view, configuration_controller_t *controller)
@@ -76,6 +71,11 @@ GtkBox *configuration_view_create(configuration_view_t *view, configuration_cont
   gtk_box_append(view->container, content);
 
   return view->container;
+}
+
+void configuration_view_destroy(configuration_view_t *view)
+{
+  pagination_bar_destroy(&view->pagination_bar);
 }
 
 void configuration_view_refresh(configuration_view_t *view)
@@ -116,19 +116,9 @@ void configuration_view_update_config_table(configuration_view_t *view, const vo
   configuration_t *configs = (configuration_t *)result;
 
   for (int i = 0; i < count; i++) 
-  {
     build_config_table_row(view, configs[i], i + 1);
-  }
 
-  GtkWidget *parent = gtk_widget_get_parent(GTK_WIDGET(view->pagination_bar));
-  
-  if (parent != NULL)
-  {
-    gtk_box_remove(GTK_BOX(parent), GTK_WIDGET(view->pagination_bar));
-
-    view->pagination_bar = GTK_BOX(build_pagination_bar(view));
-    gtk_box_append(GTK_BOX(parent), GTK_WIDGET(view->pagination_bar));
-  }
+  pagination_bar_refresh(&view->pagination_bar);
 }
 
 void configuration_view_update_equipment_list(configuration_view_t *view, const void *result, int count)
@@ -140,9 +130,7 @@ void configuration_view_update_equipment_list(configuration_view_t *view, const 
   equipment_t *equipments = (equipment_t *)result;
 
   for (int i = 0; i < count; i++)
-  {
     build_equipment_list_row(GTK_WIDGET(view->list), equipments[i]);
-  }
 }
 
 void configuration_view_set_actions_enabled(configuration_view_t *view, bool is_active)
@@ -291,10 +279,12 @@ static GtkWidget *build_config_table(configuration_view_t *view)
 
   build_config_table_header(GTK_WIDGET(view->table));
 
-  view->pagination_bar = GTK_BOX(build_pagination_bar(view));
+  view->pagination_bar = pagination_bar_new(&view->controller->pagination, on_page_clicked, view);
+  pagination_bar_refresh(&view->pagination_bar);
+  pagination_bar_setup_callbacks(&view->pagination_bar);
 
   gtk_box_append(GTK_BOX(box), scrolled_window);
-  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->pagination_bar));
+  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->pagination_bar.container));
 
   configuration_controller_reset_config_query(view->controller);
 
@@ -317,50 +307,6 @@ static void build_equipment_list_row(GtkWidget *list, equipment_t equipment)
   gtk_widget_add_css_class(row, "list-equipment-item");
 
   gtk_list_box_append(GTK_LIST_BOX(list), row);
-}
-
-static GtkWidget *build_pagination_bar(configuration_view_t *view)
-{
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
-  gtk_widget_set_size_request(box, -1, 64);
-  gtk_widget_set_hexpand(box, TRUE);
-  gtk_widget_set_halign(box, GTK_ALIGN_END);
-
-  GtkWidget *previous_button = action_button_new(NULL, "assets/left-arrow.svg", "arrow-page");
-  gtk_widget_set_margin_top(previous_button, 16);
-  gtk_widget_set_margin_bottom(previous_button, 16);
-  gtk_widget_set_size_request(previous_button, 32, 32);
-  
-  g_signal_connect(previous_button, "clicked", G_CALLBACK(on_previous_page_clicked), view);
-  gtk_box_append(GTK_BOX(box), previous_button);
-
-  int start, end;
-
-  pagination_get_range(view->controller->pagination, &start, &end);
-
-  /*
-  for (int i = start; i <= end; i++) 
-  {
-    char buffer[12];
-    snprintf(buffer, sizeof(buffer), "%d", i + 1);
-
-    GtkWidget *button = pagination_button_new(view->controller->pagination, buffer, i);
-    g_signal_connect(button, "clicked", G_CALLBACK(on_page_clicked), view);
-
-    gtk_box_append(GTK_BOX(box), button);
-  }
-  */
-
-  GtkWidget *next_button = action_button_new(NULL, "assets/right-arrow.svg", "arrow-page");
-  gtk_widget_set_margin_top(next_button, 16);
-  gtk_widget_set_margin_bottom(next_button, 16);
-  gtk_widget_set_margin_end(next_button, 24);
-  g_signal_connect(next_button, "clicked", G_CALLBACK(on_next_page_clicked), view);
-  gtk_widget_set_size_request(next_button, 32, 32);
- 
-  gtk_box_append(GTK_BOX(box), next_button);
-
-  return box;
 }
 
 static void build_config_table_header(GtkWidget *table)
@@ -730,37 +676,9 @@ static void on_revert_last_clicked(GtkButton *button, gpointer data)
   configuration_controller_start_revert(view->controller);
 }
 
-static void on_previous_page_clicked(GtkButton *button, gpointer data)
+static void on_page_clicked(void *data)
 {
-  (void)button; // unused parameter
-  
   configuration_view_t *view = (configuration_view_t *)data;
-
-  pagination_previous(&view->controller->pagination);
-
-  configuration_view_update(view);
-}
-
-static void on_next_page_clicked(GtkButton *button, gpointer data)
-{
-  (void)button; // unused parameter 
-
-  configuration_view_t *view = (configuration_view_t *)data;
-
-  pagination_next(&view->controller->pagination);
-
-  configuration_view_update(view);
-}
-
-static void on_page_clicked(GtkButton *button, gpointer data)
-{
-  (void)button; // unused parameter 
-  
-  configuration_view_t *view = (configuration_view_t *)data;
-
-  int page_number = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "page-number"));
-
-  pagination_set_page_number(&view->controller->pagination, page_number);
 
   configuration_view_update(view);
 }

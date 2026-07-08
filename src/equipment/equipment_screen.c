@@ -32,6 +32,8 @@ static void equipment_screen_destroy(screen_t *parent)
 {
   equipment_screen_t *screen = (equipment_screen_t *)parent;
 
+  equipment_view_destroy(&screen->view);
+
   free(screen);
 }
 

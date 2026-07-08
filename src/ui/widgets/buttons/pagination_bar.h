@@ -26,6 +26,7 @@ typedef struct {
 
 
 pagination_bar_t pagination_bar_new(pagination_t *pagination, pagination_bar_callback callback, void *data);
+void pagination_bar_destroy(pagination_bar_t *bar);
 
 void pagination_bar_refresh(pagination_bar_t *bar);
 void pagination_bar_setup_callbacks(pagination_bar_t *bar);

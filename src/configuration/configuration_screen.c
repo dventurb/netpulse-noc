@@ -33,6 +33,8 @@ static void configuration_screen_destroy(screen_t *parent)
 {
   configuration_screen_t *screen = (configuration_screen_t *)parent;
 
+  configuration_view_destroy(&screen->view);
+
   free(screen);
 }
 
