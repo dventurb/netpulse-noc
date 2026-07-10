@@ -3,7 +3,7 @@
 
 #include <gtk/gtk.h>
 
-#include "pagination_bar.h"
+#include "table.h"
 #include "stats_card.h"
 
 #include "sensor.h"
@@ -14,14 +14,13 @@ typedef struct sensor_view_t {
   sensor_controller_t *controller;
   
   GtkBox      *container;
-  GtkGrid     *table;
 
   stats_card_t total_card;
   stats_card_t ok_card;
   stats_card_t warning_card;
   stats_card_t failed_card;
 
-  pagination_bar_t  pagination_bar;
+  table_t table;
 
   GtkButton   *import_button;
   GtkButton   *fetch_button;

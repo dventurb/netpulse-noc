@@ -373,10 +373,16 @@
   background-color: #fafafa;
 }
 
-.table-bold-cell,
-.table-name-cell {
+.table-bold-cell {
+  all: unset; /* reset default style */
+
   color: #222222;
   font-weight: 600;
+  font-size: 14px;
+
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 18px 24px;
 }
 
 .priority-cell,

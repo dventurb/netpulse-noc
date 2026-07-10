@@ -5,16 +5,12 @@
 
 #include "action_button.h"
 #include "stats_card.h"
-#include "table_header.h"
 #include "table_cell.h"
 #include "status_badge.h"
 #include "widget_utils.h"
 
 static const char* const filter_status[] = { "All", "OK", "Warning", "Critical", "Network Failure", NULL };
-static const char* const headers[] = { "CODE", "TYPE", "VALUE", "STATUS", "READ AT" };
-static const int widths[] = { CELL_CODE_WIDTH, CELL_TYPE_WIDTH, CELL_VALUE_WIDTH, CELL_STATUS_WIDTH, CELL_READ_AT_WIDTH };
 
-static const int SENSOR_HEADER_COLUMN_COUNT = 5;
 static const int SENSOR_TABLE_COLUMN_COUNT = 5;
 
 static GtkWidget *build_sidebar(sensor_view_t *view);
@@ -22,10 +18,10 @@ static GtkWidget *build_content(sensor_view_t *view);
 static GtkWidget *build_header(sensor_view_t *view);
 static GtkWidget *build_stats_cards(sensor_view_t *view);
 static GtkWidget *build_filter_bar(sensor_view_t *view);
-static GtkWidget *build_table(sensor_view_t *view);
 
-static void build_table_header(GtkWidget *table);
-static void build_table_row(sensor_view_t *view, sensor_t sensor, int row);
+static GtkWidget *build_table(sensor_view_t *view);
+static void build_table_row(sensor_view_t *view, sensor_t sensor);
+
 static GtkWidget *build_status_cell(sensor_status_t status);
 
 static void sensor_view_apply_filters(sensor_view_t *view);
@@ -58,7 +54,7 @@ GtkBox *sensor_view_create(sensor_view_t *view, sensor_controller_t *controller)
 
 void sensor_view_destroy(sensor_view_t *view)
 {
-  pagination_bar_destroy(&view->pagination_bar);
+  table_destroy(&view->table);
 }
 
 void sensor_view_refresh(sensor_view_t *view)
@@ -85,14 +81,14 @@ void sensor_view_update_stats_cards(sensor_view_t *view)
 
 void sensor_view_update_table(sensor_view_t *view, const sensor_t *sensors, int count)
 {
-  table_remove_rows(GTK_WIDGET(view->table));
+  table_clear_rows(&view->table);
 
   if (sensors == NULL || count == 0) return;
 
   for (int i = 0; i < count; i++) 
-    build_table_row(view, sensors[i], i + 1);
+    build_table_row(view, sensors[i]);
 
-  pagination_bar_refresh(&view->pagination_bar);
+  table_refresh(&view->table);
 }
 
 void sensor_view_set_actions_enabled(sensor_view_t *view, bool is_active)
@@ -213,68 +209,41 @@ static GtkWidget *build_filter_bar(sensor_view_t *view)
 
 static GtkWidget *build_table(sensor_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-  gtk_widget_add_css_class(box, "inventory");
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
-  GtkWidget *scrolled_window = gtk_scrolled_window_new();
-  gtk_widget_set_size_request(scrolled_window, -1, 456);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
-  gtk_widget_add_css_class(scrolled_window, "table-scroll");
+  table_column_t columns[] = {
+    { "CODE",    CELL_CODE_WIDTH },
+    { "TYPE",    CELL_TYPE_WIDTH },
+    { "VALUE",   CELL_VALUE_WIDTH },
+    { "STATUS",  CELL_STATUS_WIDTH },
+    { "READ AT", CELL_READ_AT_WIDTH }
+  };
 
-  view->table = GTK_GRID(gtk_grid_new());
-  gtk_widget_set_hexpand(GTK_WIDGET(view->table), FALSE);
-  gtk_widget_set_halign(GTK_WIDGET(view->table), GTK_ALIGN_FILL);
-  gtk_widget_add_css_class(GTK_WIDGET(view->table), "table");
+  view->table = table_new(columns, SENSOR_TABLE_COLUMN_COUNT, FALSE);
+  table_set_pagination(&view->table, &view->controller->pagination, on_page_clicked, view);
 
-  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(view->table));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->table.container));
 
-  build_table_header(GTK_WIDGET(view->table));
-
-  view->pagination_bar = pagination_bar_new(&view->controller->pagination, on_page_clicked, view);
-  pagination_bar_refresh(&view->pagination_bar);
-  pagination_bar_setup_callbacks(&view->pagination_bar);
-
-  gtk_box_append(GTK_BOX(box), scrolled_window);
-  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->pagination_bar.container));
-
-  sensor_controller_reset_query(view->controller);
-
-  return box;
+  return container;
 }
 
-static void build_table_header(GtkWidget *table)
+static void build_table_row(sensor_view_t *view, sensor_t sensor)
 {
-  for (int i = 0; i < SENSOR_HEADER_COLUMN_COUNT; i++) {
-    GtkWidget *header_col = table_header_new(headers[i], widths[i]);
-    gtk_widget_set_hexpand(header_col, TRUE);
-    gtk_grid_attach(GTK_GRID(table), header_col, i, 0, 1, 1);
-  }
-}
+  table_row_t row = table_row_new(SENSOR_TABLE_COLUMN_COUNT);
 
-static void build_table_row(sensor_view_t *view, sensor_t sensor, int row)
-{
-  const char *css_class = (row % 2 == 0) ? "table-row-even" : "table-row-odd";
-  
   char value[VALUE_MAX];
   snprintf(value, VALUE_MAX, "%0.2f %s", sensor.value, sensor.unit);
 
   char datetime[DATETIME_MAX];
   format_timestamp_to_datetime(sensor.read_at, datetime);
-  GtkWidget *columns[] = {
-    table_cell_new(sensor.code, CELL_CODE_WIDTH),
-    table_cell_new(sensor.type, CELL_TYPE_WIDTH),
-    table_cell_new(value, CELL_VALUE_WIDTH),
-    build_status_cell(sensor.status),
-    table_cell_new(datetime, CELL_READ_AT_WIDTH)
-  };
 
-  for (int i = 0; i < SENSOR_TABLE_COLUMN_COUNT; i++) {
-    
-    gtk_widget_add_css_class(columns[i], css_class);
-    gtk_widget_set_hexpand(columns[i], TRUE);
+  table_row_insert_cell(&row, table_cell_new(sensor.code, CELL_CODE_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(sensor.type, CELL_TYPE_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(value, CELL_VALUE_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, build_status_cell(sensor.status));
+  table_row_insert_cell(&row, table_cell_new(datetime, CELL_READ_AT_WIDTH, "table-cell"));
 
-    gtk_grid_attach(view->table, columns[i], i, row, 1, 1);
-  }
+  table_insert_row(&view->table, &row);
 }
 
 static GtkWidget *build_status_cell(sensor_status_t status)

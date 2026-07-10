@@ -25,11 +25,11 @@ typedef struct {
 } pagination_bar_t;
 
 
-pagination_bar_t pagination_bar_new(pagination_t *pagination, pagination_bar_callback callback, void *data);
+pagination_bar_t pagination_bar_new(pagination_t *pagination);
 void pagination_bar_destroy(pagination_bar_t *bar);
 
 void pagination_bar_refresh(pagination_bar_t *bar);
-void pagination_bar_setup_callbacks(pagination_bar_t *bar);
+void pagination_bar_set_callback(pagination_bar_t *bar, pagination_bar_callback callback, void *data);
 
 GtkWidget *pagination_button_new(pagination_bar_t *bar, char *text, int number);
 

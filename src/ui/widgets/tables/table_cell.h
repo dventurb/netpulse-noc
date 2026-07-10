@@ -3,6 +3,6 @@
 
 #include <gtk/gtk.h>
 
-GtkWidget *table_cell_new(const char *text, int width);
+GtkWidget *table_cell_new(const char *text, int width, const char *css);
 
 #endif

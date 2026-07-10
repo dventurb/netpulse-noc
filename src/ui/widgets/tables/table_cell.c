@@ -1,10 +1,10 @@
 #include "table_cell.h"
 
-GtkWidget *table_cell_new(const char *text, int width)
+GtkWidget *table_cell_new(const char *text, int width, const char *css)
 {
-  GtkWidget *label = gtk_label_new(text != NULL ? text : "");
+  GtkWidget *label = gtk_label_new(text ? text : "");
 
-  gtk_widget_add_css_class(label, "table-cell");
+  gtk_widget_add_css_class(label, css);
   
   gtk_widget_set_size_request(label, width, -1);
   gtk_label_set_single_line_mode(GTK_LABEL(label), TRUE);

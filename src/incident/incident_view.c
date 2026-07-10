@@ -5,7 +5,6 @@
 
 #include "action_button.h"
 #include "dialog.h"
-#include "table_header.h"
 #include "table_cell.h"
 #include "table_checkbox.h"
 #include "status_badge.h"
@@ -17,23 +16,20 @@ static const char* const incident_priority[] = { "Low", "Medium", "High", "Criti
 static const char* const incident_type[] = { "Equipment", "Sensor", NULL };
 static const char* const filter_status[] = { "All", "Pending", "In Progress", "Concluded", NULL };
 static const char* const filter_priority[] = { "All", "Low", "Medium", "High", "Critical", NULL };
-static const char* const headers[] = { "ID", "QUEUE", "SOURCE", "TYPE", "DESCRIPTION", "PRIORITY", "STATUS", "TECHNICIAN", "CREATED", "CONCLUDED"};
-static const int widths[] = { CELL_NUMBER_WIDTH, CELL_QUEUE_WIDTH, CELL_SOURCE_WIDTH, CELL_TYPE_WIDTH, CELL_DESCRIPTION_WIDTH, CELL_PRIORITY_WIDTH, CELL_STATUS_WIDTH, CELL_TECHNICIAN_WIDTH, CELL_CREATED_WIDTH, CELL_CONCLUDED_WIDTH };
 
 static const char* DATA_INCIDENT = "INCIDENT-ID";
 
-static const int INCIDENT_HEADER_COLUMN_COUNT = 10;
-static const int INCIDENT_TABLE_COLUMN_COUNT = 11;
+static const int INCIDENT_TABLE_COLUMN_COUNT = 9;
 
 static GtkWidget *build_sidebar(incident_view_t *view);
 static GtkWidget *build_content(incident_view_t *view);
 static GtkWidget *build_header(incident_view_t *view);
 static GtkWidget *build_stats_cards(incident_view_t *view);
 static GtkWidget *build_filter_bar(incident_view_t *view);
-static GtkWidget *build_table(incident_view_t *view);
 
-static void build_table_header(GtkWidget *grid);
-static void build_table_row(incident_view_t *view, incident_t incident, int row);
+static GtkWidget *build_table(incident_view_t *view);
+static void build_table_row(incident_view_t *view, incident_t incident);
+
 static GtkWidget *build_priority_cell(incident_priority_t priority);
 static GtkWidget *build_status_cell(incident_status_t status);
 
@@ -73,7 +69,7 @@ GtkBox *incident_view_create(incident_view_t *view, incident_controller_t *contr
 
 void incident_view_destroy(incident_view_t *view)
 {
-  pagination_bar_destroy(&view->pagination_bar);
+  table_destroy(&view->table);
 }
 
 void incident_view_refresh(incident_view_t *view)
@@ -107,14 +103,14 @@ void incident_view_update_stats_cards(incident_view_t *view)
 
 void incident_view_update_table(incident_view_t *view, incident_t *incidents, int count)
 {
-  table_remove_rows(GTK_WIDGET(view->table));
+  table_clear_rows(&view->table);
 
   if (incidents == NULL || count == 0) return;
 
   for (int i = 0; i < count; i++) 
-    build_table_row(view, incidents[i], i + 1);
+    build_table_row(view, incidents[i]);
 
-  pagination_bar_refresh(&view->pagination_bar);
+  table_refresh(&view->table);
 }
 
 // TODO
@@ -228,52 +224,33 @@ static GtkWidget *build_filter_bar(incident_view_t *view)
 
 static GtkWidget *build_table(incident_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-  gtk_widget_add_css_class(box, "incident");
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
-  GtkWidget *scrolled_window = gtk_scrolled_window_new();
-  gtk_widget_set_size_request(scrolled_window, -1, 456);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
-  gtk_widget_add_css_class(scrolled_window, "table-scroll");
+  table_column_t columns[] = {
+    { "ID",          CELL_NUMBER_WIDTH },
+    { "SOURCE",      CELL_SOURCE_WIDTH },
+    { "TYPE",        CELL_TYPE_WIDTH },
+    { "DESCRIPTION", CELL_DESCRIPTION_WIDTH },
+    { "PRIORITY",    CELL_PRIORITY_WIDTH },
+    { "STATUS",      CELL_STATUS_WIDTH },
+    { "TECHNICIAN",  CELL_TECHNICIAN_WIDTH },
+    { "CREATED",     CELL_CREATED_WIDTH },
+    { "CONCLUDED",   CELL_CONCLUDED_WIDTH }
+  };
 
-  view->table = GTK_GRID(gtk_grid_new());
-  gtk_widget_set_hexpand(GTK_WIDGET(view->table), FALSE);
-  gtk_widget_set_halign(GTK_WIDGET(view->table), GTK_ALIGN_FILL);
-  gtk_widget_add_css_class(GTK_WIDGET(view->table), "table");
+  view->table = table_new(columns, INCIDENT_TABLE_COLUMN_COUNT, TRUE);
+  table_set_pagination(&view->table, &view->controller->pagination, on_page_clicked, view);
 
-  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(view->table));
-
-  build_table_header(GTK_WIDGET(view->table));
-
-  view->pagination_bar = pagination_bar_new(&view->controller->pagination, on_page_clicked, view);
-  pagination_bar_refresh(&view->pagination_bar);
-  pagination_bar_setup_callbacks(&view->pagination_bar);
-
-  gtk_box_append(GTK_BOX(box), scrolled_window);
-  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->pagination_bar.container));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->table.container));
 
   incident_controller_refresh_page(view->controller);
 
-  return box;
+  return container;
 }
 
-static void build_table_header(GtkWidget *table)
+static void build_table_row(incident_view_t *view, incident_t incident)
 {
-  GtkWidget *select_all_button = gtk_check_button_new();
-  gtk_widget_add_css_class(select_all_button, "table-header-checkbox");
-  gtk_widget_set_size_request(select_all_button, 60, -1);
-  gtk_grid_attach(GTK_GRID(table), select_all_button, 0, 0, 1, 1);
-
-  for (int i = 0; i < INCIDENT_HEADER_COLUMN_COUNT; i++) 
-  {
-    GtkWidget *label = table_header_new(headers[i], widths[i]);
-    gtk_grid_attach(GTK_GRID(table), label, i + 1, 0, 1, 1);
-  }
-}
-
-static void build_table_row(incident_view_t *view, incident_t incident, int row)
-{
-  const char *css_class = (row % 2 == 0) ? "table-row-even" : "table-row-odd";
+  table_row_t row = table_row_new(INCIDENT_TABLE_COLUMN_COUNT);
 
   GtkWidget *check_button = table_checkbox_new();
   g_object_set_data(G_OBJECT(check_button), DATA_INCIDENT, GINT_TO_POINTER(incident.number));
@@ -282,38 +259,24 @@ static void build_table_row(incident_view_t *view, incident_t incident, int row)
   char number[ID_MAX];
   incident_format_id(incident.number, number);
 
-  char position_buffer[12];
-  int position = incident_controller_get_position(view->controller, incident, row);
-  incident_format_position(position, position_buffer);
-
   char created[DATETIME_MAX];
   format_timestamp_to_datetime(incident.created_at, created);
 
   char concluded[DATETIME_MAX];
   format_timestamp_to_datetime(incident.concluded_at, concluded);
 
-  GtkWidget *columns[] = {
-    check_button,
-    table_cell_new(number, CELL_ID_WIDTH),
-    table_cell_new(position_buffer, CELL_QUEUE_WIDTH),
-    table_cell_new(incident.source_id, CELL_SOURCE_WIDTH),
-    table_cell_new(incident.type, CELL_TYPE_WIDTH),
-    table_cell_new(incident.description, CELL_DESCRIPTION_WIDTH),
-    build_priority_cell(incident.priority),
-    build_status_cell(incident.status),
-    table_cell_new(incident.technician_name, CELL_TECHNICIAN_WIDTH),
-    table_cell_new(created, CELL_CREATED_WIDTH),
-    table_cell_new(concluded, CELL_CONCLUDED_WIDTH)
-  };
+  table_row_insert_cell(&row, check_button);
+  table_row_insert_cell(&row, table_cell_new(number, CELL_ID_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(incident.source_id, CELL_SOURCE_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(incident.type, CELL_TYPE_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(incident.description, CELL_DESCRIPTION_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, build_priority_cell(incident.priority));
+  table_row_insert_cell(&row, build_status_cell(incident.status));
+  table_row_insert_cell(&row, table_cell_new(incident.technician_name, CELL_TECHNICIAN_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(created, CELL_CREATED_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(concluded, CELL_CONCLUDED_WIDTH, "table-cell"));
 
-  for (int i = 0; i < INCIDENT_TABLE_COLUMN_COUNT; i++) 
-  {
-    if (i == 1) gtk_widget_add_css_class(columns[i], "table-bold-cell");
-
-    gtk_widget_add_css_class(columns[i], css_class);
-
-    gtk_grid_attach(view->table, columns[i], i, row, 1, 1);
-  }
+  table_insert_row(&view->table, &row);
 }
 
 static GtkWidget *build_form(incident_view_t *view)

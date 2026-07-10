@@ -20,7 +20,10 @@ void sensor_array_init(sensor_array_t *array)
 
 void sensor_array_destroy(sensor_array_t *array)
 {
-  if (array->sensors != NULL) free(array->sensors);
+  if (array->sensors == NULL) return;
+
+  free(array->sensors);
+  array->sensors = NULL;
   array->count = 0;
 }
 
@@ -247,12 +250,12 @@ int sensor_get_number_code(sensor_array_t array, const char *code)
 
 int sensor_get_number_status(sensor_array_t array, sensor_status_t status)
 {
+  if (array.sensors == NULL) return 0;
+
   int i = 0;
 
   for (int j = 0; j < array.count; j++) 
-  {
-    if (array.sensors->status == status) i++;
-  }
+    if (array.sensors[j].status == status) i++;
 
   return i;
 }

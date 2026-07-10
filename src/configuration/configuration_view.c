@@ -9,18 +9,13 @@
 #include "input_field.h"
 #include "dialog.h"
 #include "alert_icon.h"
-#include "table_header.h"
 #include "table_cell.h"
 #include "text_label.h"
 #include "list_item.h"
 #include "widget_utils.h"
 
-static const char* const headers[] = { "#", "COMMAND", "TECHNICIAN", "DATE/TIME" };
-static const int widths[] = { CELL_NUMBER_WIDTH, CELL_TYPE_WIDTH, CELL_VALUE_WIDTH, CELL_STATUS_WIDTH };
-
 static const char* const DATA_EQUIPMENT_ID = "EQUIPMENT-ID";
 
-static const int CONFIG_HEADER_COLUMN_COUNT = 4;
 static const int CONFIG_TABLE_COLUMN_COUNT = 4;
 
 static GtkWidget *build_sidebar(configuration_view_t *view);
@@ -29,8 +24,7 @@ static GtkWidget *build_header(configuration_view_t *view);
 static GtkWidget *build_stats_cards(configuration_view_t *view);
 
 static GtkWidget *build_config_table(configuration_view_t *view);
-static void build_config_table_header(GtkWidget *table);
-static void build_config_table_row(configuration_view_t *view, configuration_t config, int row);
+static void build_config_table_row(configuration_view_t *view, configuration_t config);
 
 static GtkWidget *build_equipment_list(configuration_view_t *view);
 static void build_equipment_list_row(GtkWidget *list, equipment_t equipment);
@@ -73,7 +67,7 @@ GtkBox *configuration_view_create(configuration_view_t *view, configuration_cont
 
 void configuration_view_destroy(configuration_view_t *view)
 {
-  pagination_bar_destroy(&view->pagination_bar);
+  table_destroy(&view->table);
 }
 
 void configuration_view_refresh(configuration_view_t *view)
@@ -101,16 +95,16 @@ void configuration_view_update_cards(configuration_view_t *view)
 
 void configuration_view_update_config_table(configuration_view_t *view, const void *result, int count)
 {
-  table_remove_rows(GTK_WIDGET(view->table));
+  table_clear_rows(&view->table);
 
   if (result == NULL || count == 0) return;
 
   configuration_t *configs = (configuration_t *)result;
 
   for (int i = 0; i < count; i++) 
-    build_config_table_row(view, configs[i], i + 1);
+    build_config_table_row(view, configs[i]);
 
-  pagination_bar_refresh(&view->pagination_bar);
+  table_refresh(&view->table);
 }
 
 void configuration_view_update_equipment_list(configuration_view_t *view, const void *result, int count)
@@ -254,33 +248,23 @@ static GtkWidget *build_equipment_list(configuration_view_t *view)
 
 static GtkWidget *build_config_table(configuration_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-  gtk_widget_add_css_class(box, "inventory");
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
-  GtkWidget *scrolled_window = gtk_scrolled_window_new();
-  gtk_widget_set_size_request(scrolled_window, -1, 456);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
-  gtk_widget_add_css_class(scrolled_window, "table-scroll");
+  table_column_t columns[] = {
+    { "#", CELL_NUMBER_WIDTH },
+    { "COMMAND", CELL_TYPE_WIDTH },
+    { "TECHNICIAN", CELL_VALUE_WIDTH },
+    { "DATE/TIME", CELL_STATUS_WIDTH }
+  };
 
-  view->table = GTK_GRID(gtk_grid_new());
-  gtk_widget_set_hexpand(GTK_WIDGET(view->table), FALSE);
-  gtk_widget_set_halign(GTK_WIDGET(view->table), GTK_ALIGN_FILL);
-  gtk_widget_add_css_class(GTK_WIDGET(view->table), "table");
+  view->table = table_new(columns, CONFIG_TABLE_COLUMN_COUNT, FALSE);
+  table_set_pagination(&view->table, &view->controller->pagination, on_page_clicked, view);
 
-  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(view->table));
-
-  build_config_table_header(GTK_WIDGET(view->table));
-
-  view->pagination_bar = pagination_bar_new(&view->controller->pagination, on_page_clicked, view);
-  pagination_bar_refresh(&view->pagination_bar);
-  pagination_bar_setup_callbacks(&view->pagination_bar);
-
-  gtk_box_append(GTK_BOX(box), scrolled_window);
-  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->pagination_bar.container));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->table.container));
 
   configuration_controller_reset_config_query(view->controller);
 
-  return box;
+  return container;
 }
 
 static void build_equipment_list_row(GtkWidget *list, equipment_t equipment)
@@ -301,22 +285,12 @@ static void build_equipment_list_row(GtkWidget *list, equipment_t equipment)
   gtk_list_box_append(GTK_LIST_BOX(list), row);
 }
 
-static void build_config_table_header(GtkWidget *table)
+static void build_config_table_row(configuration_view_t *view, configuration_t config)
 {
-  for (int i = 0; i < CONFIG_HEADER_COLUMN_COUNT; i++) {
-    GtkWidget *header_col = table_header_new(headers[i], widths[i]);
-    gtk_widget_set_hexpand(header_col, TRUE);
-    gtk_grid_attach(GTK_GRID(table), header_col, i, 0, 1, 1);
-  }
-}
-
-static void build_config_table_row(configuration_view_t *view, configuration_t config, int row)
-{
-  bool is_top = configuration_controller_is_top_stack(view->controller, config.number);
-
-  const char *css_class = is_top ? "table-row-top" : ((row % 2 == 0) ? "table-row-even" : "table-row-odd");
-
-  const char *css_command = is_top ? "command-number-top" : "commmand-number";
+  //bool is_top = configuration_controller_is_top_stack(view->controller, config.number);
+  //const char *css_command = is_top ? "command-number-top" : "commmand-number";
+  
+  table_row_t row = table_row_new(CONFIG_TABLE_COLUMN_COUNT);
  
   char number[NUMBER_MAX];
   snprintf(number, NUMBER_MAX, "%d", config.number);
@@ -327,21 +301,12 @@ static void build_config_table_row(configuration_view_t *view, configuration_t c
   char name[STRING_MAX];
   snprintf(name, STRING_MAX, "%s", config.technician_name);
 
-  GtkWidget *columns[] = {
-    table_cell_new(number, CELL_CODE_WIDTH),
-    table_cell_new(config.command, CELL_TYPE_WIDTH),
-    table_cell_new(name, CELL_VALUE_WIDTH),
-    table_cell_new(datetime, CELL_READ_AT_WIDTH)
-  };
+  table_row_insert_cell(&row, table_cell_new(number, CELL_CODE_WIDTH, "table-bold-cell"));
+  table_row_insert_cell(&row, table_cell_new(config.command, CELL_TYPE_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(name, CELL_VALUE_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(datetime, CELL_READ_AT_WIDTH, "table-cell"));
 
-  for (int i = 0; i < CONFIG_TABLE_COLUMN_COUNT; i++) {
-    gtk_widget_add_css_class(columns[i], css_class);
-    if (i == 0) gtk_widget_add_css_class(columns[i], css_command);
-
-    gtk_widget_set_hexpand(columns[i], TRUE);
-
-    gtk_grid_attach(view->table, columns[i], i, row, 1, 1);
-  }
+  table_insert_row(&view->table, &row);
 }
 
 static GtkWidget *build_equipment_cell(equipment_t equipment) 

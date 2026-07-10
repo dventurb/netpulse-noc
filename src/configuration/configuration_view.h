@@ -4,7 +4,7 @@
 #include <gtk/gtk.h>
 
 #include "input_field.h"
-#include "pagination_bar.h"
+#include "table.h"
 #include "stats_card.h"
 
 #include "configuration.h"
@@ -27,14 +27,14 @@ typedef struct configuration_view_t {
   configuration_controller_t *controller;
   
   GtkBox      *container;
-  GtkGrid     *table;
+
   GtkListBox  *list;
 
   stats_card_t total_card;
   stats_card_t last_card;
   stats_card_t technicians_card;
 
-  pagination_bar_t pagination_bar;
+  table_t table;
 
   GtkButton   *add_button;
   GtkButton   *revert_button;

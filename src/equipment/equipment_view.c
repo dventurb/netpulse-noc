@@ -20,23 +20,20 @@ static const char* const equipment_types[] = { "Router", "Firewall", "Switch", "
 static const char* const filter_status[] = { "All", "Failed", "Maintenance", "Operational", "Disabled", NULL };
 static const char* const filter_sort[] = { "Sort", "Status", "Type", "Location", NULL};
 static const char* const filter_types[] = { "All", "Router", "Firewall", "Switch", "Access Point", "Server", "NAS", "UPS", "IP Camera", "Printer", "Other", NULL };
-static const char* const headers[] = { "ID", "NAME", "TYPE", "VENDOR", "MODEL", "IP ADDRESS", "MAC ADDRESS", "LOCATION", "STATUS", "LAST CHECK" };
-static const int widths[] = { CELL_ID_WIDTH, CELL_NAME_WIDTH, CELL_TYPE_WIDTH, CELL_VENDOR_WIDTH, CELL_MODEL_WIDTH, CELL_IP_ADDRESS_WIDTH, CELL_MAC_ADDRESS_WIDTH, CELL_LOCATION_WIDTH, CELL_STATUS_WIDTH, CELL_LAST_CHECK_WIDTH };
 
 static const char* DATA_EQUIPMENT = "EQUIPMENT-ID";
 
-static const int INVENTORY_HEADER_COLUMN_COUNT = 10;
-static const int INVENTORY_TABLE_COLUMN_COUNT = 11;
+static const int INVENTORY_TABLE_COLUMN_COUNT = 10;
 
 static GtkWidget *build_sidebar(equipment_view_t *view);
 static GtkWidget *build_content(equipment_view_t *view);
 static GtkWidget *build_header(equipment_view_t *view);
 static GtkWidget *build_stats_cards(equipment_view_t *view);
 static GtkWidget *build_filter_bar(equipment_view_t *view);
-static GtkWidget *build_table(equipment_view_t *view);
 
-static void build_table_header(GtkWidget *table);
-static void build_table_row(equipment_view_t *view, equipment_t equipment, int row);
+static GtkWidget *build_table(equipment_view_t *view);
+static void build_table_row(equipment_view_t *view, equipment_t equipment);
+
 static GtkWidget *build_summary_card(equipment_t equipment);
 static GtkWidget *build_status_cell(equipment_status_t status);
 
@@ -79,7 +76,7 @@ GtkBox *equipment_view_create(equipment_view_t *view, equipment_controller_t *co
 
 void equipment_view_destroy(equipment_view_t *view)
 {
-  pagination_bar_destroy(&view->pagination_bar);
+  table_destroy(&view->table);
 }
 
 void equipment_view_refresh(equipment_view_t *view)
@@ -109,14 +106,15 @@ void equipment_view_update_stats_cards(equipment_view_t *view)
 
 void equipment_view_update_table(equipment_view_t *view, const equipment_t *equipments, int count)
 {
-  table_remove_rows(GTK_WIDGET(view->table));
+  table_clear_rows(&view->table);
 
   if (equipments == NULL || count == 0) return;
 
+  table_refresh(&view->table);
   for (int i = 0; i < count; i++) 
-    build_table_row(view, equipments[i], i + 1);
+    build_table_row(view, equipments[i]);
 
-  pagination_bar_refresh(&view->pagination_bar);
+  table_refresh(&view->table);
 }
 
 // TODO
@@ -237,52 +235,35 @@ static GtkWidget *build_filter_bar(equipment_view_t *view)
 // TODO: Not finished yet.
 static GtkWidget *build_table(equipment_view_t *view)
 {
-  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-  gtk_widget_add_css_class(box, "inventory");
+  GtkWidget *container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
-  GtkWidget *scrolled_window = gtk_scrolled_window_new();
-  gtk_widget_set_size_request(scrolled_window, -1, 456);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
-  gtk_widget_add_css_class(scrolled_window, "table-scroll");
+  table_column_t columns[] = {
+    { "ID",          CELL_ID_WIDTH          },
+    { "NAME",        CELL_NAME_WIDTH        },
+    { "TYPE",        CELL_TYPE_WIDTH        },
+    { "VENDOR",      CELL_VENDOR_WIDTH      },
+    { "MODEL",       CELL_VENDOR_WIDTH      },
+    { "IP ADDRESS",  CELL_IP_ADDRESS_WIDTH  },
+    { "MAC ADDRESS", CELL_MAC_ADDRESS_WIDTH },
+    { "LOCATION",    CELL_LOCATION_WIDTH    },
+    { "STATUS",      CELL_STATUS_WIDTH      },
+    { "LAST CHECK",  CELL_LAST_CHECK_WIDTH  }
+  };
 
-  view->table = GTK_GRID(gtk_grid_new());
-  gtk_widget_set_hexpand(GTK_WIDGET(view->table), FALSE);
-  gtk_widget_set_halign(GTK_WIDGET(view->table), GTK_ALIGN_FILL);
-  gtk_widget_add_css_class(GTK_WIDGET(view->table), "table");
+  view->table = table_new(columns, INVENTORY_TABLE_COLUMN_COUNT, TRUE);
+  table_set_pagination(&view->table, &view->controller->pagination, on_page_clicked, view);
 
-  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(view->table));
-
-  build_table_header(GTK_WIDGET(view->table));
-
-  view->pagination_bar = pagination_bar_new(&view->controller->pagination, on_page_clicked, view);
-  pagination_bar_refresh(&view->pagination_bar);
-  pagination_bar_setup_callbacks(&view->pagination_bar);
-
-  gtk_box_append(GTK_BOX(box), scrolled_window);
-  gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->pagination_bar.container));
+  gtk_box_append(GTK_BOX(container), GTK_WIDGET(view->table.container));
 
   equipment_controller_refresh_page(view->controller);
 
-  return box;
+  return container;
 }
 
-static void build_table_header(GtkWidget *table)
+static void build_table_row(equipment_view_t *view, equipment_t equipment)
 {
-  GtkWidget *select_all_button = gtk_check_button_new();
-  gtk_widget_add_css_class(select_all_button, "table-header-checkbox");
-  gtk_widget_set_size_request(select_all_button, 60, -1);
-  gtk_grid_attach(GTK_GRID(table), select_all_button, 0, 0, 1, 1);
+  table_row_t row = table_row_new(INVENTORY_TABLE_COLUMN_COUNT);
 
-  for (int i = 0; i < INVENTORY_HEADER_COLUMN_COUNT; i++) {
-    GtkWidget *label = table_header_new(headers[i], widths[i]);
-    gtk_grid_attach(GTK_GRID(table), label, i + 1, 0, 1, 1);
-  }
-}
-
-static void build_table_row(equipment_view_t *view, equipment_t equipment, int row)
-{
-  const char *css_class = (row % 2 == 0) ? "table-row-even" : "table-row-odd";
-  
   GtkWidget *check_button = table_checkbox_new();
   g_object_set_data(G_OBJECT(check_button), DATA_EQUIPMENT, GINT_TO_POINTER(equipment.id));
   g_signal_connect(check_button, "toggled", G_CALLBACK(on_row_selection_toggled), view);
@@ -293,27 +274,19 @@ static void build_table_row(equipment_view_t *view, equipment_t equipment, int r
   char datetime[DATETIME_MAX];
   format_timestamp_to_datetime(equipment.last_check, datetime);
 
-  GtkWidget *columns[] = {
-    check_button,
-    table_cell_new(id, CELL_ID_WIDTH),
-    table_cell_new(equipment.name, CELL_NAME_WIDTH),
-    table_cell_new(equipment_type_to_string(equipment.type), CELL_TYPE_WIDTH),
-    table_cell_new(equipment.vendor, CELL_VENDOR_WIDTH),
-    table_cell_new(equipment.model, CELL_MODEL_WIDTH),
-    table_cell_new(equipment.ip_address, CELL_IP_ADDRESS_WIDTH),
-    table_cell_new(equipment.mac_address, CELL_MAC_ADDRESS_WIDTH),
-    table_cell_new(equipment.location, CELL_LOCATION_WIDTH),
-    build_status_cell(equipment.status),
-    table_cell_new(datetime, CELL_LAST_CHECK_WIDTH)
-  };
+  table_row_insert_cell(&row, check_button);
+  table_row_insert_cell(&row, table_cell_new(id, CELL_ID_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(equipment.name, CELL_NAME_WIDTH, "table-bold-cell"));
+  table_row_insert_cell(&row, table_cell_new(equipment_type_to_string(equipment.type), CELL_TYPE_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(equipment.vendor, CELL_VENDOR_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(equipment.model, CELL_MODEL_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(equipment.ip_address, CELL_IP_ADDRESS_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(equipment.mac_address, CELL_MAC_ADDRESS_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, table_cell_new(equipment.location, CELL_LOCATION_WIDTH, "table-cell"));
+  table_row_insert_cell(&row, build_status_cell(equipment.status));
+  table_row_insert_cell(&row, table_cell_new(datetime, CELL_LAST_CHECK_WIDTH, "table-cell"));
 
-  for (int i = 0; i < INVENTORY_TABLE_COLUMN_COUNT; i++) {
-    if (i == 2) gtk_widget_add_css_class(columns[i], "table-name-cell");
-
-    gtk_widget_add_css_class(columns[i], css_class);
-
-    gtk_grid_attach(view->table, columns[i], i, row, 1, 1);
-  }
+  table_insert_row(&view->table, &row);
 }
 
 static GtkWidget *build_form(equipment_view_t *view)

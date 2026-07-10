@@ -11,13 +11,11 @@ static void on_next_page_button_clicked(GtkButton *button, gpointer data);
 static void on_page_button_clicked(GtkButton *button, gpointer data);
 
 
-pagination_bar_t pagination_bar_new(pagination_t *pagination, pagination_bar_callback callback, void *data)
+pagination_bar_t pagination_bar_new(pagination_t *pagination)
 {
   pagination_bar_t bar = {0};
 
   bar.pagination = pagination;
-  bar.callback = callback;
-  bar.data = data;
   bar.buttons_total = 0;
 
   bar.container = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4));
@@ -76,8 +74,11 @@ void pagination_bar_refresh(pagination_bar_t *bar)
   }
 }
 
-void pagination_bar_setup_callbacks(pagination_bar_t *bar)
+void pagination_bar_set_callback(pagination_bar_t *bar, pagination_bar_callback callback, void *data)
 {
+  if (callback) bar->callback = callback;
+  if (data) bar->data = data;
+
   g_signal_connect(bar->previous_button, "clicked", G_CALLBACK(on_previous_page_button_clicked), bar);
   g_signal_connect(bar->next_button, "clicked", G_CALLBACK(on_next_page_button_clicked), bar);
 }
@@ -137,7 +138,8 @@ static void on_previous_page_button_clicked(GtkButton *button, gpointer data)
 
   pagination_bar_refresh(bar);
 
-  bar->callback(bar->data);
+  if (bar->callback && bar->data)
+    bar->callback(bar->data);
 }
 
 static void on_next_page_button_clicked(GtkButton *button, gpointer data)
@@ -153,7 +155,8 @@ static void on_next_page_button_clicked(GtkButton *button, gpointer data)
 
   pagination_bar_refresh(bar);
 
-  bar->callback(bar->data);
+  if (bar->callback && bar->data)
+    bar->callback(bar->data);
 }
 
 static void on_page_button_clicked(GtkButton *button, gpointer data)
@@ -167,5 +170,6 @@ static void on_page_button_clicked(GtkButton *button, gpointer data)
   pagination_set_page_number(bar->pagination, number);
   pagination_bar_refresh(bar);
 
-  bar->callback(bar->data);
+  if (bar->callback && bar->data)
+    bar->callback(bar->data);
 }

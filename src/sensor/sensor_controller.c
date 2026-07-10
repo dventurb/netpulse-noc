@@ -277,6 +277,7 @@ bool sensor_controller_validate_date(const char *text)
 void sensor_controller_get_stats(sensor_controller_t *controller, sensor_stats_t *stats)
 {
   sensor_array_t array = controller->data->sensors;
+  if (array.sensors == NULL) return;
 
   int total = sensor_get_count(array);
   snprintf(stats->total, STRING_MAX, "%d", total);
